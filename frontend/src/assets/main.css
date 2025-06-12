@@ -1,35 +1,79 @@
+
+/* 导入 Font Awesome */
+@import 'font-awesome/css/font-awesome.css';
+/* 导入基础样式 */
 @import './base.css';
 
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
-}
+/* 应用 Tailwind 的基础层、组件层和工具层 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
-}
-
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
+/* 从 index2.html 移植过来的自定义工具类 */
+@layer utilities {
+  .content-auto {
+    content-visibility: auto;
   }
-}
-
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 text-gray-300 hover:bg-primary/20 hover:text-white rounded-lg transition-all duration-300;
   }
-
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
+  .sidebar-item.router-link-exact-active {
+    @apply bg-primary text-white font-semibold;
+  }
+  .card {
+    @apply bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl;
+  }
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-300;
+  }
+  .btn-primary {
+    @apply bg-primary text-white hover:bg-primary/90;
+  }
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 hover:bg-gray-300;
+  }
+  .btn-danger {
+    @apply bg-danger text-white hover:bg-danger/90;
+  }
+  .btn-success {
+    @apply bg-success text-white hover:bg-success/90;
+  }
+  .input {
+    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all duration-300;
+  }
+  .badge {
+    @apply px-2 py-1 rounded-full text-xs font-medium;
+  }
+  .text1 {
+    font-weight: 700;
+    color: rgb(31 41 55 / var(--tw-text-opacity, 1));
+  }
+  .text2 {
+    font-weight: 700;
+    color: #ffffff;
+  }
+  .sidebar-item.active {
+    background-color: rgb(30 64 175 / var(--tw-bg-opacity, 1));
+  }
+  .step {
+    @apply flex items-center text-gray-500;
+  }
+  .step-active {
+    @apply text-primary font-bold;
+  }
+  .step-line {
+    @apply flex-auto border-t-2 transition duration-500 ease-in-out;
+  }
+  .step-line-active {
+    @apply border-primary;
+  }
+  .step-dot {
+    @apply w-6 h-6 rounded-full flex items-center justify-center text-sm;
+  }
+  .step-dot-inactive {
+    @apply bg-gray-300 text-white;
+  }
+  .step-dot-active {
+    @apply bg-primary text-white;
   }
 }

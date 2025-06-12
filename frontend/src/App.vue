@@ -1,85 +1,36 @@
-<script setup>
-import { RouterLink, RouterView } from 'vue-router'
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="@/assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-
-      <nav>
-        <RouterLink to="/">Home</RouterLink>
-        <RouterLink to="/about">About</RouterLink>
-      </nav>
+  <div class="flex h-screen overflow-hidden bg-gray-50 font-sans">
+    <Sidebar :is-mobile-open="isSidebarOpen" :toggle-sidebar="toggleSidebar" />
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <Header :toggle-sidebar="toggleSidebar" />
+      <main class="flex-1 overflow-y-auto bg-gray-50 p-4">
+        <router-view />
+      </main>
     </div>
-  </header>
-
-  <RouterView />
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
-}
+<script setup>
+import { ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import Sidebar from './components/Sidebar.vue';
+import Header from './components/Header.vue';
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
+const isSidebarOpen = ref(false);
+const route = useRoute();
 
-nav {
-  width: 100%;
-  font-size: 12px;
-  text-align: center;
-  margin-top: 2rem;
-}
+const toggleSidebar = () => {
+  isSidebarOpen.value = !isSidebarOpen.value;
+};
 
-nav a.router-link-exact-active {
-  color: var(--color-text);
-}
-
-nav a.router-link-exact-active:hover {
-  background-color: transparent;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-left: 1px solid var(--color-border);
-}
-
-nav a:first-of-type {
-  border: 0;
-}
-
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
+// 当路由变化时，如果移动端侧边栏是打开的，就关闭它
+watch(route, () => {
+  if (isSidebarOpen.value) {
+    isSidebarOpen.value = false;
   }
+});
+</script>
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
-
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  nav {
-    text-align: left;
-    margin-left: -1rem;
-    font-size: 1rem;
-
-    padding: 1rem 0;
-    margin-top: 1rem;
-  }
-}
+<style>
+/* 移除所有 scoped 和 App.vue 特有的样式，因为全局样式现在由 main.css 控制 */
 </style>
