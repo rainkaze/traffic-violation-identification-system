@@ -1,10 +1,34 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# =================================
+# General & Operating System
+# =================================
+# Logs
+logs
+*.log
+*.log.*
 
-### STS ###
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# =================================
+# IDE & Editor Configuration
+# =================================
+# IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VSCode
+.vscode/
+# Keep VSCode extensions file
+!/.vscode/extensions.json
+# For frontend sub-directory specifically
+/frontend/.vscode/*
+!/frontend/.vscode/extensions.json
+
+
+# STS / Eclipse
 .apt_generated
 .classpath
 .factorypath
@@ -13,21 +37,54 @@ target/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+# Other
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.tsbuildinfo
+
+# =================================
+# Java / Maven Specific
+# =================================
+# Compiled output
+/target/
+
+# Maven wrapper jar
+.mvn/wrapper/maven-wrapper.jar
+
+# Spring Boot default file
+HELP.md
+
+# =================================
+# Frontend (Vue / Vite) Specific
+# =================================
+# Dependencies
+/frontend/node_modules/
+
+# Build output
+/frontend/dist/
+/frontend/dist-ssr/
+
+# Local environment variables (IMPORTANT: Do not commit secrets)
+/frontend/*.local
+
+# Debug logs
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+/frontend/pnpm-debug.log*
+/frontend/lerna-debug.log*
+
+# Test & Coverage output
+/frontend/coverage/
+/frontend/cypress/videos/
+/frontend/cypress/screenshots/
