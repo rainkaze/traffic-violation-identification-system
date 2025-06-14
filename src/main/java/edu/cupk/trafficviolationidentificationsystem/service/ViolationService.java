@@ -29,13 +29,16 @@ class ViolationServiceImpl implements ViolationService {
             return new PageResultDto<>(List.of(), 0, 0, queryDto.getPage());
         }
 
-        // 3. 获取当前页的数据
-        List<ViolationDetailDto> items = violationMapper.findViolationsByCriteria(queryDto);
+        // 3. 计算 offset
+        int offset = (queryDto.getPage() - 1) * queryDto.getPageSize();
 
-        // 4. 计算总页数
+        // 4. 获取当前页的数据
+        List<ViolationDetailDto> items = violationMapper.findViolationsByCriteria(queryDto, queryDto.getPageSize(), offset);
+
+        // 5. 计算总页数
         int totalPages = (int) Math.ceil((double) totalItems / queryDto.getPageSize());
 
-        // 5. 组装并返回分页结果
+        // 6. 组装并返回分页结果
         return new PageResultDto<>(items, totalItems, totalPages, queryDto.getPage());
     }
 }
