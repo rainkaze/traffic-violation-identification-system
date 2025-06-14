@@ -71,7 +71,6 @@
             </div>
           </div>
 
-
         </form>
         <div class="flex justify-center">
           <button @click="currentStep = 2" class="btn btn-primary mt-4">确定并进入AI审查</button>
@@ -91,7 +90,6 @@
           <button @click="currentStep = 3" class="btn btn-primary">生成处罚建议</button>
         </div>
       </div>
-
       <div v-if="currentStep === 3">
         <h4 class="font-bold text-lg text-gray-700 mb-4">3. 处罚建议生成 (模拟)</h4>
         <!-- 建议输入与确认按钮 -->
