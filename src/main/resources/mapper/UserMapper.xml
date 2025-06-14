@@ -54,4 +54,38 @@
   SELECT * FROM users ORDER BY created_at DESC
  </select>
 
+
+ <select id="findById" resultMap="UserResultMap">
+  SELECT * FROM users WHERE user_id = #{userId}
+ </select>
+
+ <insert id="insertUser" useGeneratedKeys="true" keyProperty="userId">
+  INSERT INTO users (username, password_hash, full_name, email, `rank`, registration_status, created_at, updated_at)
+  VALUES (#{username}, #{passwordHash}, #{fullName}, #{email}, #{rank}, 'APPROVED', NOW(), NOW())
+ </insert>
+
+ <update id="updateUser">
+  UPDATE users
+  <set>
+   <if test="fullName != null and fullName != ''">
+    full_name = #{fullName},
+   </if>
+   <if test="email != null and email != ''">
+    email = #{email},
+   </if>
+   <if test="rank != null and rank != ''">
+    `rank` = #{rank},
+   </if>
+   <if test="registrationStatus != null and registrationStatus != ''">
+    registration_status = #{registrationStatus},
+   </if>
+   updated_at = NOW()
+  </set>
+  WHERE user_id = #{userId}
+ </update>
+
+ <delete id="deleteUserById">
+  DELETE FROM users WHERE user_id = #{userId}
+ </delete>
+
 </mapper>

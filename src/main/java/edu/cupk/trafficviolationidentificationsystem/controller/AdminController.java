@@ -1,7 +1,10 @@
 package edu.cupk.trafficviolationidentificationsystem.controller;
 
 import edu.cupk.trafficviolationidentificationsystem.dto.UserDto;
+import edu.cupk.trafficviolationidentificationsystem.dto.UserUpsertDto;
 import edu.cupk.trafficviolationidentificationsystem.service.AdminService;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -34,5 +37,23 @@ public class AdminController {
     public ResponseEntity<Void> rejectUser(@PathVariable Integer userId) {
         adminService.rejectUser(userId);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/users")
+    public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserUpsertDto userDto) {
+        UserDto createdUser = adminService.createUser(userDto);
+        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/users/{userId}")
+    public ResponseEntity<UserDto> updateUser(@PathVariable Integer userId, @Valid @RequestBody UserUpsertDto userDto) {
+        UserDto updatedUser = adminService.updateUser(userId, userDto);
+        return ResponseEntity.ok(updatedUser);
+    }
+
+    @DeleteMapping("/users/{userId}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Integer userId) {
+        adminService.deleteUser(userId);
+        return ResponseEntity.noContent().build();
     }
 }

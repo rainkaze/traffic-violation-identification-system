@@ -20,7 +20,6 @@
         <button @click="openCreateUserModal" class="btn btn-primary"><i class="fa fa-plus mr-1"></i> 新建用户</button>
       </div>
 
-
       <div v-if="activeTab === 'pending'">
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
@@ -62,26 +61,36 @@
                         'bg-red-100 text-red-800': user.registrationStatus === 'REJECTED'
                     }" class="badge">{{ user.registrationStatus }}</span>
               </td>
-              <td class="px-6 py-4 text-right"><button class="text-primary mr-3">编辑</button></td>
+              <td class="px-6 py-4 text-right">
+                <button @click="openEditUserModal(user)" class="text-primary hover:text-primary/80 mr-3">编辑</button>
+                <button @click="handleDeleteUser(user.userId)" class="text-danger hover:text-danger/80">删除</button>
+              </td>
             </tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
+
+    <UserFormModal :show="showModal" :user="currentUserForEdit" @close="closeModal" @save="handleSave" />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import {ref, onMounted, computed} from 'vue';
 import apiClient from '@/services/api';
+import UserFormModal from '@/components/admin/UserFormModal.vue'; // 引入模态框组件
 
 const activeTab = ref('pending');
 const users = ref([]);
 const isLoading = ref(true);
 
+const showModal = ref(false);
+const currentUserForEdit = ref(null);
+
 const pendingUsers = computed(() => users.value.filter(u => u.registrationStatus === 'PENDING'));
-const allUsers = computed(() => users.value);
+// 过滤掉待审批的用户，使其只在“待审批”标签页显示
+const allUsers = computed(() => users.value.filter(u => u.registrationStatus !== 'PENDING'));
 
 const fetchUsers = async () => {
   isLoading.value = true;
@@ -121,11 +130,34 @@ const rejectUser = async (userId) => {
 };
 
 const openCreateUserModal = () => {
-  // In a real app, this would open a modal form.
-  // For this example, we'll just log to console.
-  alert("（模拟）打开新建用户模态框。");
-  console.log("Admin wants to create a new user.");
-}
+  currentUserForEdit.value = null; // 清空，表示是新建模式
+  showModal.value = true;
+};
+
+const openEditUserModal = (user) => {
+  currentUserForEdit.value = user; // 传入要编辑的用户数据
+  showModal.value = true;
+};
+
+const closeModal = () => {
+  showModal.value = false;
+};
+
+const handleSave = () => {
+  fetchUsers(); // 保存成功后刷新用户列表
+};
+
+const handleDeleteUser = async (userId) => {
+  if (!confirm('确定要永久删除该用户吗？此操作不可撤销。')) return;
+  try {
+    await apiClient.delete(`/admin/users/${userId}`);
+    alert('用户已删除。');
+    await fetchUsers();
+  } catch (error) {
+    alert(error.response?.data?.message || '删除用户失败。');
+    console.error("删除用户失败", error);
+  }
+};
 
 onMounted(fetchUsers);
 </script>

@@ -11,6 +11,7 @@ import StatisticsView from '../views/StatisticsView.vue';
 import DevicesView from '../views/DevicesView.vue';
 import SettingsView from '../views/SettingsView.vue';
 import HelpView from '../views/HelpView.vue';
+import ProfileView from '../views/ProfileView.vue';
 
 // --- 新增页面导入 ---
 import LoginView from '../views/auth/LoginView.vue';
@@ -89,6 +90,13 @@ const router = createRouter({
       name: 'help',
       component: HelpView,
       meta: { requiresAuth: true }
+    },
+    // --- 新增个人信息路由 ---
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfileView,
+      meta: { requiresAuth: true } // 需要登录才能访问
     },
     // --- 新增管理员路由 ---
     {

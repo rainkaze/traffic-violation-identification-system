@@ -31,9 +31,9 @@
           <div
             class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 translate-y-2"
           >
-            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+            <router-link to="/profile" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
               <i class="fa fa-user mr-2"></i>个人信息
-            </a>
+            </router-link>
             <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
               <i class="fa fa-cog mr-2"></i>账号设置
             </a>

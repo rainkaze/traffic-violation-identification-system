@@ -10,10 +10,14 @@ import java.util.Optional;
 @Mapper
 public interface UserMapper {
     Optional<User> findByUsername(@Param("username") String username);
+    Optional<User> findById(@Param("userId") Integer userId);
     Optional<User> findByEmail(@Param("email") String email);
     Boolean existsByUsername(@Param("username") String username);
     Boolean existsByEmail(@Param("email") String email);
     void save(User user);
+    void insertUser(User user);
+    void updateUser(User user);
+    void deleteUserById(@Param("userId") Integer userId);
     void updateUserStatus(@Param("userId") Integer userId, @Param("status") String status);
     void updateUserPassword(@Param("userId") Integer userId, @Param("passwordHash") String passwordHash);
     List<User> findAll();
