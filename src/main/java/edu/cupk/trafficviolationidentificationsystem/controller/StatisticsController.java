@@ -3,7 +3,6 @@ package edu.cupk.trafficviolationidentificationsystem.controller;
 import edu.cupk.trafficviolationidentificationsystem.dto.ChartDataDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.StatisticsDataDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.TopLocationDto;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,8 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/statistics")
-// 在开发环境中允许来自Vue开发服务器(通常是localhost:5173)的跨域请求
-@CrossOrigin(origins = "http://localhost:5173")
+// @CrossOrigin 注解已被移除，统一由 SecurityConfig 管理
 public class StatisticsController {
 
     @GetMapping

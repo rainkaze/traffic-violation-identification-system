@@ -1,4 +1,3 @@
-// 文件路径: src/main/java/edu/cupk/trafficviolationidentificationsystem/config/SecurityConfig.java
 package edu.cupk.trafficviolationidentificationsystem.config;
 
 import edu.cupk.trafficviolationidentificationsystem.security.JwtAuthenticationFilter;
@@ -51,8 +50,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // 公开端点
                         .requestMatchers("/api/auth/**").permitAll()
-                        // 任何拥有 '管理员' 或 '警员' 角色的用户都可以访问 violations 接口
-                        .requestMatchers("/api/violations/**").hasAnyRole("管理员", "警员", "小队长", "中队长", "大队长")
+                        // 为数据接口添加明确的访问角色
+                        .requestMatchers("/api/violations/**", "/api/statistics/**").hasAnyRole("管理员", "警员", "小队长", "中队长", "大队长")
                         // 只有 '管理员' 可以访问 admin 接口
                         .requestMatchers("/api/admin/**").hasRole("管理员")
                         // 其他所有请求都需要认证
