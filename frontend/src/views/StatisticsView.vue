@@ -8,37 +8,11 @@
     <div v-if="isLoading" class="text-center py-10">
       <p class="text-gray-500">正在加载统计数据...</p>
     </div>
-    <div v-if="error" class="card bg-red-50 text-red-700 p-4 text-center">
+    <div v-else-if="error" class="card bg-red-50 text-red-700 p-4 text-center">
       <p>{{ error }}</p>
     </div>
 
-    <div v-if="!isLoading && statisticsData" class="space-y-6">
-      <div class="card">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div class="flex flex-col sm:flex-row gap-3 flex-wrap">
-            <select class="input w-full sm:w-40">
-              <option value="week" selected>按周</option>
-              <option value="month">按月</option>
-              <option value="year">按年</option>
-            </select>
-            <div class="relative">
-              <input type="date" value="2025-06-09" class="input w-full sm:w-48">
-            </div>
-            <select class="input w-full sm:w-40">
-              <option value="">全部区域</option>
-              <option value="kmq">克拉玛依区</option>
-              <option value="dsz">独山子区</option>
-              <option value="bjt">白碱滩区</option>
-            </select>
-          </div>
-          <div class="flex gap-2">
-            <button class="btn btn-primary">
-              <i class="fa fa-download mr-1"></i> 导出报告
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <div v-else-if="statisticsData" class="space-y-6">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card h-80"><canvas ref="violationTrendChart"></canvas></div>
         <div class="card h-80"><canvas ref="peakTimeAnalysisChart"></canvas></div>
@@ -54,7 +28,7 @@
           <div class="h-64"><canvas ref="regionDistributionChart"></canvas></div>
         </div>
         <div class="card">
-          <h3 class="font-bold text-gray-800 mb-4">高发时段热力图</h3>
+          <h3 class="font-bold text-gray-800 mb-4">高发时段热力图 (模拟)</h3>
           <div class="h-64 flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden">
             <img src="/reli.jpg" class="object-cover w-full h-full" alt="Heatmap placeholder"/>
           </div>
@@ -70,18 +44,16 @@
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">排名</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">地点</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">区域</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">周违法次数</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">主要违法类型</th>
-              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">趋势</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">总违法次数</th>
+              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">趋势 (模拟)</th>
             </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
             <tr v-for="item in statisticsData.topLocations" :key="item.rank" class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4 whitespace-nowrap">{{ item.rank }}</td>
+              <td class="px-6 py-4 whitespace-nowrap font-bold">{{ item.rank }}</td>
               <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ item.location }}</td>
               <td class="px-6 py-4 whitespace-nowrap">{{ item.region }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">{{ item.count }}</td>
-              <td class="px-6 py-4 whitespace-nowrap">{{ item.primaryViolationType }}</td>
+              <td class="px-6 py-4 whitespace-nowrap font-bold text-lg">{{ item.count }}</td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
                 <span v-if="item.trend > 0" class="text-danger">
                   <i class="fa fa-arrow-up mr-1"></i> {{ (item.trend * 100).toFixed(0) }}%
@@ -103,100 +75,113 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, nextTick } from 'vue';
 import Chart from 'chart.js/auto';
-import axios from 'axios';
+import apiClient from '@/services/api';
 
-// Refs for chart canvases
 const violationTrendChart = ref(null);
 const peakTimeAnalysisChart = ref(null);
 const violationTypePieChart = ref(null);
 const regionDistributionChart = ref(null);
 
-// Refs for state management
 const statisticsData = ref(null);
 const isLoading = ref(true);
 const error = ref(null);
 
-// Fetch data from backend
+let chartInstances = [];
+
+const destroyCharts = () => {
+  chartInstances.forEach(chart => chart.destroy());
+  chartInstances = [];
+};
+
 const fetchStatistics = async () => {
   isLoading.value = true;
   error.value = null;
+  destroyCharts(); // 在获取新数据前销毁旧图表实例
   try {
-    const response = await axios.get('http://localhost:8080/api/statistics');
+    const response = await apiClient.get('/statistics');
     statisticsData.value = response.data;
-    // Data is fetched, now we can initialize charts
+    await nextTick();
     initCharts();
   } catch (err) {
-    error.value = '无法加载统计数据。请确保后端服务正在运行且CORS配置正确。';
-    console.error(err);
+    error.value = '无法加载统计数据。请确保后端服务正常且数据库连接无误。';
+    console.error("Error fetching statistics:", err.response || err);
   } finally {
     isLoading.value = false;
   }
 };
 
-// Call fetchStatistics when the component is mounted
 onMounted(fetchStatistics);
 
-// Chart initialization function
 const initCharts = () => {
-  // Ensure we have data and the canvas elements are ready
-  if (!statisticsData.value || !violationTrendChart.value) {
-    return;
-  }
+  if (!statisticsData.value) return;
   const data = statisticsData.value;
+  const chartColors = ['#1e40af', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#d946ef'];
 
-  new Chart(violationTrendChart.value.getContext('2d'), {
-    type: 'line',
-    data: {
-      labels: data.violationTrend.labels,
-      datasets: [{
-        label: '本周违法',
-        data: data.violationTrend.data,
-        tension: 0.4,
-        backgroundColor: 'rgba(30, 64, 175, 0.1)',
-        borderColor: 'rgba(30, 64, 175, 1)',
-        fill: true
-      }]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-  });
+  if (violationTrendChart.value && data.violationTrend) {
+    const chart = new Chart(violationTrendChart.value.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: data.violationTrend.labels,
+        datasets: [{
+          label: '每日违法数量',
+          data: data.violationTrend.data,
+          tension: 0.1,
+          backgroundColor: 'rgba(30, 64, 175, 0.1)',
+          borderColor: 'rgba(30, 64, 175, 1)',
+          fill: true
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: '最近30天违法趋势' } } }
+    });
+    chartInstances.push(chart);
+  }
 
-  new Chart(peakTimeAnalysisChart.value.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: data.peakTimeAnalysis.labels,
-      datasets: [{
-        label: '高峰时段违法',
-        data: data.peakTimeAnalysis.data,
-        backgroundColor: 'rgba(14, 165, 233, 0.8)'
-      }]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-  });
+  if (peakTimeAnalysisChart.value && data.peakTimeAnalysis) {
+    const chart = new Chart(peakTimeAnalysisChart.value.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: data.peakTimeAnalysis.labels,
+        datasets: [{
+          label: '违法数量',
+          data: data.peakTimeAnalysis.data,
+          backgroundColor: 'rgba(14, 165, 233, 0.8)'
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: '24小时违法分布' } } }
+    });
+    chartInstances.push(chart);
+  }
 
-  new Chart(violationTypePieChart.value.getContext('2d'), {
-    type: 'pie',
-    data: {
-      labels: data.violationTypeDistribution.labels,
-      datasets: [{
-        data: data.violationTypeDistribution.data,
-        backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#1e40af']
-      }]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-  });
+  if (violationTypePieChart.value && data.violationTypeDistribution) {
+    const chart = new Chart(violationTypePieChart.value.getContext('2d'), {
+      type: 'pie',
+      data: {
+        labels: data.violationTypeDistribution.labels,
+        datasets: [{
+          data: data.violationTypeDistribution.data,
+          backgroundColor: chartColors
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+    chartInstances.push(chart);
+  }
 
-  new Chart(regionDistributionChart.value.getContext('2d'), {
-    type: 'doughnut',
-    data: {
-      labels: data.regionDistribution.labels,
-      datasets: [{
-        data: data.regionDistribution.data,
-        backgroundColor: ['#1e40af', '#0ea5e9', '#10b981', '#f59e0b']
-      }]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-  });
+  if (regionDistributionChart.value && data.regionDistribution) {
+    const chart = new Chart(regionDistributionChart.value.getContext('2d'), {
+      type: 'doughnut',
+      data: {
+        labels: data.regionDistribution.labels,
+        datasets: [{
+          data: data.regionDistribution.data,
+          backgroundColor: chartColors
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+    chartInstances.push(chart);
+  }
 };
 </script>
