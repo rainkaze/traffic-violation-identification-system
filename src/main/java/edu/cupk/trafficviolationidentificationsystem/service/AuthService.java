@@ -7,4 +7,5 @@ import edu.cupk.trafficviolationidentificationsystem.dto.RegisterDto;
 public interface AuthService {
     JwtAuthResponseDto login(LoginDto loginDto);
     String register(RegisterDto registerDto);
+    void sendVerificationCode(String email); // 新增发送验证码接口
 }

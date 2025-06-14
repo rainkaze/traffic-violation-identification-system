@@ -1,4 +1,3 @@
-// 文件路径: src/main/java/edu/cupk/trafficviolationidentificationsystem/controller/AuthController.java
 package edu.cupk.trafficviolationidentificationsystem.controller;
 
 import edu.cupk.trafficviolationidentificationsystem.dto.JwtAuthResponseDto;
@@ -26,30 +25,35 @@ public class AuthController {
         this.authService = authService;
     }
 
-    /**
-     * 用户登录接口
-     * 通过 try-catch 捕获特定的认证异常，并返回更友好的错误信息
-     */
+    @PostMapping("/send-verification-code")
+    public ResponseEntity<?> sendVerificationCode(@RequestBody Map<String, String> payload) {
+        try {
+            String email = payload.get("email");
+            if (email == null || email.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "邮箱不能为空。"));
+            }
+            authService.sendVerificationCode(email);
+            return ResponseEntity.ok(Map.of("message", "验证码已成功发送至您的邮箱。"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
         try {
             JwtAuthResponseDto jwtAuthResponse = authService.login(loginDto);
             return ResponseEntity.ok(jwtAuthResponse);
         } catch (BadCredentialsException e) {
-            // 捕获密码错误异常
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "用户名或密码错误。"));
         } catch (DisabledException e) {
-            // 捕获账户被禁用或待审批异常
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "账户已被禁用或正在等待管理员批准。"));
         } catch (Exception e) {
-            // 捕获其他未知异常
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", "登录时发生未知错误。"));
         }
     }
 
-    /**
-     * 用户注册申请接口
-     */
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterDto registerDto) {
         try {
