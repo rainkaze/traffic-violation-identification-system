@@ -304,6 +304,7 @@ const manualSections = ref([
   }
 ]);
 
+
 const selectedVideos = ref([]); // 存储多个视频文件
 const videoPreviewUrls = ref([]); // 存储多个视频预览链接
 const contactSupport = () => {
