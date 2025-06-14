@@ -21,24 +21,24 @@
         <div class="relative group">
           <button class="flex items-center gap-2 text-gray-700 hover:text-primary">
             <img
-              src="https://picsum.photos/id/1005/200/200"
+              :src="userAvatar"
               alt="用户头像"
               class="w-8 h-8 rounded-full object-cover border-2 border-primary"
             />
-            <span class="hidden md:inline">克拉玛依交警</span>
+            <span class="hidden md:inline">{{ userFullName }}</span>
             <i class="fa fa-angle-down"></i>
           </button>
           <div
             class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform group-hover:translate-y-0 translate-y-2"
           >
-            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+            <router-link to="/profile" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
               <i class="fa fa-user mr-2"></i>个人信息
-            </a>
+            </router-link>
             <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
               <i class="fa fa-cog mr-2"></i>账号设置
             </a>
             <div class="border-t border-gray-200 my-1"></div>
-            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" @click.prevent="logout">
+            <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-100" @click.prevent="handleLogout">
               <i class="fa fa-sign-out mr-2"></i>退出登录
             </a>
           </div>
@@ -49,12 +49,25 @@
 </template>
 
 <script setup>
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+import authStore from '@/store/auth';
+
 defineProps({
   toggleSidebar: Function,
 });
 
-const logout = () => {
+const router = useRouter();
+
+const user = computed(() => authStore.currentUser());
+const userFullName = computed(() => user.value?.fullName || '访客');
+const userAvatar = computed(() => user.value?.avatarUrl || 'https://picsum.photos/id/1005/200/200');
+
+
+const handleLogout = () => {
   if (confirm('确定要退出登录吗？')) {
+    authStore.logout();
+    router.push('/login');
     alert('已成功退出登录');
   }
 };

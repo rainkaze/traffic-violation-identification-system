@@ -14,6 +14,12 @@
             <span>仪表盘</span>
           </router-link>
         </li>
+        <li v-if="isAdmin">
+          <router-link to="/user-management" class="sidebar-item">
+            <i class="fa fa-users w-5 text-center"></i>
+            <span>用户管理</span>
+          </router-link>
+        </li>
         <li>
           <router-link to="/violations" class="sidebar-item">
             <i class="fa fa-list-alt w-5 text-center"></i>
@@ -66,7 +72,7 @@
             </router-link>
           </li>
           <li>
-            <a href="#" class="sidebar-item" @click.prevent="logout">
+            <a href="#" class="sidebar-item" @click.prevent="handleLogout">
               <i class="fa fa-sign-out w-5 text-center"></i>
               <span>退出登录</span>
             </a>
@@ -100,46 +106,16 @@
             <span>仪表盘</span>
           </router-link>
         </li>
+        <li v-if="isAdmin">
+          <router-link to="/user-management" class="sidebar-item">
+            <i class="fa fa-users w-5 text-center"></i>
+            <span>用户管理</span>
+          </router-link>
+        </li>
         <li>
           <router-link to="/violations" class="sidebar-item">
             <i class="fa fa-list-alt w-5 text-center"></i>
             <span>违法记录</span>
-          </router-link>
-        </li>
-        <li>
-          <router-link to="/monitoring" class="sidebar-item">
-            <i class="fa fa-video-camera w-5 text-center"></i>
-            <span>实时监控</span>
-          </router-link>
-        </li>
-        <li>
-          <router-link to="/enforcement" class="sidebar-item">
-            <i class="fa fa-gavel w-5 text-center"></i>
-            <span>执法管理</span>
-          </router-link>
-        </li>
-        <li>
-          <router-link to="/accidents" class="sidebar-item">
-            <i class="fa fa-car w-5 text-center"></i>
-            <span>事故处置</span>
-          </router-link>
-        </li>
-        <li>
-          <router-link to="/statistics" class="sidebar-item">
-            <i class="fa fa-bar-chart w-5 text-center"></i>
-            <span>统计分析</span>
-          </router-link>
-        </li>
-        <li>
-          <router-link to="/devices" class="sidebar-item">
-            <i class="fa fa-camera w-5 text-center"></i>
-            <span>设备管理</span>
-          </router-link>
-        </li>
-        <li>
-          <router-link to="/settings" class="sidebar-item">
-            <i class="fa fa-cog w-5 text-center"></i>
-            <span>系统设置</span>
           </router-link>
         </li>
       </ul>
@@ -152,7 +128,7 @@
             </router-link>
           </li>
           <li>
-            <a href="#" class="sidebar-item" @click.prevent="logout">
+            <a href="#" class="sidebar-item" @click.prevent="handleLogout">
               <i class="fa fa-sign-out w-5 text-center"></i>
               <span>退出登录</span>
             </a>
@@ -164,16 +140,22 @@
 </template>
 
 <script setup>
+import {computed} from 'vue';
+import {useRouter} from 'vue-router';
+import authStore from '@/store/auth';
+
 defineProps({
   isMobileOpen: Boolean,
   toggleSidebar: Function,
 });
 
-const logout = () => {
+const router = useRouter();
+const isAdmin = computed(() => authStore.isAdmin());
+
+const handleLogout = () => {
   if (confirm('确定要退出登录吗？')) {
-    alert('已成功退出登录');
-    // In a real app, you would call an API, clear tokens, and redirect.
-    // e.g., router.push('/login');
+    authStore.logout();
+    router.push('/login');
   }
 };
 </script>
