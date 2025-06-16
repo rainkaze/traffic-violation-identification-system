@@ -14,7 +14,6 @@
             <span>常见问题</span>
           </button>
 
-
           <button class="sidebar-item w-full text-left" :class="{ 'bg-primary/10 text-primary': activeTab === 'manual' }"
                   @click="switchTab('manual')">
             <i class="fa fa-book w-5 text-center text-gray-500"></i>
