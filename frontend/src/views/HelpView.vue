@@ -1,4 +1,3 @@
-
 <template>
   <div class="p-4">
     <div class="mb-6">
@@ -109,7 +108,7 @@
                       <div v-for="(msg, index) in chatMessages" :key="index" class="mb-3 flex" :class="{ 'justify-end': msg.isUser }">
                         <!-- AI 消息头像 -->
                         <div class="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden mr-2" v-if="!msg.isUser">
-                          <img src="https://i.postimg.cc/HncCCVY3/image.jpg" alt="智能客服" class="w-full h-full object-cover">
+                          <img src="https://i.postimg.cc/5tyYYZTp/image.jpg" alt="智能客服" class="w-full h-full object-cover">
                         </div>
 
                         <!-- 气泡消息 -->
@@ -122,7 +121,7 @@
 
                         <!-- 用户头像 -->
                         <div class="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden ml-2" v-if="msg.isUser">
-                          <img src="https://i.postimg.cc/sf4wmV3Z/image.jpg" alt="用户头像" class="w-full h-full object-cover">
+                          <img src="https://i.postimg.cc/brk2YkWh/image.jpg" alt="用户头像" class="w-full h-full object-cover">
                         </div>
                       </div>
                     </div>
@@ -236,7 +235,8 @@
   </div>
 </template>
 
-<script setup>import { ref } from 'vue';
+<script setup>
+import { ref } from 'vue';
 
 const activeTab = ref('faq');
 const switchTab = (tabName) => {
