@@ -680,6 +680,9 @@ import axios from 'axios'
 const activeTab = ref('profile')
 const searchKeyword = ref('')
 
+// import request from '@/utils/request' // 注意路径
+// 错误修正：从直接使用 axios 改为使用我们配置好的 apiClient
+import apiClient from '@/services/api';
 
 // 控制弹窗显示
 const showUserModal = ref(false)
@@ -777,7 +780,7 @@ const size = ref(5)          // 每页数量
 // 单独写请求函数
 async function fetchUserData() {
   try {
-    const response = await axios.get('http://localhost:8080/api/users/getUser')
+    const response = await apiClient.get('http://localhost:8080/api/users/getUser')
     user.value = response.data
   } catch (error) {
     console.error('请求失败：', error)
@@ -785,24 +788,44 @@ async function fetchUserData() {
 }
 
 
-//要分页的
+
 async function fetchUsersData() {
   try {
     console.log('fetchUsers 被调用了，当前 page:', page.value)
-    const response = await axios.get('http://localhost:8080/api/users/getUsers',{
+    const response = await apiClient.get('/users/getUsers', {
       params: {
         page: page.value,
         size: size.value,
-        keyword: searchKeyword.value // 后端可选接收关键词
+        keyword: searchKeyword.value
       }
     })
-    // users.value = response.data
     users.value = response.data.data
     total.value = response.data.total
   } catch (error) {
     console.error('请求失败：', error)
   }
 }
+
+
+//
+// //要分页的
+// async function fetchUsersData() {
+//   try {
+//     console.log('fetchUsers 被调用了，当前 page:', page.value)
+//     const response = await axios.get('http://localhost:8080/api/users/getUsers',{
+//       params: {
+//         page: page.value,
+//         size: size.value,
+//         keyword: searchKeyword.value // 后端可选接收关键词
+//       }
+//     })
+//     // users.value = response.data
+//     users.value = response.data.data
+//     total.value = response.data.total
+//   } catch (error) {
+//     console.error('请求失败：', error)
+//   }
+// }
 
 
 // 判断用户姓名是否包含搜索关键词。
