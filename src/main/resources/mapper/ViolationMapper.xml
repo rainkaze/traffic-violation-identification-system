@@ -10,17 +10,14 @@
             v.plate_number AS plate,
             v.violation_time AS time,
             tr.violation_type AS type,
-            d.address AS location,             -- [修正] 'location' 字段现在从 devices 表的 'address' 获取
-            dist.district_name AS district,   -- [修正] 'district' 字段现在从 districts 表获取
+            d.address AS location,
+            dist.district_name AS district,
             d.device_name AS device,
             v.status AS status
         FROM
             violations v
-            -- [修正] 通过 violations.device_id 连接到 devices 表
             LEFT JOIN devices d ON v.device_id = d.device_id
-            -- [修正] 再通过 devices.district_id 连接到 districts 表, 以获取辖区名称
             LEFT JOIN districts dist ON d.district_id = dist.district_id
-            -- [保留] 对 traffic_rules 表的连接保持不变
             LEFT JOIN traffic_rules tr ON v.rule_id = tr.rule_id
     </sql>
 
@@ -38,6 +35,15 @@
             <if test="query.yearMonth != null and query.yearMonth != ''">
                 AND DATE_FORMAT(v.violation_time, '%Y-%m') = #{query.yearMonth}
             </if>
+            <if test="query.districtId != null">
+                AND d.district_id = #{query.districtId}
+            </if>
+            <if test="query.accessibleDistrictIds != null and query.accessibleDistrictIds.size() > 0">
+                AND d.district_id IN
+                <foreach item="id" collection="query.accessibleDistrictIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
         </where>
     </sql>
 
@@ -52,7 +58,7 @@
         SELECT COUNT(v.violation_id)
         FROM
         violations v
-        -- [修正] 为了满足筛选条件, 只需要连接 traffic_rules 即可, 无需连接其他表, 提升count效率
+        LEFT JOIN devices d ON v.device_id = d.device_id
         LEFT JOIN traffic_rules tr ON v.rule_id = tr.rule_id
         <include refid="dynamicWhere"/>
     </select>

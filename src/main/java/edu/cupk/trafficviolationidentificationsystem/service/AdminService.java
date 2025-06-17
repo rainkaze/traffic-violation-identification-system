@@ -12,4 +12,6 @@ public interface AdminService {
     UserDto createUser(@Valid UserUpsertDto userUpsertDto);
     UserDto updateUser(Integer userId, @Valid UserUpsertDto userUpsertDto);
     void deleteUser(Integer userId);
+
+    void updateUserDistricts(Integer userId, List<Integer> districtIds);
 }

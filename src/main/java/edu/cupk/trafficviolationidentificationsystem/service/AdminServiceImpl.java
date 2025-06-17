@@ -31,7 +31,13 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<UserDto> getAllUsers() {
-        return userMapper.findAll().stream().map(UserDto::new).collect(Collectors.toList());
+        List<User> users = userMapper.findAll();
+        // 遍历所有用户，为每个用户DTO填充其辖区列表
+        return users.stream().map(user -> {
+            UserDto dto = new UserDto(user);
+            dto.setDistricts(userMapper.findDistrictsByUserId(user.getUserId()));
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     @Override
@@ -116,5 +122,18 @@ public class AdminServiceImpl implements AdminService {
             throw new RuntimeException("不能删除超级管理员账户！");
         }
         userMapper.deleteUserById(userId);
+    }
+
+    @Override
+    @Transactional
+    public void updateUserDistricts(Integer userId, List<Integer> districtIds) {
+        // 先删除该用户的所有旧辖区关联
+        userMapper.deleteDistrictsByUserId(userId);
+        // 如果传入了新的辖区ID列表，则逐一插入新关联
+        if (districtIds != null && !districtIds.isEmpty()) {
+            for (Integer districtId : districtIds) {
+                userMapper.insertUserDistrict(userId, districtId);
+            }
+        }
     }
 }

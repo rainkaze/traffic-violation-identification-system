@@ -88,4 +88,24 @@
   DELETE FROM users WHERE user_id = #{userId}
  </delete>
 
+ <select id="findDistrictsByUserId" resultType="java.lang.String">
+  SELECT d.district_name
+  FROM districts d
+        JOIN user_districts ud ON d.district_id = ud.district_id
+  WHERE ud.user_id = #{userId}
+ </select>
+
+ <delete id="deleteDistrictsByUserId">
+  DELETE FROM user_districts WHERE user_id = #{userId}
+ </delete>
+
+ <insert id="insertUserDistrict">
+  INSERT INTO user_districts (user_id, district_id) VALUES (#{userId}, #{districtId})
+ </insert>
+
+ <select id="findDistrictIdsByUserId" resultType="java.lang.Integer">
+  SELECT district_id
+  FROM user_districts
+  WHERE user_id = #{userId}
+ </select>
 </mapper>
