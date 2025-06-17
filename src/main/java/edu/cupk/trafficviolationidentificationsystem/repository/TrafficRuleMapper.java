@@ -1,5 +1,6 @@
 package edu.cupk.trafficviolationidentificationsystem.repository;
 
+import edu.cupk.trafficviolationidentificationsystem.dto.TrafficRuleDto;
 import org.apache.ibatis.annotations.Mapper;
 import java.util.List;
 
@@ -11,4 +12,5 @@ public interface TrafficRuleMapper {
      * @return 违法类型字符串列表
      */
     List<String> findAllViolationTypes();
+    List<TrafficRuleDto> findAllRules();
 }

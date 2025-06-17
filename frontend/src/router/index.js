@@ -18,6 +18,7 @@ import LoginView from '../views/auth/LoginView.vue';
 import RegisterView from '../views/auth/RegisterView.vue';
 import UserManagementView from '../views/admin/UserManagementView.vue';
 import WorkflowManagementView from '../views/admin/WorkflowManagementView.vue';
+import WorkflowForm from '../views/admin/WorkflowForm.vue';
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -111,6 +112,19 @@ const router = createRouter({
       path: '/workflow-management',
       name: 'workflow-management',
       component: WorkflowManagementView,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    { // --- 新建工作流的专属页面 ---
+      path: '/workflow-management/new',
+      name: 'workflow-form-new',
+      component: WorkflowForm,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    { // --- 编辑页面  ---
+      path: '/workflow-management/edit/:id',
+      name: 'workflow-form-edit',
+      component: WorkflowForm,
+      props: true, // 允许将路由参数作为props传入组件
       meta: { requiresAuth: true, requiresAdmin: true }
     },
     { path: '/:pathMatch(.*)*', redirect: '/dashboard' }

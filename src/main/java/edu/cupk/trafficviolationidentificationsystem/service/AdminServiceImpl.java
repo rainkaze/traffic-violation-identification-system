@@ -1,6 +1,7 @@
 package edu.cupk.trafficviolationidentificationsystem.service;
 
 import edu.cupk.trafficviolationidentificationsystem.dto.UserDto;
+import edu.cupk.trafficviolationidentificationsystem.dto.UserForAssignmentDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.UserUpsertDto;
 import edu.cupk.trafficviolationidentificationsystem.model.User;
 import edu.cupk.trafficviolationidentificationsystem.repository.UserMapper;
@@ -135,5 +136,18 @@ public class AdminServiceImpl implements AdminService {
                 userMapper.insertUserDistrict(userId, districtId);
             }
         }
+    }
+
+    @Override
+    public List<UserForAssignmentDto> getUsersForAssignment(Integer districtId) {
+        List<User> users = userMapper.findUsersForAssignment(districtId);
+        return users.stream().map(user -> {
+            UserForAssignmentDto dto = new UserForAssignmentDto();
+            dto.setUserId(user.getUserId());
+            dto.setFullName(user.getFullName());
+            dto.setRank(user.getRank());
+            dto.setDistricts(userMapper.findDistrictsByUserId(user.getUserId()));
+            return dto;
+        }).collect(Collectors.toList());
     }
 }

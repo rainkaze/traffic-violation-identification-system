@@ -1,9 +1,6 @@
 package edu.cupk.trafficviolationidentificationsystem.controller;
 
-import edu.cupk.trafficviolationidentificationsystem.dto.UserDistrictAssignmentDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.UserDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.UserUpsertDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.WorkflowCreateDto;
+import edu.cupk.trafficviolationidentificationsystem.dto.*;
 import edu.cupk.trafficviolationidentificationsystem.model.Workflow;
 import edu.cupk.trafficviolationidentificationsystem.service.AdminService;
 import edu.cupk.trafficviolationidentificationsystem.service.WorkflowService;
@@ -71,9 +68,39 @@ public class AdminController {
     }
 
     // 新增工作流创建端点
+    /**
+     * 获取所有工作流的列表.
+     * 这个方法调用 service 层，而不是 mapper.
+     */
+    @GetMapping("/workflows")
+    public ResponseEntity<List<WorkflowListDto>> getAllWorkflows() {
+        return ResponseEntity.ok(workflowService.getAllWorkflows());
+    }
+
+    /**
+     * 创建一个新的工作流.
+     * 注意：这里的请求体是 WorkflowUpsertDto，以匹配我们前端的复杂表单.
+     */
     @PostMapping("/workflows")
-    public ResponseEntity<Workflow> createWorkflow(@Valid @RequestBody WorkflowCreateDto workflowCreateDto) {
-        Workflow createdWorkflow = workflowService.createWorkflow(workflowCreateDto);
+    public ResponseEntity<Workflow> createWorkflow(@Valid @RequestBody WorkflowUpsertDto workflowUpsertDto) {
+        Workflow createdWorkflow = workflowService.createWorkflow(workflowUpsertDto);
         return new ResponseEntity<>(createdWorkflow, HttpStatus.CREATED);
+    }
+
+
+    @DeleteMapping("/workflows/{id}")
+    public ResponseEntity<Void> deleteWorkflow(@PathVariable("id") Integer workflowId) {
+        workflowService.deleteWorkflow(workflowId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/users/for-assignment")
+    public ResponseEntity<List<UserForAssignmentDto>> getUsersForAssignment(@RequestParam(required = false) Integer districtId) {
+        return ResponseEntity.ok(adminService.getUsersForAssignment(districtId));
+    }
+    @PostMapping("/workflows/{id}/toggle-activation")
+    public ResponseEntity<Boolean> toggleActivation(@PathVariable Integer id) {
+        boolean newStatus = workflowService.toggleWorkflowActivation(id);
+        return ResponseEntity.ok(newStatus);
     }
 }

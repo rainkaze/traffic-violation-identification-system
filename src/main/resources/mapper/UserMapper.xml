@@ -108,4 +108,17 @@
   FROM user_districts
   WHERE user_id = #{userId}
  </select>
+
+
+ <select id="findUsersForAssignment" resultMap="UserResultMap">
+  SELECT DISTINCT u.* FROM users u
+  <if test="districtId != null">
+   JOIN user_districts ud ON u.user_id = ud.user_id
+  </if>
+  WHERE u.rank != '管理员' AND u.registration_status = 'APPROVED'
+  <if test="districtId != null">
+   AND ud.district_id = #{districtId}
+  </if>
+  ORDER BY u.full_name
+ </select>
 </mapper>
