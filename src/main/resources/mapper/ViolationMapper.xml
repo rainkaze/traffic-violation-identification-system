@@ -42,13 +42,14 @@
         <include refid="selectJoins"/>
         <include refid="dynamicWhere"/>
         ORDER BY v.violation_time DESC
-        LIMIT #{query.pageSize} OFFSET ${ (query.page - 1) * query.pageSize }
+        LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
     <select id="countViolationsByCriteria" resultType="long">
         SELECT COUNT(v.violation_id)
         FROM violations v
         LEFT JOIN traffic_rules tr ON v.rule_id = tr.rule_id
+        LEFT JOIN locations l ON v.location_id = l.location_id /* 某些情况下可能需要 join 更多表来满足筛选条件 */
         <include refid="dynamicWhere"/>
     </select>
 

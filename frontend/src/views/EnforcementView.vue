@@ -138,8 +138,8 @@
             <span class="ml-auto badge bg-gray-400 text-white">待处理</span>
           </li>
         </ul>
-        <button @click="currentStep = 3" class="btn btn-secondary w-full">返回上一步</button>
-        <button @click="currentStep = 1" class="btn btn-primary w-full mt-4">完成审批</button>
+          <button @click="currentStep = 3" class="btn btn-secondary w-full">返回上一步</button>
+          <button @click="currentStep = 1" class="btn btn-primary w-full mt-4">完成审批</button>
       </div>
 
     </div>
@@ -147,6 +147,10 @@
 </template>
 
 <script setup>
+
+
+
+
 import { ref } from 'vue'
 
 const currentStep = ref(1) // 当前步骤：1-案件立案，2-AI审查，3-处罚建议，4-线上审批
