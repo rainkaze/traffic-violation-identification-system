@@ -1,10 +1,5 @@
 <template>
   <div class="p-4">
-    <div class="mb-6">
-      <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800">工作流管理</h2>
-      <p class="text-gray-600">创建和管理自动化业务流程</p>
-    </div>
-
     <div class="card mb-6">
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-xl font-bold text-gray-800">工作流列表</h3>
@@ -36,8 +31,13 @@
             </td>
             <td class="px-6 py-4">{{ wf.createdByFullName }}</td>
             <td class="px-6 py-4 text-right">
-              <button class="text-primary hover:text-primary/80 mr-3">编辑</button>
-              <button @click="deleteWorkflow(wf.workflowId)" class="text-danger hover:text-danger/80">删除</button>
+              <router-link :to="{ name: 'workflow-form-edit', params: { id: wf.workflowId } }"
+                           class="text-primary hover:text-primary/80 mr-3">
+                编辑
+              </router-link>
+              <button @click="deleteWorkflow(wf.workflowId)"
+                      class="text-danger hover:text-danger/80">删除
+              </button>
             </td>
           </tr>
           </tbody>
@@ -48,7 +48,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+// <script>部分的代码完全不用修改
+import {ref, onMounted} from 'vue';
 import apiClient from '@/services/api';
 
 const loading = ref(true);
@@ -59,8 +60,12 @@ const fetchWorkflows = async () => {
   try {
     const response = await apiClient.get('/admin/workflows');
     workflows.value = response.data;
-  } catch(e) { console.error("无法加载工作流列表:", e); alert('无法加载工作流列表'); }
-  finally { loading.value = false; }
+  } catch (e) {
+    console.error("无法加载工作流列表:", e);
+    alert('无法加载工作流列表');
+  } finally {
+    loading.value = false;
+  }
 };
 
 const deleteWorkflow = async (id) => {
@@ -69,13 +74,18 @@ const deleteWorkflow = async (id) => {
     await apiClient.delete(`/admin/workflows/${id}`);
     alert('工作流已删除。');
     await fetchWorkflows();
-  } catch (e) { console.error("删除工作流失败:", e); alert('删除失败'); }
+  } catch (e) {
+    console.error("删除工作流失败:", e);
+    alert('删除失败');
+  }
 };
 
 const toggleActivation = async (workflow) => {
   try {
+    // 后端返回的是布尔值，直接赋值
     const response = await apiClient.post(`/admin/workflows/${workflow.workflowId}/toggle-activation`);
-    workflow.isActive = response.data; // 直接更新前端状态
+    workflow.isActive = response.data;
+    alert('状态更新成功！');
   } catch (e) {
     console.error("更新状态失败:", e);
     alert('状态更新失败');
