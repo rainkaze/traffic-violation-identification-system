@@ -1,5 +1,6 @@
 package edu.cupk.trafficviolationidentificationsystem.controller;
 
+import edu.cupk.trafficviolationidentificationsystem.dto.UserDistrictAssignmentDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.UserDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.UserUpsertDto;
 import edu.cupk.trafficviolationidentificationsystem.service.AdminService;
@@ -55,5 +56,11 @@ public class AdminController {
     public ResponseEntity<Void> deleteUser(@PathVariable Integer userId) {
         adminService.deleteUser(userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/users/{userId}/districts")
+    public ResponseEntity<Void> updateUserDistricts(@PathVariable Integer userId, @RequestBody UserDistrictAssignmentDto assignmentDto) {
+        adminService.updateUserDistricts(userId, assignmentDto.getDistrictIds());
+        return ResponseEntity.ok().build();
     }
 }

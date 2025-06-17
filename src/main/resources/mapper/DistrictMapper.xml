@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.DistrictMapper">
+
+ <select id="findAllDistricts" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DistrictDto">
+  SELECT district_id, district_name FROM districts ORDER BY district_id
+ </select>
+
+</mapper>

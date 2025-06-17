@@ -2,7 +2,7 @@
   <div class="p-4">
     <div class="mb-6">
       <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800">违法记录管理</h2>
-      <p class="text-gray-600">查询、筛选和管理克拉玛依市所有交通违法记录</p>
+      <p class="text-gray-600">{{ pageDescription }}</p>
     </div>
 
     <div class="card mb-6">
@@ -12,14 +12,17 @@
             <input type="text" v-model="filters.plateNumber" @input="onFilterChange" placeholder="搜索车牌号" class="input pl-10 w-full sm:w-48">
             <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
           </div>
-          <select v-model="filters.violationType" @change="onFilterChange" class="input w-full sm:w-40">
+          <select v-model="filters.violationType" @change="onFilterChange" class="input w-full sm:w-48">
             <option value="">全部违法类型</option>
-            <option value="闯红灯">闯红灯</option>
-            <option value="超速行驶">超速行驶</option>
-            <option value="逆行">逆行</option>
-            <option value="不按导向车道行驶">不按导向车道行驶</option>
-            <option value="违法变道">违法变道</option>
-            <option value="违章停车">违章停车</option>
+            <option v-for="type in violationTypes" :key="type" :value="type">
+              {{ type }}
+            </option>
+          </select>
+          <select v-model="filters.districtId" @change="onFilterChange" class="input w-full sm:w-40">
+            <option value="">全部辖区</option>
+            <option v-for="district in availableDistricts" :key="district.districtId" :value="district.districtId">
+              {{ district.districtName }}
+            </option>
           </select>
           <input type="month" v-model="filters.yearMonth" @change="onFilterChange" class="input w-full sm:w-40">
           <select v-model="filters.status" @change="onFilterChange" class="input w-full sm:w-32">
@@ -92,28 +95,71 @@
 </template>
 
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
-// 错误修正：从直接使用 axios 改为使用我们配置好的 apiClient
+import { ref, onMounted, reactive, computed } from 'vue';
 import apiClient from '@/services/api';
+import authStore from '@/store/auth'; // 引入权限状态
 import { debounce } from 'lodash';
 
 const violations = ref([]);
 const error = ref(null);
 const loading = ref(true);
+const violationTypes = ref([]);
+const allDistricts = ref([]); // 存储所有辖区列表
+
+// 从 authStore 中获取用户信息和角色
+const isAdmin = computed(() => authStore.isAdmin());
+const currentUser = computed(() => authStore.currentUser());
+
+// 动态生成页面描述
+const pageDescription = computed(() => {
+  return isAdmin.value
+    ? '查询、筛选和管理克拉玛依市所有交通违法记录'
+    : '查询、筛选您所管辖区的交通违法记录';
+});
+
+// 根据用户角色，计算出下拉框中可用的辖区
+const availableDistricts = computed(() => {
+  if (isAdmin.value) {
+    return allDistricts.value;
+  }
+  if (currentUser.value && currentUser.value.districts) {
+    return allDistricts.value.filter(d => currentUser.value.districts.includes(d.districtName));
+  }
+  return [];
+});
 
 const filters = reactive({
   plateNumber: '',
   violationType: '',
   status: '',
-  yearMonth: ''
+  yearMonth: '',
+  districtId: '', // 新增辖区筛选字段
 });
 
 const pagination = reactive({
   currentPage: 1,
-  pageSize: 10, // 每页显示10条，以便查看更多数据
+  pageSize: 10,
   totalPages: 1,
   totalItems: 0
 });
+
+const fetchViolationTypes = async () => {
+  try {
+    const response = await apiClient.get('/rules/types');
+    violationTypes.value = response.data;
+  } catch (err) {
+    console.error("加载违法类型失败:", err);
+  }
+};
+
+const fetchAllDistricts = async () => {
+  try {
+    const response = await apiClient.get('/districts');
+    allDistricts.value = response.data;
+  } catch (error) {
+    console.error("加载所有辖区失败:", error);
+  }
+};
 
 const fetchViolations = async () => {
   loading.value = true;
@@ -125,7 +171,6 @@ const fetchViolations = async () => {
       ...filters
     };
 
-    // 错误修正：使用 apiClient 发送请求，它会自动附带认证Token
     const response = await apiClient.get('/violations', { params });
     const data = response.data;
 
@@ -159,9 +204,14 @@ const changePage = (page) => {
 
 const formatTime = (isoString) => {
   if (!isoString) return 'N/A';
-  // 假设后端返回的是标准ISO 8601字符串
   return new Date(isoString).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
 };
 
-onMounted(fetchViolations);
+onMounted(async () => {
+  // 先获取辖区数据，以便筛选框能正常显示
+  await fetchAllDistricts();
+  // 然后获取违法记录和类型
+  fetchViolations();
+  fetchViolationTypes();
+});
 </script>
