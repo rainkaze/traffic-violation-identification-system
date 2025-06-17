@@ -17,6 +17,7 @@ import ProfileView from '../views/ProfileView.vue';
 import LoginView from '../views/auth/LoginView.vue';
 import RegisterView from '../views/auth/RegisterView.vue';
 import UserManagementView from '../views/admin/UserManagementView.vue';
+import WorkflowManagementView from '../views/admin/WorkflowManagementView.vue';
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -91,19 +92,26 @@ const router = createRouter({
       component: HelpView,
       meta: { requiresAuth: true }
     },
-    // --- 新增个人信息路由 ---
+    // --- 个人信息路由 ---
     {
       path: '/profile',
       name: 'profile',
       component: ProfileView,
       meta: { requiresAuth: true } // 需要登录才能访问
     },
-    // --- 新增管理员路由 ---
+    // --- 管理员路由 ---
     {
       path: '/user-management',
       name: 'user-management',
       component: UserManagementView,
       meta: { requiresAuth: true, requiresAdmin: true } // 需要登录且是管理员
+    },
+    // --- 工作流路由 ---
+    {
+      path: '/workflow-management',
+      name: 'workflow-management',
+      component: WorkflowManagementView,
+      meta: { requiresAuth: true, requiresAdmin: true }
     },
     { path: '/:pathMatch(.*)*', redirect: '/dashboard' }
   ],

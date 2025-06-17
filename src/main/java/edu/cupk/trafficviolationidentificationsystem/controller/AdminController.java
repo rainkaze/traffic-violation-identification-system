@@ -3,7 +3,10 @@ package edu.cupk.trafficviolationidentificationsystem.controller;
 import edu.cupk.trafficviolationidentificationsystem.dto.UserDistrictAssignmentDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.UserDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.UserUpsertDto;
+import edu.cupk.trafficviolationidentificationsystem.dto.WorkflowCreateDto;
+import edu.cupk.trafficviolationidentificationsystem.model.Workflow;
 import edu.cupk.trafficviolationidentificationsystem.service.AdminService;
+import edu.cupk.trafficviolationidentificationsystem.service.WorkflowService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +21,12 @@ import java.util.List;
 public class AdminController {
 
     private final AdminService adminService;
+    private final WorkflowService workflowService; // 注入新Service
 
-    public AdminController(AdminService adminService) {
+
+    public AdminController(AdminService adminService, WorkflowService workflowService) {
         this.adminService = adminService;
+        this.workflowService = workflowService;
     }
 
     @GetMapping("/users")
@@ -62,5 +68,12 @@ public class AdminController {
     public ResponseEntity<Void> updateUserDistricts(@PathVariable Integer userId, @RequestBody UserDistrictAssignmentDto assignmentDto) {
         adminService.updateUserDistricts(userId, assignmentDto.getDistrictIds());
         return ResponseEntity.ok().build();
+    }
+
+    // 新增工作流创建端点
+    @PostMapping("/workflows")
+    public ResponseEntity<Workflow> createWorkflow(@Valid @RequestBody WorkflowCreateDto workflowCreateDto) {
+        Workflow createdWorkflow = workflowService.createWorkflow(workflowCreateDto);
+        return new ResponseEntity<>(createdWorkflow, HttpStatus.CREATED);
     }
 }
