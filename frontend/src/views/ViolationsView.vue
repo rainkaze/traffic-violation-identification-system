@@ -64,7 +64,7 @@
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.location }}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.device }}</td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <span :class="{'bg-warning': item.status === '待处理', 'bg-success': item.status === '已处理', 'bg-blue-500': item.status === '处理中'}" class="badge text-white">{{ item.status }}</span>
+              <span :class="{'bg-yellow-100 text-yellow-800': item.status === '待处理', 'bg-green-100 text-green-800': item.status === '已处理', 'bg-blue-100 text-blue-800': item.status === '处理中', 'bg-gray-100 text-gray-800': item.status === '已归档'}" class="badge">{{ item.status }}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <button class="text-primary hover:text-primary/80 mr-3">详情</button>
@@ -92,26 +92,25 @@
 </template>
 
 <script setup>
-import {ref, onMounted, reactive} from 'vue';
-import axios from 'axios';
-import {debounce} from 'lodash';
+import { ref, onMounted, reactive } from 'vue';
+// 错误修正：从直接使用 axios 改为使用我们配置好的 apiClient
+import apiClient from '@/services/api';
+import { debounce } from 'lodash';
 
 const violations = ref([]);
 const error = ref(null);
-const loading = ref(true); // 初始为true，表示正在加载
+const loading = ref(true);
 
-// 筛选条件响应式对象
 const filters = reactive({
   plateNumber: '',
   violationType: '',
   status: '',
-  yearMonth: '' // e.g. "2025-06"
+  yearMonth: ''
 });
 
-// 分页信息响应式对象
 const pagination = reactive({
   currentPage: 1,
-  pageSize: 5, // 每页显示5条
+  pageSize: 10, // 每页显示10条，以便查看更多数据
   totalPages: 1,
   totalItems: 0
 });
@@ -120,18 +119,14 @@ const fetchViolations = async () => {
   loading.value = true;
   error.value = null;
   try {
-    // 准备请求参数，只包含有值的筛选条件
     const params = {
       page: pagination.currentPage,
-      pageSize: pagination.pageSize
+      pageSize: pagination.pageSize,
+      ...filters
     };
-    for (const key in filters) {
-      if (filters[key]) {
-        params[key] = filters[key];
-      }
-    }
 
-    const response = await axios.get('http://localhost:8080/api/violations', {params});
+    // 错误修正：使用 apiClient 发送请求，它会自动附带认证Token
+    const response = await apiClient.get('/violations', { params });
     const data = response.data;
 
     violations.value = data.items;
@@ -139,25 +134,22 @@ const fetchViolations = async () => {
     pagination.totalPages = data.totalPages;
     pagination.currentPage = data.currentPage;
   } catch (err) {
-    error.value = '无法从后端加载违法记录。请确保后端服务正在运行且网络和CORS配置正确。';
-    console.error(err);
+    error.value = '加载违法记录失败。请检查网络连接或联系管理员。';
+    console.error("Error fetching violations:", err.response || err);
   } finally {
     loading.value = false;
   }
 };
 
-// 使用防抖函数包装fetchViolations，避免因用户快速输入/选择而发起过多请求
 const debouncedFetch = debounce(() => {
-  pagination.currentPage = 1; // 筛选条件变化时，重置到第一页
+  pagination.currentPage = 1;
   fetchViolations();
-}, 500); // 用户停止输入500毫秒后执行
+}, 300);
 
-// 当任何筛选条件变化时，调用防抖函数
 const onFilterChange = () => {
   debouncedFetch();
 };
 
-// 改变页码
 const changePage = (page) => {
   if (page > 0 && page <= pagination.totalPages) {
     pagination.currentPage = page;
@@ -165,26 +157,11 @@ const changePage = (page) => {
   }
 };
 
-// 格式化时间 (处理ISO字符串)
 const formatTime = (isoString) => {
-  if (!isoString || typeof isoString !== 'string') {
-    return '';
-  }
-  const dt = new Date(isoString);
-  if (isNaN(dt.getTime())) {
-    return '';
-  }
-  return dt.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  }).replace(/\//g, '-');
+  if (!isoString) return 'N/A';
+  // 假设后端返回的是标准ISO 8601字符串
+  return new Date(isoString).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
 };
 
-// 组件挂载时首次加载数据
 onMounted(fetchViolations);
 </script>

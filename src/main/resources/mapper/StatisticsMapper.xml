@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.StatisticsMapper">
+
+    <select id="countByViolationType" resultType="edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto">
+        SELECT
+            tr.violation_type AS label,
+            COUNT(v.violation_id) AS value
+        FROM
+            violations v
+            JOIN traffic_rules tr ON v.rule_id = tr.rule_id
+        GROUP BY
+            tr.violation_type
+        ORDER BY
+            value DESC;
+    </select>
+
+    <select id="countByDistrict" resultType="edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto">
+        SELECT
+            l.district AS label,
+            COUNT(v.violation_id) AS value
+        FROM
+            violations v
+            JOIN locations l ON v.location_id = l.location_id
+        WHERE
+            l.district IS NOT NULL
+        GROUP BY
+            l.district
+        ORDER BY
+            value DESC;
+    </select>
+
+    <select id="countByHour" resultType="edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto">
+        SELECT
+            DATE_FORMAT(v.violation_time, '%H:00') AS label,
+            COUNT(v.violation_id) AS value
+        FROM
+            violations v
+        GROUP BY
+            label
+        ORDER BY
+            label ASC;
+    </select>
+
+    <select id="countByDayLast30Days" resultType="edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto">
+        SELECT
+            DATE_FORMAT(v.violation_time, '%Y-%m-%d') AS label,
+            COUNT(v.violation_id) AS value
+        FROM
+            violations v
+        WHERE
+            v.violation_time >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        GROUP BY
+            label
+        ORDER BY
+            label ASC;
+    </select>
+
+    <select id="findTop5Locations" resultType="edu.cupk.trafficviolationidentificationsystem.dto.TopLocationDto">
+        SELECT
+            l.address AS location,
+            l.district AS region,
+            COUNT(v.violation_id) AS count
+        FROM
+            violations v
+            JOIN locations l ON v.location_id = l.location_id
+        GROUP BY
+            v.location_id, l.address, l.district
+        ORDER BY
+            count DESC
+            LIMIT 5;
+    </select>
+
+</mapper>
