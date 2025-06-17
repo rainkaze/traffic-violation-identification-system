@@ -12,14 +12,11 @@
             <input type="text" v-model="filters.plateNumber" @input="onFilterChange" placeholder="搜索车牌号" class="input pl-10 w-full sm:w-48">
             <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
           </div>
-          <select v-model="filters.violationType" @change="onFilterChange" class="input w-full sm:w-40">
+          <select v-model="filters.violationType" @change="onFilterChange" class="input w-full sm:w-48">
             <option value="">全部违法类型</option>
-            <option value="闯红灯">闯红灯</option>
-            <option value="超速行驶">超速行驶</option>
-            <option value="逆行">逆行</option>
-            <option value="不按导向车道行驶">不按导向车道行驶</option>
-            <option value="违法变道">违法变道</option>
-            <option value="违章停车">违章停车</option>
+            <option v-for="type in violationTypes" :key="type" :value="type">
+              {{ type }}
+            </option>
           </select>
           <input type="month" v-model="filters.yearMonth" @change="onFilterChange" class="input w-full sm:w-40">
           <select v-model="filters.status" @change="onFilterChange" class="input w-full sm:w-32">
@@ -100,6 +97,8 @@ import { debounce } from 'lodash';
 const violations = ref([]);
 const error = ref(null);
 const loading = ref(true);
+const violationTypes = ref([]);
+
 
 const filters = reactive({
   plateNumber: '',
@@ -114,7 +113,16 @@ const pagination = reactive({
   totalPages: 1,
   totalItems: 0
 });
-
+// 创建一个函数来获取违法类型数据
+const fetchViolationTypes = async () => {
+  try {
+    const response = await apiClient.get('/rules/types');
+    violationTypes.value = response.data;
+  } catch (err) {
+    console.error("加载违法类型失败:", err);
+    // 这里可以选择是否给用户一个提示
+  }
+};
 const fetchViolations = async () => {
   loading.value = true;
   error.value = null;
@@ -163,5 +171,8 @@ const formatTime = (isoString) => {
   return new Date(isoString).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
 };
 
-onMounted(fetchViolations);
+onMounted(() => {
+  fetchViolations();
+  fetchViolationTypes(); // 获取违法类型列表
+});
 </script>
