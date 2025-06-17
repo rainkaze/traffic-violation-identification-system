@@ -13,5 +13,11 @@
   INSERT INTO workflow_assignment_users (assignment_id, user_id)
   VALUES (#{assignmentId}, #{userId})
  </insert>
+ <select id="findByNodeId" resultType="edu.cupk.trafficviolationidentificationsystem.model.WorkflowNodeAssignment">
+  SELECT * FROM workflow_node_assignments WHERE node_id = #{nodeId} LIMIT 1
+ </select>
 
+ <select id="findStaticUserIdsByAssignmentId" resultType="java.lang.Integer">
+  SELECT user_id FROM workflow_assignment_users WHERE assignment_id = #{assignmentId}
+ </select>
 </mapper>

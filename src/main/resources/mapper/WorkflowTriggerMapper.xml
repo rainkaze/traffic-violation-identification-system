@@ -8,5 +8,11 @@
   INSERT INTO workflow_triggers (workflow_id, district_id, rule_id, min_demerit_points, priority, is_active)
   VALUES (#{workflowId}, #{districtId}, #{ruleId}, #{minDemeritPoints}, #{priority}, #{isActive})
  </insert>
+ <select id="findByWorkflowId" resultType="edu.cupk.trafficviolationidentificationsystem.model.WorkflowTrigger">
+  SELECT * FROM workflow_triggers WHERE workflow_id = #{workflowId} LIMIT 1
+ </select>
 
+ <delete id="deleteByWorkflowId">
+  DELETE FROM workflow_triggers WHERE workflow_id = #{workflowId}
+ </delete>
 </mapper>

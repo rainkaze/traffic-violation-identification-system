@@ -86,6 +86,17 @@ public class AdminController {
         Workflow createdWorkflow = workflowService.createWorkflow(workflowUpsertDto);
         return new ResponseEntity<>(createdWorkflow, HttpStatus.CREATED);
     }
+    @GetMapping("/workflows/{id}")
+    public ResponseEntity<WorkflowDetailDto> getWorkflowById(@PathVariable Integer id) {
+        WorkflowDetailDto workflowDetail = workflowService.getWorkflowDetailById(id);
+        return ResponseEntity.ok(workflowDetail);
+    }
+
+    @PutMapping("/workflows/{id}")
+    public ResponseEntity<Workflow> updateWorkflow(@PathVariable Integer id, @Valid @RequestBody WorkflowUpsertDto workflowUpsertDto) {
+        Workflow updatedWorkflow = workflowService.updateWorkflow(id, workflowUpsertDto);
+        return ResponseEntity.ok(updatedWorkflow);
+    }
 
 
     @DeleteMapping("/workflows/{id}")

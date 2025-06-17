@@ -39,7 +39,17 @@ public interface WorkflowMapper {
      */
     void updateActivationStatus(@Param("workflowId") Integer workflowId, @Param("isActive") boolean isActive);
 
-
+    /**
+     * 根据工作流ID查询工作流详情
+     * @param workflowId 工作流ID
+     * @return 工作流详情DTO
+     */
     Optional<Workflow> findById(@Param("workflowId") Integer workflowId);
 
+    /**
+     * 更新工作流
+     * @param workflow 工作流对象
+     * @return 影响的行数
+     */
+    int updateWorkflow(Workflow workflow);
 }

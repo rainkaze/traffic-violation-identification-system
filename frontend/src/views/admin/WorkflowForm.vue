@@ -1,11 +1,14 @@
 <template>
   <div class="p-4">
     <div class="mb-6">
-      <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800">新建工作流</h2>
-      <p class="text-gray-600">定义一个完整的工作流，包括触发器、节点和负责人。</p>
+      <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800">{{ pageTitle }}</h2>
+      <p class="text-gray-600">{{ pageDescription }}</p>
     </div>
 
-    <form @submit.prevent="submitWorkflow" class="card max-w-4xl mx-auto space-y-8">
+    <div v-if="pageLoading" class="text-center p-10">
+      <p>正在加载工作流数据...</p>
+    </div>
+    <form v-else @submit.prevent="submitWorkflow" class="card max-w-4xl mx-auto space-y-8">
       <section>
         <h3 class="font-semibold text-lg border-b pb-2 mb-4">1. 基本信息</h3>
         <div class="space-y-4">
@@ -104,12 +107,14 @@
       <div class="mt-8 pt-6 border-t flex items-center justify-between">
         <div class="flex items-center">
           <input v-model="form.isActive" type="checkbox" id="isActive" class="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary">
-          <label for="isActive" class="ml-2 block text-sm text-gray-900">创建后立即激活</label>
+          <label for="isActive" class="ml-2 block text-sm text-gray-900">
+            {{ isEditMode ? '保持激活状态' : '创建后立即激活' }}
+          </label>
         </div>
         <div class="flex gap-3">
           <router-link to="/workflow-management" class="btn btn-secondary">取消</router-link>
           <button type="submit" :disabled="isLoading" class="btn btn-primary">
-            {{ isLoading ? '保存中...' : '确认并保存工作流' }}
+            {{ isLoading ? '保存中...' : (isEditMode ? '更新工作流' : '确认并保存') }}
           </button>
         </div>
       </div>
@@ -119,18 +124,31 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import apiClient from '@/services/api';
+import { cloneDeep } from 'lodash';
 
+const route = useRoute();
 const router = useRouter();
 
+// --- 状态与数据 ---
 const isLoading = ref(false);
+const pageLoading = ref(false);
 const districts = ref([]);
 const trafficRules = ref([]);
 const allAssignableUsers = ref([]);
 const searchTerms = reactive({});
 
-const form = reactive({
+// 通过路由参数判断是否为编辑模式
+const isEditMode = computed(() => !!route.params.id);
+const workflowId = computed(() => route.params.id);
+
+// 动态标题
+const pageTitle = computed(() => isEditMode.value ? '编辑工作流' : '新建工作流');
+const pageDescription = computed(() => isEditMode.value ? '修改工作流的触发器、节点和负责人。' : '定义一个完整的工作流，包括触发器、节点和负责人。');
+
+// 使用一个函数来创建默认的表单结构，便于重置
+const createDefaultForm = () => ({
   workflowName: '',
   description: '',
   isActive: true,
@@ -144,6 +162,9 @@ const form = reactive({
   nodes: [],
 });
 
+const form = reactive(createDefaultForm());
+
+// --- computed 和 watch ---
 const filteredUsersForNode = (nodeIndex) => {
   const searchTerm = (searchTerms[nodeIndex] || '').toLowerCase();
   if (!searchTerm) return allAssignableUsers.value;
@@ -158,6 +179,7 @@ watch(() => form.trigger.districtId, (newDistrictId) => {
   form.nodes.forEach(node => { node.staticUserIds = []; });
 }, { deep: true });
 
+// --- 方法 ---
 const addNode = () => {
   const newNodeIndex = form.nodes.length;
   form.nodes.push({
@@ -179,7 +201,6 @@ const removeNode = (index) => {
 
 const fetchDropdownData = async () => {
   try {
-    // 修正API路径，去掉/api前缀
     const [districtsRes, rulesRes] = await Promise.all([
       apiClient.get('/districts'),
       apiClient.get('/rules'),
@@ -197,24 +218,63 @@ const fetchAssignableUsers = async (districtId) => {
   } catch(e) { console.error("加载可指派用户失败:", e); }
 };
 
+/**
+ * [新增] 加载工作流数据用于编辑
+ */
+const loadWorkflowForEdit = async () => {
+  if (!isEditMode.value) return;
+  pageLoading.value = true;
+  try {
+    const response = await apiClient.get(`/admin/workflows/${workflowId.value}`);
+    const data = response.data;
+    // 使用 cloneDeep 防止响应式问题
+    Object.assign(form, cloneDeep(data));
+    // 初始化搜索词
+    form.nodes.forEach((_, index) => searchTerms[index] = '');
+  } catch (e) {
+    console.error("加载工作流详情失败:", e);
+    alert('无法加载工作流详情，将返回列表页。');
+    router.push('/workflow-management');
+  } finally {
+    pageLoading.value = false;
+  }
+}
+
+
 const submitWorkflow = async () => {
   isLoading.value = true;
   try {
-    await apiClient.post('/admin/workflows', form);
-    alert('工作流创建成功！');
+    if (isEditMode.value) {
+      // 更新模式
+      await apiClient.put(`/admin/workflows/${workflowId.value}`, form);
+      alert('工作流更新成功！');
+    } else {
+      // 创建模式
+      await apiClient.post('/admin/workflows', form);
+      alert('工作流创建成功！');
+    }
     router.push('/workflow-management');
   } catch (err) {
-    alert('创建失败：' + (err.response?.data?.message || err.message));
+    alert('操作失败：' + (err.response?.data?.message || err.message));
   } finally {
     isLoading.value = false;
   }
 };
 
-onMounted(() => {
-  fetchDropdownData();
-  fetchAssignableUsers(null);
-  if (form.nodes.length === 0) {
-    addNode();
+// --- 生命周期钩子 ---
+onMounted(async () => {
+  pageLoading.value = true;
+  await fetchDropdownData();
+  await fetchAssignableUsers(null);
+
+  if (isEditMode.value) {
+    await loadWorkflowForEdit();
+  } else {
+    // 如果是新建模式，确保至少有一个节点
+    if (form.nodes.length === 0) {
+      addNode();
+    }
   }
+  pageLoading.value = false;
 });
 </script>

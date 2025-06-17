@@ -41,4 +41,13 @@
   <result property="isActive" column="is_active"/>
   <result property="createdBy" column="created_by"/>
  </resultMap>
+
+ <update id="updateWorkflow" parameterType="edu.cupk.trafficviolationidentificationsystem.model.Workflow">
+  UPDATE workflows
+  SET
+   workflow_name = #{workflowName},
+   description = #{description},
+   is_active = #{isActive}
+  WHERE workflow_id = #{workflowId}
+ </update>
 </mapper>
