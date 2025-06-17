@@ -1,5 +1,6 @@
 package edu.cupk.trafficviolationidentificationsystem.controller;
 
+import edu.cupk.trafficviolationidentificationsystem.dto.TrafficRuleDto;
 import edu.cupk.trafficviolationidentificationsystem.service.TrafficRuleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,5 +27,10 @@ public class TrafficRuleController {
     public ResponseEntity<List<String>> getViolationTypes() {
         List<String> types = trafficRuleService.getAllViolationTypes();
         return ResponseEntity.ok(types);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<TrafficRuleDto>> getAllRules() {
+        return ResponseEntity.ok(trafficRuleService.getAllRules());
     }
 }

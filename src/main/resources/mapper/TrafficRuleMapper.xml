@@ -9,5 +9,7 @@
   FROM traffic_rules
   ORDER BY violation_type
  </select>
-
+ <select id="findAllRules" resultType="edu.cupk.trafficviolationidentificationsystem.dto.TrafficRuleDto">
+  SELECT rule_id, violation_type FROM traffic_rules ORDER BY rule_id
+ </select>
 </mapper>

@@ -26,4 +26,7 @@ public interface UserMapper {
     void deleteDistrictsByUserId(@Param("userId") Integer userId);
     void insertUserDistrict(@Param("userId") Integer userId, @Param("districtId") Integer districtId);
     List<Integer> findDistrictIdsByUserId(@Param("userId") Integer userId);
+
+    List<User> findUsersForAssignment(@Param("districtId") Integer districtId);
+
 }
