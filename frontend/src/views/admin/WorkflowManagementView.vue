@@ -26,7 +26,7 @@
             <td class="px-6 py-4">
               <button @click="toggleActivation(wf)" class="badge cursor-pointer" :class="wf.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'">
                 <i :class="wf.isActive ? 'fa fa-check-circle' : 'fa fa-power-off'"></i>
-                {{ wf.isActive ? '已激活' : '草稿' }}
+                {{ wf.isActive ? '已激活' : '未激活' }}
               </button>
             </td>
             <td class="px-6 py-4">{{ wf.createdByFullName }}</td>

@@ -126,12 +126,10 @@
 import { ref, reactive, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import apiClient from '@/services/api';
-import { cloneDeep } from 'lodash';
 
 const route = useRoute();
 const router = useRouter();
 
-// --- 状态与数据 ---
 const isLoading = ref(false);
 const pageLoading = ref(false);
 const districts = ref([]);
@@ -139,15 +137,12 @@ const trafficRules = ref([]);
 const allAssignableUsers = ref([]);
 const searchTerms = reactive({});
 
-// 通过路由参数判断是否为编辑模式
 const isEditMode = computed(() => !!route.params.id);
 const workflowId = computed(() => route.params.id);
 
-// 动态标题
 const pageTitle = computed(() => isEditMode.value ? '编辑工作流' : '新建工作流');
 const pageDescription = computed(() => isEditMode.value ? '修改工作流的触发器、节点和负责人。' : '定义一个完整的工作流，包括触发器、节点和负责人。');
 
-// 使用一个函数来创建默认的表单结构，便于重置
 const createDefaultForm = () => ({
   workflowName: '',
   description: '',
@@ -164,7 +159,6 @@ const createDefaultForm = () => ({
 
 const form = reactive(createDefaultForm());
 
-// --- computed 和 watch ---
 const filteredUsersForNode = (nodeIndex) => {
   const searchTerm = (searchTerms[nodeIndex] || '').toLowerCase();
   if (!searchTerm) return allAssignableUsers.value;
@@ -174,12 +168,13 @@ const filteredUsersForNode = (nodeIndex) => {
   );
 };
 
+// **关键修复点 1**: 修正 watch 逻辑
 watch(() => form.trigger.districtId, (newDistrictId) => {
+  // 当辖区变化时，只重新获取可供选择的用户列表
+  // 不要清空用户已经做出的选择
   fetchAssignableUsers(newDistrictId);
-  form.nodes.forEach(node => { node.staticUserIds = []; });
 }, { deep: true });
 
-// --- 方法 ---
 const addNode = () => {
   const newNodeIndex = form.nodes.length;
   form.nodes.push({
@@ -218,19 +213,29 @@ const fetchAssignableUsers = async (districtId) => {
   } catch(e) { console.error("加载可指派用户失败:", e); }
 };
 
-/**
- * [新增] 加载工作流数据用于编辑
- */
 const loadWorkflowForEdit = async () => {
   if (!isEditMode.value) return;
   pageLoading.value = true;
   try {
     const response = await apiClient.get(`/admin/workflows/${workflowId.value}`);
     const data = response.data;
-    // 使用 cloneDeep 防止响应式问题
-    Object.assign(form, cloneDeep(data));
-    // 初始化搜索词
+
+    if (data.nodes && Array.isArray(data.nodes)) {
+      data.nodes.forEach(node => {
+        if (!Array.isArray(node.staticUserIds)) {
+          node.staticUserIds = [];
+        }
+      });
+    }
+
+    form.workflowName = data.workflowName;
+    form.description = data.description;
+    form.isActive = data.isActive;
+    form.trigger = data.trigger || createDefaultForm().trigger;
+    form.nodes = data.nodes || [];
+
     form.nodes.forEach((_, index) => searchTerms[index] = '');
+
   } catch (e) {
     console.error("加载工作流详情失败:", e);
     alert('无法加载工作流详情，将返回列表页。');
@@ -238,19 +243,31 @@ const loadWorkflowForEdit = async () => {
   } finally {
     pageLoading.value = false;
   }
-}
-
+};
 
 const submitWorkflow = async () => {
   isLoading.value = true;
   try {
+    const payload = {
+      workflowName: form.workflowName,
+      description: form.description,
+      isActive: form.isActive,
+      trigger: form.trigger,
+      nodes: form.nodes.map(node => ({
+        nodeName: node.nodeName,
+        stepOrder: node.stepOrder,
+        completionRule: node.completionRule,
+        assignmentType: node.assignmentType,
+        assignedRank: node.assignmentType === 'DYNAMIC_ROLE_IN_DISTRICT' ? node.assignedRank : null,
+        staticUserIds: node.assignmentType === 'STATIC_USER_LIST' ? node.staticUserIds : []
+      }))
+    };
+
     if (isEditMode.value) {
-      // 更新模式
-      await apiClient.put(`/admin/workflows/${workflowId.value}`, form);
+      await apiClient.put(`/admin/workflows/${workflowId.value}`, payload);
       alert('工作流更新成功！');
     } else {
-      // 创建模式
-      await apiClient.post('/admin/workflows', form);
+      await apiClient.post('/admin/workflows', payload);
       alert('工作流创建成功！');
     }
     router.push('/workflow-management');
@@ -261,16 +278,19 @@ const submitWorkflow = async () => {
   }
 };
 
-// --- 生命周期钩子 ---
 onMounted(async () => {
   pageLoading.value = true;
-  await fetchDropdownData();
-  await fetchAssignableUsers(null);
+  await Promise.all([
+    fetchDropdownData(),
+    fetchAssignableUsers(null)
+  ]);
 
   if (isEditMode.value) {
     await loadWorkflowForEdit();
+    if (form.trigger.districtId) {
+      await fetchAssignableUsers(form.trigger.districtId);
+    }
   } else {
-    // 如果是新建模式，确保至少有一个节点
     if (form.nodes.length === 0) {
       addNode();
     }
