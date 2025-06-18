@@ -24,10 +24,10 @@
 
             <!-- 负责人 -->
             <select class="input w-full sm:w-40 flex-shrink-0">
-              <option value="" disabled selected>负责人</option>
-              <option value="zhangsan">张三</option>
-              <option value="lisi">李四</option>
-              <option value="wangwu">王五</option>
+              <option value="" disabled selected>辖区</option>
+              <option value="zhangsan">辖区一</option>
+              <option value="lisi">辖区二</option>
+              <option value="wangwu">辖区三</option>
             </select>
 
             <!-- 事故等级 -->
@@ -49,17 +49,24 @@
 
       <div class="space-y-6">
         <div class="card">
-          <h3 class="font-bold text-gray-800 mb-4">疑似事故列表</h3>
+          <h3 class="font-bold text-gray-800 mb-4">事故详情</h3>
+          <!-- 下拉菜单 -->
+          <div class="mb-4">
+            <label for="accidentSelect" class="block text-sm font-medium text-gray-700 mb-2">选择事故</label>
+            <select id="accidentSelect" class="input w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+              <option value="" disabled selected>请选择事故</option>
+              <option value="accident1">严重事故 - 世纪大道与和平路口</option>
+              <option value="accident2">轻微事故 - G30高速K3558</option>
+            </select>
+          </div>
           <div class="space-y-3">
+            <!-- 示例事故条目 -->
             <div class="p-3 rounded-lg bg-red-50 border border-red-200 cursor-pointer">
-              <p class="font-bold text-red-800">严重事故 - 车辆停滞</p>
-              <p class="text-sm text-gray-600">地点: 世纪大道与和平路口</p>
+              <p class="font-bold text-red-800">事故等级: 一级事故</p>
+              <p class="text-sm text-gray-600">事故地点: 世纪大道与和平路口</p>
+              <p class="text-sm text-gray-600">负责人: 张三</p>
               <p class="text-xs text-gray-500">检测时间: 2025-06-09 14:10</p>
-            </div>
-            <div class="p-3 rounded-lg bg-yellow-50 border border-yellow-200">
-              <p class="font-bold text-yellow-800">轻微事故 - 模拟碰撞信号</p>
-              <p class="text-sm text-gray-600">地点: G30高速K3558</p>
-              <p class="text-xs text-gray-500">检测时间: 2025-06-09 14:05</p>
+              <p class="text-xs text-gray-500">事故状态: 进行中</p>
             </div>
           </div>
         </div>
