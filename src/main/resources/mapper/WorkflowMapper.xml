@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.WorkflowMapper">
+
+ <insert id="insertWorkflow" useGeneratedKeys="true" keyProperty="workflowId" parameterType="edu.cupk.trafficviolationidentificationsystem.model.Workflow">
+  INSERT INTO workflows (workflow_name, description, is_active, created_by)
+  VALUES (#{workflowName}, #{description}, #{isActive}, #{createdBy})
+ </insert>
+
+ <select id="findAllForList" resultType="edu.cupk.trafficviolationidentificationsystem.dto.WorkflowListDto">
+  SELECT
+   w.workflow_id,
+   w.workflow_name,
+   w.description,
+   w.is_active,
+   u.full_name AS created_by_full_name,
+   (SELECT COUNT(*) FROM workflow_nodes wn WHERE wn.workflow_id = w.workflow_id) AS node_count
+  FROM
+   workflows w
+    LEFT JOIN users u ON w.created_by = u.user_id
+  ORDER BY w.workflow_id DESC
+ </select>
+
+ <delete id="deleteById">
+  DELETE FROM workflows WHERE workflow_id = #{workflowId}
+ </delete>
+ <update id="updateActivationStatus">
+  UPDATE workflows SET is_active = #{isActive} WHERE workflow_id = #{workflowId}
+ </update>
+
+ <select id="findById" resultMap="WorkflowResultMap">
+  SELECT * FROM workflows WHERE workflow_id = #{workflowId}
+ </select>
+
+ <resultMap id="WorkflowResultMap" type="edu.cupk.trafficviolationidentificationsystem.model.Workflow">
+  <id property="workflowId" column="workflow_id"/>
+  <result property="workflowName" column="workflow_name"/>
+  <result property="description" column="description"/>
+  <result property="isActive" column="is_active"/>
+  <result property="createdBy" column="created_by"/>
+ </resultMap>
+
+ <update id="updateWorkflow" parameterType="edu.cupk.trafficviolationidentificationsystem.model.Workflow">
+  UPDATE workflows
+  SET
+   workflow_name = #{workflowName},
+   description = #{description},
+   is_active = #{isActive}
+  WHERE workflow_id = #{workflowId}
+ </update>
+</mapper>

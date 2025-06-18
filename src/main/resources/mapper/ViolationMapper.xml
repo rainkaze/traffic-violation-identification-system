@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.ViolationMapper">
+
+    <sql id="selectJoins">
+        SELECT
+            v.violation_id AS id,
+            v.plate_number AS plate,
+            v.violation_time AS time,
+            tr.violation_type AS type,
+            d.address AS location,
+            dist.district_name AS district,
+            d.device_name AS device,
+            v.status AS status
+        FROM
+            violations v
+            LEFT JOIN devices d ON v.device_id = d.device_id
+            LEFT JOIN districts dist ON d.district_id = dist.district_id
+            LEFT JOIN traffic_rules tr ON v.rule_id = tr.rule_id
+    </sql>
+
+    <sql id="dynamicWhere">
+        <where>
+            <if test="query.plateNumber != null and query.plateNumber != ''">
+                AND v.plate_number LIKE CONCAT('%', #{query.plateNumber}, '%')
+            </if>
+            <if test="query.violationType != null and query.violationType != ''">
+                AND tr.violation_type = #{query.violationType}
+            </if>
+            <if test="query.status != null and query.status != ''">
+                AND v.status = #{query.status}
+            </if>
+            <if test="query.yearMonth != null and query.yearMonth != ''">
+                AND DATE_FORMAT(v.violation_time, '%Y-%m') = #{query.yearMonth}
+            </if>
+            <if test="query.districtId != null">
+                AND d.district_id = #{query.districtId}
+            </if>
+            <if test="query.accessibleDistrictIds != null and query.accessibleDistrictIds.size() > 0">
+                AND d.district_id IN
+                <foreach item="id" collection="query.accessibleDistrictIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+    </sql>
+
+    <select id="findViolationsByCriteria" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
+        <include refid="selectJoins"/>
+        <include refid="dynamicWhere"/>
+        ORDER BY v.violation_time DESC
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countViolationsByCriteria" resultType="long">
+        SELECT COUNT(v.violation_id)
+        FROM
+        violations v
+        LEFT JOIN devices d ON v.device_id = d.device_id
+        LEFT JOIN traffic_rules tr ON v.rule_id = tr.rule_id
+        <include refid="dynamicWhere"/>
+    </select>
+
+</mapper>

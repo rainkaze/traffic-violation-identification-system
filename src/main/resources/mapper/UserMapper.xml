@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.UserMapper">
+
+ <resultMap id="UserResultMap" type="edu.cupk.trafficviolationidentificationsystem.model.User">
+  <id property="userId" column="user_id"/>
+  <result property="username" column="username"/>
+  <result property="passwordHash" column="password_hash"/>
+  <result property="fullName" column="full_name"/>
+  <result property="email" column="email"/>
+  <result property="phoneNumber" column="phone_number"/>
+  <result property="avatarUrl" column="avatar_url"/>
+  <result property="rank" column="rank"/>
+  <result property="registrationStatus" column="registration_status"/>
+  <result property="verificationToken" column="verification_token"/>
+  <result property="verificationTokenExpiresAt" column="verification_token_expires_at"/>
+  <result property="lastLoginAt" column="last_login_at"/>
+  <result property="createdAt" column="created_at"/>
+  <result property="updatedAt" column="updated_at"/>
+ </resultMap>
+
+ <select id="findByUsername" resultMap="UserResultMap">
+  SELECT * FROM users WHERE username = #{username}
+ </select>
+
+ <select id="findByEmail" resultMap="UserResultMap">
+  SELECT * FROM users WHERE email = #{email}
+ </select>
+
+ <select id="existsByUsername" resultType="boolean">
+  SELECT COUNT(1) FROM users WHERE username = #{username}
+ </select>
+
+ <select id="existsByEmail" resultType="boolean">
+  SELECT COUNT(1) FROM users WHERE email = #{email}
+ </select>
+
+ <insert id="save" useGeneratedKeys="true" keyProperty="userId">
+  INSERT INTO users (username, password_hash, full_name, email, `rank`, registration_status)
+  VALUES (#{username}, #{passwordHash}, #{fullName}, #{email}, #{rank}, #{registrationStatus})
+ </insert>
+
+ <update id="updateUserStatus">
+  UPDATE users SET registration_status = #{status} WHERE user_id = #{userId}
+ </update>
+
+ <update id="updateUserPassword">
+  UPDATE users SET password_hash = #{passwordHash} WHERE user_id = #{userId}
+ </update>
+
+ <select id="findAll" resultMap="UserResultMap">
+  SELECT * FROM users ORDER BY created_at DESC
+ </select>
+
+
+ <select id="findById" resultMap="UserResultMap">
+  SELECT * FROM users WHERE user_id = #{userId}
+ </select>
+
+ <insert id="insertUser" useGeneratedKeys="true" keyProperty="userId">
+  INSERT INTO users (username, password_hash, full_name, email, `rank`, registration_status, created_at, updated_at)
+  VALUES (#{username}, #{passwordHash}, #{fullName}, #{email}, #{rank}, 'APPROVED', NOW(), NOW())
+ </insert>
+
+ <update id="updateUser">
+  UPDATE users
+  <set>
+   <if test="fullName != null and fullName != ''">
+    full_name = #{fullName},
+   </if>
+   <if test="email != null and email != ''">
+    email = #{email},
+   </if>
+   <if test="rank != null and rank != ''">
+    `rank` = #{rank},
+   </if>
+   <if test="registrationStatus != null and registrationStatus != ''">
+    registration_status = #{registrationStatus},
+   </if>
+   updated_at = NOW()
+  </set>
+  WHERE user_id = #{userId}
+ </update>
+
+ <delete id="deleteUserById">
+  DELETE FROM users WHERE user_id = #{userId}
+ </delete>
+
+ <select id="findDistrictsByUserId" resultType="java.lang.String">
+  SELECT d.district_name
+  FROM districts d
+        JOIN user_districts ud ON d.district_id = ud.district_id
+  WHERE ud.user_id = #{userId}
+ </select>
+
+ <delete id="deleteDistrictsByUserId">
+  DELETE FROM user_districts WHERE user_id = #{userId}
+ </delete>
+
+ <insert id="insertUserDistrict">
+  INSERT INTO user_districts (user_id, district_id) VALUES (#{userId}, #{districtId})
+ </insert>
+
+ <select id="findDistrictIdsByUserId" resultType="java.lang.Integer">
+  SELECT district_id
+  FROM user_districts
+  WHERE user_id = #{userId}
+ </select>
+
+
+ <select id="findUsersForAssignment" resultMap="UserResultMap">
+  SELECT DISTINCT u.* FROM users u
+  <if test="districtId != null">
+   JOIN user_districts ud ON u.user_id = ud.user_id
+  </if>
+  WHERE u.rank != '管理员' AND u.registration_status = 'APPROVED'
+  <if test="districtId != null">
+   AND ud.district_id = #{districtId}
+  </if>
+  ORDER BY u.full_name
+ </select>
+</mapper>
