@@ -5,9 +5,12 @@
 <mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.WorkflowTriggerMapper">
 
  <insert id="insertTrigger" useGeneratedKeys="true" keyProperty="triggerId">
-  INSERT INTO workflow_triggers (workflow_id, district_id, rule_id, min_demerit_points, priority, is_active)
-  VALUES (#{workflowId}, #{districtId}, #{ruleId}, #{minDemeritPoints}, #{priority}, #{isActive})
+  INSERT INTO workflow_triggers
+  (workflow_id, district_id, rule_id, min_fine, max_fine, min_demerit_points, max_demerit_points, priority, is_active)
+  VALUES
+   (#{workflowId}, #{districtId}, #{ruleId}, #{minFine}, #{maxFine}, #{minDemeritPoints}, #{maxDemeritPoints}, #{priority}, #{isActive})
  </insert>
+
  <select id="findByWorkflowId" resultType="edu.cupk.trafficviolationidentificationsystem.model.WorkflowTrigger">
   SELECT * FROM workflow_triggers WHERE workflow_id = #{workflowId} LIMIT 1
  </select>
@@ -15,4 +18,5 @@
  <delete id="deleteByWorkflowId">
   DELETE FROM workflow_triggers WHERE workflow_id = #{workflowId}
  </delete>
+
 </mapper>
