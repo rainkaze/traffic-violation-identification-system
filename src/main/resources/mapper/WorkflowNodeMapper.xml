@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.WorkflowNodeMapper">
+
+ <insert id="insertNode" useGeneratedKeys="true" keyProperty="nodeId">
+  INSERT INTO workflow_nodes (workflow_id, node_name, step_order, completion_rule)
+  VALUES (#{workflowId}, #{nodeName}, #{stepOrder}, #{completionRule})
+ </insert>
+ <select id="findNodesByWorkflowId" resultType="edu.cupk.trafficviolationidentificationsystem.model.WorkflowNode">
+  SELECT * FROM workflow_nodes WHERE workflow_id = #{workflowId} ORDER BY step_order ASC
+ </select>
+
+ <delete id="deleteByWorkflowId">
+  DELETE FROM workflow_nodes WHERE workflow_id = #{workflowId}
+ </delete>
+</mapper>

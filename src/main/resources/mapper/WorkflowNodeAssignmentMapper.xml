@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.WorkflowNodeAssignmentMapper">
+
+ <insert id="insertAssignment" useGeneratedKeys="true" keyProperty="assignmentId">
+  INSERT INTO workflow_node_assignments (node_id, assignment_type, assigned_rank)
+  VALUES (#{nodeId}, #{assignmentType}, #{assignedRank})
+ </insert>
+
+ <insert id="insertStaticUser">
+  INSERT INTO workflow_assignment_users (assignment_id, user_id)
+  VALUES (#{assignmentId}, #{userId})
+ </insert>
+ <select id="findByNodeId" resultType="edu.cupk.trafficviolationidentificationsystem.model.WorkflowNodeAssignment">
+  SELECT * FROM workflow_node_assignments WHERE node_id = #{nodeId} LIMIT 1
+ </select>
+
+ <select id="findStaticUserIdsByAssignmentId" resultType="java.lang.Integer">
+  SELECT user_id FROM workflow_assignment_users WHERE assignment_id = #{assignmentId}
+ </select>
+</mapper>

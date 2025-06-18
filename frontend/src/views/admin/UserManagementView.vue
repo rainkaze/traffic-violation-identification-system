@@ -21,33 +21,22 @@
       </div>
 
       <div v-if="activeTab === 'pending'">
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left">姓名</th><th class="px-6 py-3 text-left">邮箱</th><th class="px-6 py-3 text-left">申请等级</th><th class="px-6 py-3 text-left">申请时间</th><th class="px-6 py-3 text-right">操作</th></tr></thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-if="isLoading"><td colspan="5" class="text-center py-4">加载中...</td></tr>
-            <tr v-else-if="pendingUsers.length === 0"><td colspan="5" class="text-center py-4 text-gray-500">暂无待审批的申请</td></tr>
-            <tr v-for="user in pendingUsers" :key="user.userId">
-              <td class="px-6 py-4">{{ user.fullName }}</td>
-              <td class="px-6 py-4">{{ user.email }}</td>
-              <td class="px-6 py-4">{{ user.rank }}</td>
-              <td class="px-6 py-4">{{ new Date(user.createdAt).toLocaleString() }}</td>
-              <td class="px-6 py-4 text-right space-x-2">
-                <button @click="approveUser(user.userId)" class="btn btn-success text-xs">批准</button>
-                <button @click="rejectUser(user.userId)" class="btn btn-danger text-xs">拒绝</button>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
       </div>
 
       <div v-if="activeTab === 'all'">
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left">用户</th><th class="px-6 py-3 text-left">等级</th><th class="px-6 py-3 text-left">状态</th><th class="px-6 py-3 text-right">操作</th></tr></thead>
+            <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left">用户</th>
+              <th class="px-6 py-3 text-left">等级</th>
+              <th class="px-6 py-3 text-left">辖区</th>
+              <th class="px-6 py-3 text-left">状态</th>
+              <th class="px-6 py-3 text-right">操作</th>
+            </tr>
+            </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-if="isLoading"><td colspan="4" class="text-center py-4">加载中...</td></tr>
+            <tr v-if="isLoading"><td colspan="5" class="text-center py-4">加载中...</td></tr>
             <tr v-for="user in allUsers" :key="user.userId">
               <td class="px-6 py-4">
                 <div class="font-medium">{{ user.fullName }}</div>
@@ -55,13 +44,22 @@
               </td>
               <td class="px-6 py-4">{{ user.rank }}</td>
               <td class="px-6 py-4">
-                    <span :class="{
-                        'bg-green-100 text-green-800': user.registrationStatus === 'APPROVED',
-                        'bg-yellow-100 text-yellow-800': user.registrationStatus === 'PENDING',
-                        'bg-red-100 text-red-800': user.registrationStatus === 'REJECTED'
-                    }" class="badge">{{ user.registrationStatus }}</span>
+                  <span v-if="user.districts && user.districts.length" class="flex flex-wrap gap-1">
+                    <span v-for="district in user.districts" :key="district" class="badge bg-blue-100 text-blue-800">
+                      {{ district }}
+                    </span>
+                  </span>
+                <span v-else class="text-gray-400">未分配</span>
               </td>
-              <td class="px-6 py-4 text-right">
+              <td class="px-6 py-4">
+                  <span :class="{
+                      'bg-green-100 text-green-800': user.registrationStatus === 'APPROVED',
+                      'bg-yellow-100 text-yellow-800': user.registrationStatus === 'PENDING',
+                      'bg-red-100 text-red-800': user.registrationStatus === 'REJECTED'
+                  }" class="badge">{{ user.registrationStatus }}</span>
+              </td>
+              <td class="px-6 py-4 text-right whitespace-nowrap">
+                <button @click="openDistrictModal(user)" class="text-blue-600 hover:text-blue-800 mr-3" v-if="user.rank !== '管理员'">辖区</button>
                 <button @click="openEditUserModal(user)" class="text-primary hover:text-primary/80 mr-3">编辑</button>
                 <button @click="handleDeleteUser(user.userId)" class="text-danger hover:text-danger/80">删除</button>
               </td>
@@ -73,6 +71,7 @@
     </div>
 
     <UserFormModal :show="showModal" :user="currentUserForEdit" @close="closeModal" @save="handleSave" />
+    <UserDistrictModal :show="showDistrictModal" :user="currentUserForDistrict" :all-districts="districts" @close="closeDistrictModal" @save="handleSave" />
   </div>
 </template>
 
@@ -80,13 +79,18 @@
 import {ref, onMounted, computed} from 'vue';
 import apiClient from '@/services/api';
 import UserFormModal from '@/components/admin/UserFormModal.vue'; // 引入模态框组件
+import UserDistrictModal from '@/components/admin/UserDistrictModal.vue';
 
 const activeTab = ref('pending');
 const users = ref([]);
+const districts = ref([]); // 存储所有辖区列表
 const isLoading = ref(true);
 
 const showModal = ref(false);
+const showDistrictModal = ref(false);
 const currentUserForEdit = ref(null);
+const currentUserForDistrict = ref(null);
+
 
 const pendingUsers = computed(() => users.value.filter(u => u.registrationStatus === 'PENDING'));
 // 过滤掉待审批的用户，使其只在“待审批”标签页显示
@@ -102,6 +106,15 @@ const fetchUsers = async () => {
     alert('无法加载用户列表');
   } finally {
     isLoading.value = false;
+  }
+};
+
+const fetchDistricts = async () => {
+  try {
+    const response = await apiClient.get('/districts');
+    districts.value = response.data;
+  } catch (error) {
+    console.error("无法加载辖区列表", error);
   }
 };
 
@@ -142,11 +155,6 @@ const openEditUserModal = (user) => {
 const closeModal = () => {
   showModal.value = false;
 };
-
-const handleSave = () => {
-  fetchUsers(); // 保存成功后刷新用户列表
-};
-
 const handleDeleteUser = async (userId) => {
   if (!confirm('确定要永久删除该用户吗？此操作不可撤销。')) return;
   try {
@@ -159,5 +167,24 @@ const handleDeleteUser = async (userId) => {
   }
 };
 
-onMounted(fetchUsers);
+const openDistrictModal = (user) => {
+  currentUserForDistrict.value = user;
+  showDistrictModal.value = true;
+};
+
+const closeDistrictModal = () => {
+  showDistrictModal.value = false;
+};
+
+const handleSave = () => {
+  // 无论是编辑用户还是分配辖区，都刷新用户列表
+  fetchUsers();
+  closeModal();
+  closeDistrictModal();
+};
+
+onMounted(() => {
+  fetchUsers();
+  fetchDistricts(); // 页面加载时获取辖区列表
+});
 </script>

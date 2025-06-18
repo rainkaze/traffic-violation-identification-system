@@ -10,14 +10,14 @@
             v.plate_number AS plate,
             v.violation_time AS time,
             tr.violation_type AS type,
-            l.address AS location,
-            l.district AS district,
+            d.address AS location,
+            dist.district_name AS district,
             d.device_name AS device,
             v.status AS status
         FROM
             violations v
-            LEFT JOIN locations l ON v.location_id = l.location_id
             LEFT JOIN devices d ON v.device_id = d.device_id
+            LEFT JOIN districts dist ON d.district_id = dist.district_id
             LEFT JOIN traffic_rules tr ON v.rule_id = tr.rule_id
     </sql>
 
@@ -35,6 +35,15 @@
             <if test="query.yearMonth != null and query.yearMonth != ''">
                 AND DATE_FORMAT(v.violation_time, '%Y-%m') = #{query.yearMonth}
             </if>
+            <if test="query.districtId != null">
+                AND d.district_id = #{query.districtId}
+            </if>
+            <if test="query.accessibleDistrictIds != null and query.accessibleDistrictIds.size() > 0">
+                AND d.district_id IN
+                <foreach item="id" collection="query.accessibleDistrictIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
         </where>
     </sql>
 
@@ -47,9 +56,10 @@
 
     <select id="countViolationsByCriteria" resultType="long">
         SELECT COUNT(v.violation_id)
-        FROM violations v
+        FROM
+        violations v
+        LEFT JOIN devices d ON v.device_id = d.device_id
         LEFT JOIN traffic_rules tr ON v.rule_id = tr.rule_id
-        LEFT JOIN locations l ON v.location_id = l.location_id /* 某些情况下可能需要 join 更多表来满足筛选条件 */
         <include refid="dynamicWhere"/>
     </select>
 

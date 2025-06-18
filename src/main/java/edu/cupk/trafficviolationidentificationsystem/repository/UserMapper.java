@@ -21,4 +21,12 @@ public interface UserMapper {
     void updateUserStatus(@Param("userId") Integer userId, @Param("status") String status);
     void updateUserPassword(@Param("userId") Integer userId, @Param("passwordHash") String passwordHash);
     List<User> findAll();
+
+    List<String> findDistrictsByUserId(@Param("userId") Integer userId);
+    void deleteDistrictsByUserId(@Param("userId") Integer userId);
+    void insertUserDistrict(@Param("userId") Integer userId, @Param("districtId") Integer districtId);
+    List<Integer> findDistrictIdsByUserId(@Param("userId") Integer userId);
+
+    List<User> findUsersForAssignment(@Param("districtId") Integer districtId);
+
 }

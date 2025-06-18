@@ -20,6 +20,12 @@
             <span>用户管理</span>
           </router-link>
         </li>
+        <li v-if="isAdmin">
+          <router-link to="/workflow-management" class="sidebar-item">
+            <i class="fa fa-sitemap w-5 text-center"></i>
+            <span>工作流管理</span>
+          </router-link>
+        </li>
         <li>
           <router-link to="/violations" class="sidebar-item">
             <i class="fa fa-list-alt w-5 text-center"></i>
@@ -110,6 +116,12 @@
           <router-link to="/user-management" class="sidebar-item">
             <i class="fa fa-users w-5 text-center"></i>
             <span>用户管理</span>
+          </router-link>
+        </li>
+        <li v-if="isAdmin">
+          <router-link to="/workflow-management" class="sidebar-item">
+            <i class="fa fa-sitemap w-5 text-center"></i>
+            <span>工作流管理</span>
           </router-link>
         </li>
         <li>
