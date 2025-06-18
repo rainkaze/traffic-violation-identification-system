@@ -10,6 +10,59 @@
   ORDER BY violation_type
  </select>
  <select id="findAllRules" resultType="edu.cupk.trafficviolationidentificationsystem.dto.TrafficRuleDto">
-  SELECT rule_id, violation_type FROM traffic_rules ORDER BY rule_id
- </select>
+  SELECT
+    rule_id,
+    violation_type,
+    legal_reference,
+    base_fine,
+    base_demerit_points
+  FROM traffic_rules
+  ORDER BY rule_id
+</select>
+<!-- 查询总数 -->
+<select id="countAllRules" resultType="int">
+  SELECT COUNT(*) FROM traffic_rules
+</select>
+
+<!-- 分页查询 -->
+<select id="findRulesByOffsetAndSize" resultType="edu.cupk.trafficviolationidentificationsystem.dto.TrafficRuleDto">
+  SELECT
+    rule_id,
+    violation_type,
+    legal_reference,
+    base_fine,
+    base_demerit_points
+  FROM traffic_rules
+  ORDER BY rule_id
+  LIMIT #{size} OFFSET #{offset}
+</select>
+
+<!-- 新增规则 -->
+<insert id="insertRule" parameterType="edu.cupk.trafficviolationidentificationsystem.dto.TrafficRuleDto">
+    INSERT INTO traffic_rules (
+        violation_type,
+        legal_reference,
+        base_fine,
+        base_demerit_points
+    ) VALUES (
+        #{violationType},
+        #{legalReference},
+        #{baseFine},
+        #{baseDemeritPoints}
+    )
+</insert>
+
+<!-- 更新规则 -->
+<update id="updateRule" parameterType="edu.cupk.trafficviolationidentificationsystem.dto.TrafficRuleDto">
+    UPDATE traffic_rules
+    SET
+        violation_type = #{violationType},
+        legal_reference = #{legalReference},
+        base_fine = #{baseFine},
+        base_demerit_points = #{baseDemeritPoints}
+    WHERE rule_id = #{ruleId}
+</update>
+
+
+
 </mapper>

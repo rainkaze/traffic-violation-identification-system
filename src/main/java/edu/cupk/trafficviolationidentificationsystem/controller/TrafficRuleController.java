@@ -3,11 +3,11 @@ package edu.cupk.trafficviolationidentificationsystem.controller;
 import edu.cupk.trafficviolationidentificationsystem.dto.TrafficRuleDto;
 import edu.cupk.trafficviolationidentificationsystem.service.TrafficRuleService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/rules") // 我们为法规相关的API创建一个新的路径
@@ -33,4 +33,38 @@ public class TrafficRuleController {
     public ResponseEntity<List<TrafficRuleDto>> getAllRules() {
         return ResponseEntity.ok(trafficRuleService.getAllRules());
     }
+
+    // 新增接口：分页查询
+    @GetMapping("/page")
+    public ResponseEntity<Map<String, Object>> getRulesPage(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        int offset = (page - 1) * size;
+        List<TrafficRuleDto> items = trafficRuleService.getRulesByPage(offset, size);
+        int total = trafficRuleService.countAllRules();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("total", total);
+        response.put("items", items);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping
+    public ResponseEntity<TrafficRuleDto> createRule(@RequestBody TrafficRuleDto trafficRuleDto) {
+    TrafficRuleDto createdRule = trafficRuleService.createRule(trafficRuleDto);
+    return ResponseEntity.ok(createdRule);
+    }
+
+    @PutMapping("/{ruleId}")
+    public ResponseEntity<TrafficRuleDto> updateRule(@PathVariable Long ruleId, @RequestBody TrafficRuleDto trafficRuleDto) {
+    trafficRuleDto.setRuleId(Math.toIntExact(ruleId)); // 确保ID正确设置
+    TrafficRuleDto updatedRule = trafficRuleService.updateRule(trafficRuleDto);
+    return ResponseEntity.ok(updatedRule);
+    }
+
+
+
+
 }

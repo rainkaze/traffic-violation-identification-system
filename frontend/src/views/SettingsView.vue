@@ -8,18 +8,18 @@
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
       <div class="card lg:col-span-1 p-0">
         <div class="space-y-1 p-3">
-          <button @click="activeTab = 'profile'" :class="{'bg-primary/10 text-primary': activeTab === 'profile'}" class="sidebar-item w-full text-left">
-            <i class="fa fa-user-circle w-5 text-center" :class="activeTab === 'profile' ? 'text-primary' : 'text-gray-500'"></i>
-            <span>个人设置</span>
-          </button>
-          <button @click="activeTab = 'users'" :class="{'bg-primary/10 text-primary': activeTab === 'users'}" class="sidebar-item w-full text-left">
-            <i class="fa fa-users w-5 text-center" :class="activeTab === 'users' ? 'text-primary' : 'text-gray-500'"></i>
-            <span>用户管理</span>
-          </button>
-          <button @click="activeTab = 'roles'" :class="{'bg-primary/10 text-primary': activeTab === 'roles'}" class="sidebar-item w-full text-left">
-            <i class="fa fa-shield w-5 text-center" :class="activeTab === 'roles' ? 'text-primary' : 'text-gray-500'"></i>
-            <span>角色权限</span>
-          </button>
+<!--          <button @click="activeTab = 'profile'" :class="{'bg-primary/10 text-primary': activeTab === 'profile'}" class="sidebar-item w-full text-left">-->
+<!--            <i class="fa fa-user-circle w-5 text-center" :class="activeTab === 'profile' ? 'text-primary' : 'text-gray-500'"></i>-->
+<!--            <span>个人设置</span>-->
+<!--          </button>-->
+<!--          <button @click="activeTab = 'users'" :class="{'bg-primary/10 text-primary': activeTab === 'users'}" class="sidebar-item w-full text-left">-->
+<!--            <i class="fa fa-users w-5 text-center" :class="activeTab === 'users' ? 'text-primary' : 'text-gray-500'"></i>-->
+<!--            <span>用户管理</span>-->
+<!--          </button>-->
+<!--          <button @click="activeTab = 'roles'" :class="{'bg-primary/10 text-primary': activeTab === 'roles'}" class="sidebar-item w-full text-left">-->
+<!--            <i class="fa fa-shield w-5 text-center" :class="activeTab === 'roles' ? 'text-primary' : 'text-gray-500'"></i>-->
+<!--            <span>角色权限</span>-->
+<!--          </button>-->
           <button @click="activeTab = 'notifications'" :class="{'bg-primary/10 text-primary': activeTab === 'notifications'}" class="sidebar-item w-full text-left">
             <i class="fa fa-bell w-5 text-center" :class="activeTab === 'notifications' ? 'text-primary' : 'text-gray-500'"></i>
             <span>通知设置</span>
@@ -52,146 +52,8 @@
 
       <div class="card lg:col-span-3">
         <div v-if="activeTab === 'profile'">
-          <h3 class="font-bold text-gray-800 mb-6">个人设置</h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="md:col-span-1 flex flex-col items-center">
-<!--              <img src="https://picsum.photos/id/1005/128/128" alt="User Avatar" class="w-32 h-32 rounded-full mb-4 object-cover">-->
-<!--              <button class="btn btn-secondary text-sm">上传新头像</button>-->
-              <img
-                :src="user.avatar || 'https://picsum.photos/id/1005/128/128'"
-                alt="User Avatar"
-                class="w-32 h-32 rounded-full mb-4 object-cover"
-              />
-              <input
-                type="file"
-                ref="avatarFileInput"
-                @change="handleAvatarChange"
-                accept="image/*"
-                class="hidden"
-              />
-              <button class="btn btn-secondary text-sm" @click="triggerUpload">上传新头像</button>
-            </div>
-            <div class="md:col-span-2 space-y-4">
-              <div><label class="block text-sm font-medium text-gray-700">姓名</label><input type="text" v-model="user.name" class="mt-1 block w-full input"></div>
-              <div><label class="block text-sm font-medium text-gray-700">邮箱地址</label><input type="email" v-model="user.email" class="mt-1 block w-full input"></div>
-              <div><label class="block text-sm font-medium text-gray-700">手机号</label><input type="tel" v-model="user.phone" class="mt-1 block w-full input"></div>
-            </div>
-          </div>
-          <hr class="my-6">
-          <div>
-            <h4 class="font-medium text-gray-700 mb-4">修改密码</h4>
-            <div class="space-y-4">
-<!--              我user没定义密码字段....-->
-              <div><label class="block text-sm font-medium text-gray-700">当前密码</label><input type="password" :value="user.status1" class="mt-1 block w-full input"></div>
-              <div><label class="block text-sm font-medium text-gray-700">新密码</label><input type="password" class="mt-1 block w-full input"></div>
-              <div><label class="block text-sm font-medium text-gray-700">确认新密码</label><input type="password" class="mt-1 block w-full input"></div>
-            </div>
-          </div>
-          <div class="flex justify-end gap-3 mt-6"><button class="btn btn-primary">保存更改</button></div>
-        </div>
 
-
-
-
-
-
-
-
-        <div v-if="activeTab === 'users'">
-          <h3 class="font-bold text-gray-800 mb-6">用户管理</h3>
-
-          <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-3">
-            <div class="relative w-full md:w-auto">
-              <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-              <input v-model="searchKeyword" type="text" placeholder="搜索用户..." class="input pl-10 w-full" />
-            </div>
-            <button @click="openAddUser" class="btn btn-primary w-full md:w-auto">
-              <i class="fa fa-plus mr-1"></i> 添加用户
-            </button>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left">用户</th>
-                <th class="px-6 py-3 text-left">角色</th>
-                <th class="px-6 py-3 text-left">状态</th>
-                <th class="px-6 py-3 text-left">上次登录</th>
-                <th class="px-6 py-3 text-right">操作</th>
-              </tr>
-              </thead>
-              <tbody class="divide-y">
-              <tr v-for="user in filteredUsers" :key="user.id">
-                <td class="px-6 py-4">
-                  <div class="flex items-center gap-3">
-                    <img :src="user.avatar" class="w-10 h-10 rounded-full object-cover" />
-                    <div>
-                      <div class="font-medium">{{ user.name }}</div>
-                      <div class="text-sm text-gray-500">{{ user.email }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4">{{ user.role }}</td>
-                <td class="px-6 py-4">
-            <span
-              class="badge"
-              :class="user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-200 text-gray-600'"
-            >
-              {{ user.status === 'active' ? '活跃' : '已禁用' }}
-            </span>
-                </td>
-                <td class="px-6 py-4">{{ user.lastLogin }}</td>
-                <td class="px-6 py-4 text-right">
-                  <button class="text-primary mr-3" @click="openEditUser(user)">编辑</button>
-                  <button
-                    :class="user.status === 'active' ? 'text-danger' : 'text-success'"
-                    @click="toggleUserStatus(user)"
-                  >
-                    {{ user.status === 'active' ? '禁用' : '启用' }}
-                  </button>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-
-            <div class="mt-4 flex flex-col md:flex-row justify-between items-center text-sm text-gray-600">
-              <!-- 显示条数 -->
-              <div class="mb-2 md:mb-0">
-                显示第 {{ (page - 1) * size + 1 }} 到
-                {{ Math.min(page * size, total) }} 条，共 {{ total }} 条记录
-              </div>
-
-              <!-- 分页按钮 -->
-              <div class="flex items-center space-x-2">
-                <button
-                  @click="handlePageChange(page - 1)"
-                  :disabled="page === 1"
-                  class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
-                >
-                  上一页
-                </button>
-
-                <span>第 {{ page }} / {{ Math.ceil(total / size) }} 页</span>
-
-                <button
-                  @click="handlePageChange(page + 1)"
-                  :disabled="page >= Math.ceil(total / size)"
-                  class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
-                >
-                  下一页
-                </button>
-              </div>
-            </div>
-
-
-
-
-
-
-          </div>
-
-<!--           添加/编辑用户弹窗-->
+          <!--           添加/编辑用户弹窗-->
           <div v-if="showUserModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40">
             <div class="bg-white p-6 rounded shadow-lg w-96">
               <h4 class="text-xl mb-4">{{ editingUser.id ? '编辑用户' : '添加用户' }}</h4>
@@ -220,29 +82,29 @@
 
 
                 <div class="mb-4">
-  <label class="block mb-1">头像</label>
-  <div class="flex items-center gap-3">
-    <img
-      :src="editingUser.avatar"
-      alt="预览"
-      class="w-10 h-10 rounded-full object-cover"
-    />
-    <input
-      type="file"
-      ref="userAvatarInput"
-      @change="handleUserAvatarChange"
-      accept="image/*"
-      class="hidden"
-    />
-    <button
-      type="button"
-      class="btn btn-secondary text-sm"
-      @click="triggerUserAvatarUpload"
-    >
-      选择头像
-    </button>
-  </div>
-</div>
+                  <label class="block mb-1">头像</label>
+                  <div class="flex items-center gap-3">
+                    <img
+                      :src="editingUser.avatar"
+                      alt="预览"
+                      class="w-10 h-10 rounded-full object-cover"
+                    />
+                    <input
+                      type="file"
+                      ref="userAvatarInput"
+                      @change="handleUserAvatarChange"
+                      accept="image/*"
+                      class="hidden"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-secondary text-sm"
+                      @click="triggerUserAvatarUpload"
+                    >
+                      选择头像
+                    </button>
+                  </div>
+                </div>
                 <div class="flex justify-end gap-3">
                   <button type="button" @click="closeUserModal" class="btn btn-secondary">取消</button>
                   <button type="submit" class="btn btn-primary">{{ editingUser.id ? '保存' : '添加' }}</button>
@@ -365,201 +227,171 @@
 
 
 
-<!--        <div v-if="activeTab === 'warnings'"><h3 class="font-bold text-gray-800 mb-6">预警规则管理</h3><div class="space-y-4"><div class="p-4 border rounded-lg"><h4 class="font-medium">一级预警 <span class="badge bg-danger text-white">即时推送</span></h4><p class="text-sm text-gray-500 my-2">当违法行为满足以下任一条件时，触发最高级别预警。</p><p><code>(违法类型 = 闯红灯 OR 逆行) AND (置信度 >= 0.8)</code></p></div><div class="p-4 border rounded-lg"><h4 class="font-medium">二级预警 <span class="badge bg-warning text-white">每日汇总</span></h4><p class="text-sm text-gray-500 my-2">当违法行为满足以下条件时，触发二级预警。</p><p><code>(违法类型 = 超速) AND (置信度 >= 0.6)</code></p></div></div><div class="text-right mt-6"><button class="btn btn-primary">编辑规则</button></div></div>-->
-
-
-
-<!--        <div v-if="activeTab === 'rules'"><h3 class="font-bold text-gray-800 mb-6">法规库管理</h3><p class="text-sm text-gray-500 mb-4">维护违法行为与交通法规的对应关系、处罚标准。</p><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left">违法类型</th><th class="px-6 py-3 text-left">对应条款</th><th class="px-6 py-3 text-left">罚款(元)</th><th class="px-6 py-3 text-left">记分</th><th class="px-6 py-3 text-right">操作</th></tr></thead><tbody class="divide-y"><tr><td class="px-6 py-4">闯红灯</td><td class="px-6 py-4">第26条, 第90条</td><td class="px-6 py-4">200</td><td class="px-6 py-4">6</td><td class="px-6 py-4 text-right"><button class="text-primary">编辑</button></td></tr><tr><td class="px-6 py-4">超速20%</td><td class="px-6 py-4">第42条, 第99条</td><td class="px-6 py-4">500</td><td class="px-6 py-4">3</td><td class="px-6 py-4 text-right"><button class="text-primary">编辑</button></td></tr><tr><td class="px-6 py-4">逆行</td><td class="px-6 py-4">第35条, 第90条</td><td class="px-6 py-4">200</td><td class="px-6 py-4">3</td><td class="px-6 py-4 text-right"><button class="text-primary">编辑</button></td></tr></tbody></table><div class="text-right mt-6"><button class="btn btn-primary">添加新条款</button></div></div>-->
-<!--        <div v-if="activeTab === 'params'"><h3 class="font-bold text-gray-800 mb-6">系统参数</h3><div class="space-y-4"><div><label class="block text-sm font-medium text-gray-700">系统名称</label><input type="text" value="城市交通智能执法平台" class="mt-1 block w-full input"></div><div><label class="block text-sm font-medium text-gray-700">会话超时时间 (分钟)</label><input type="number" value="30" class="mt-1 block w-full input"></div><div><label class="block text-sm font-medium text-gray-700">数据保留策略 (天)</label><input type="number" value="365" class="mt-1 block w-full input"><p class="text-xs text-gray-500 mt-1">系统将自动清除超过此天数的历史操作日志和违法记录。</p></div></div><div class="flex justify-end gap-3 mt-6"><button class="btn btn-primary">保存参数</button></div></div>-->
-<!--        <div v-if="activeTab === 'data'"><h3 class="font-bold text-gray-800 mb-6">数据管理</h3><div class="space-y-6"><div class="p-4 border rounded-lg"><h4 class="font-medium">数据备份</h4><p class="text-sm text-gray-500 my-2">创建系统数据的完整备份。上次备份时间：2025-06-08 02:00:00</p><button class="btn btn-secondary">立即备份</button></div><div class="p-4 border border-warning/50 rounded-lg bg-warning/5"><h4 class="font-medium text-warning">数据恢复</h4><p class="text-sm text-gray-500 my-2">从备份文件恢复数据。注意：此操作将覆盖现有数据且不可逆。</p><input type="file" class="text-sm"><button class="btn btn-warning ml-4">开始恢复</button></div></div></div>-->
-<!--        <div v-if="activeTab === 'logs'"><h3 class="font-bold text-gray-800 mb-6">操作日志</h3><div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-3"><div class="relative w-full md:w-auto"><i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i><input type="text" placeholder="搜索操作或用户..." class="input pl-10 w-full"></div><input type="date" class="input w-full md:w-auto"></div><div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left">时间</th><th class="px-6 py-3 text-left">用户</th><th class="px-6 py-3 text-left">IP地址</th><th class="px-6 py-3 text-left">操作详情</th></tr></thead><tbody class="divide-y"><tr><td class="px-6 py-4">2025-06-09 16:10</td><td class="px-6 py-4">张三</td><td class="px-6 py-4">192.168.1.101</td><td class="px-6 py-4">登录系统</td></tr><tr><td class="px-6 py-4">2025-06-09 15:45</td><td class="px-6 py-4">李四</td><td class="px-6 py-4">202.55.10.18</td><td class="px-6 py-4">更新了ID为 "R003" 的角色权限</td></tr><tr><td class="px-6 py-4">2025-06-09 15:30</td><td class="px-6 py-4">李四</td><td class="px-6 py-4">202.55.10.18</td><td class="px-6 py-4">处理了违法记录 "V20250609-0123"</td></tr></tbody></table></div></div>-->
-<!--      -->
+        <!--        <div v-if="activeTab === 'warnings'"><h3 class="font-bold text-gray-800 mb-6">预警规则管理</h3><div class="space-y-4"><div class="p-4 border rounded-lg"><h4 class="font-medium">一级预警 <span class="badge bg-danger text-white">即时推送</span></h4><p class="text-sm text-gray-500 my-2">当违法行为满足以下任一条件时，触发最高级别预警。</p><p><code>(违法类型 = 闯红灯 OR 逆行) AND (置信度 >= 0.8)</code></p></div><div class="p-4 border rounded-lg"><h4 class="font-medium">二级预警 <span class="badge bg-warning text-white">每日汇总</span></h4><p class="text-sm text-gray-500 my-2">当违法行为满足以下条件时，触发二级预警。</p><p><code>(违法类型 = 超速) AND (置信度 >= 0.6)</code></p></div></div><div class="text-right mt-6"><button class="btn btn-primary">编辑规则</button></div></div>-->
 
 
 
 
+        <!-- 预警规则 -->
+        <div v-if="activeTab === 'warnings'">
+          <h3 class="font-bold text-gray-800 mb-6">预警规则管理</h3>
+          <div class="space-y-4">
+            <div v-for="(rule, index) in warningRules" :key="index" class="p-4 border rounded-lg">
+              <h4 class="font-medium">
+                {{ rule.level }}
+                <span class="badge" :class="rule.badgeClass">{{ rule.triggerType }}</span>
+              </h4>
+              <p class="text-sm text-gray-500 my-2">
+                {{ rule.description }}
+              </p>
+              <p><code>{{ rule.condition }}</code></p>
 
-<!--        &lt;!&ndash; 预警规则 &ndash;&gt;-->
-<!--        <div v-if="activeTab === 'warnings'">-->
-<!--          <h3 class="font-bold text-gray-800 mb-6">预警规则管理</h3>-->
-<!--          <div class="space-y-4">-->
-<!--            <div class="p-4 border rounded-lg">-->
-<!--              <h4 class="font-medium">一级预警 <span class="badge bg-danger text-white">即时推送</span></h4>-->
-<!--              <p class="text-sm text-gray-500 my-2">当违法行为满足以下任一条件时，触发最高级别预警。</p>-->
-<!--              <p><code>(违法类型 = 闯红灯 OR 逆行) AND (置信度 >= 0.8)</code></p>-->
-<!--            </div>-->
-<!--            <div class="p-4 border rounded-lg">-->
-<!--              <h4 class="font-medium">二级预警 <span class="badge bg-warning text-white">每日汇总</span></h4>-->
-<!--              <p class="text-sm text-gray-500 my-2">当违法行为满足以下条件时，触发二级预警。</p>-->
-<!--              <p><code>(违法类型 = 超速) AND (置信度 >= 0.6)</code></p>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--          <div class="text-right mt-6">-->
-<!--            <button class="btn btn-primary">编辑规则</button>-->
-<!--          </div>-->
-<!--        </div>-->
+              <!-- 编辑按钮：绑定当前规则 -->
+              <div class="mt-3 text-right">
+                <button class="btn btn-sm btn-secondary" @click="openEditRuleModal(rule)">编辑规则</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 所有规则统一编辑入口（可选） -->
+          <!-- <div class="text-right mt-6">
+            <button class="btn btn-primary" @click="openEditAllRules">批量编辑</button>
+          </div> -->
+
+          <!-- 编辑规则弹窗 -->
+          <div v-if="editWarningRuleModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+            <div class="bg-white p-6 rounded shadow-lg w-96">
+              <h4 class="text-xl mb-4">编辑预警规则</h4>
+              <form @submit.prevent="saveWarningRule">
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">预警等级</label>
+                  <input type="text" v-model="editingRule.level" class="input w-full" disabled />
+                </div>
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">触发方式</label>
+                  <input type="text" v-model="editingRule.triggerType" class="input w-full" disabled />
+                </div>
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">描述信息</label>
+                  <input type="text" v-model="editingRule.description" class="input w-full" />
+                </div>
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-1">条件表达式</label>
+                  <textarea v-model="editingRule.condition" rows="3" class="input w-full"></textarea>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                  <button type="button" class="btn btn-secondary" @click="closeEditRuleModal">取消</button>
+                  <button type="submit" class="btn btn-primary">保存规则</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
 
 
 
-<!-- 预警规则 -->
-<div v-if="activeTab === 'warnings'">
-  <h3 class="font-bold text-gray-800 mb-6">预警规则管理</h3>
-  <div class="space-y-4">
-    <div v-for="(rule, index) in warningRules" :key="index" class="p-4 border rounded-lg">
-      <h4 class="font-medium">
-        {{ rule.level }}
-        <span class="badge" :class="rule.badgeClass">{{ rule.triggerType }}</span>
-      </h4>
-      <p class="text-sm text-gray-500 my-2">
-        {{ rule.description }}
-      </p>
-      <p><code>{{ rule.condition }}</code></p>
 
-      <!-- 编辑按钮：绑定当前规则 -->
-      <div class="mt-3 text-right">
-        <button class="btn btn-sm btn-secondary" @click="openEditRuleModal(rule)">编辑规则</button>
-      </div>
-    </div>
+
+
+
+
+
+
+
+
+        <!-- 法规库管理 -->
+        <div v-if="activeTab === 'rules'">
+          <h3 class="font-bold text-gray-800 mb-6">法规库管理</h3>
+          <p class="text-sm text-gray-500 mb-4">维护违法行为与交通法规的对应关系、处罚标准。</p>
+          <!-- 表格头部 + 添加按钮 -->
+          <div class="flex justify-between items-center mb-4">
+            <h4 class="font-medium text-gray-700">法规列表</h4>
+            <button class="btn btn-primary" @click="openEditRule()">添加新条款</button>
+          </div>
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left">违法类型</th>
+              <th class="px-6 py-3 text-left">对应条款</th>
+              <th class="px-6 py-3 text-left">罚款(元)</th>
+              <th class="px-6 py-3 text-left">记分</th>
+              <th class="px-6 py-3 text-right">操作</th>
+            </tr>
+            </thead>
+            <tbody class="divide-y">
+           <tr v-for="rule in rules" :key="rule.ruleId">
+  <td class="px-6 py-4">{{ rule.violationType }}</td>
+  <td class="px-6 py-4">{{ rule.legalReference }}</td>
+  <td class="px-6 py-4">{{ rule.baseFine }}</td>
+  <td class="px-6 py-4">{{ rule.baseDemeritPoints }}</td>
+  <td class="px-6 py-4 text-right">
+    <button class="text-primary" @click="openEditRule(rule)">编辑</button>
+  </td>
+</tr>
+
+            </tbody>
+          </table>
+
+
+                   <!-- 分页区域 -->
+<div class="mt-4 flex flex-col md:flex-row justify-between items-center text-sm text-gray-600">
+  <div class="mb-2 md:mb-0">
+    显示第 {{ (rulePagination.page - 1) * rulePagination.size + 1 }} 到
+    {{ Math.min(rulePagination.page * rulePagination.size, rulePagination.total) }} 条，共 {{ rulePagination.total }} 条记录
   </div>
+  <div class="flex items-center space-x-2">
+    <button
+      @click="handleRulePageChange(rulePagination.page - 1)"
+      :disabled="rulePagination.page === 1"
+      class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+    >
+      上一页
+    </button>
 
-  <!-- 所有规则统一编辑入口（可选） -->
-  <!-- <div class="text-right mt-6">
-    <button class="btn btn-primary" @click="openEditAllRules">批量编辑</button>
-  </div> -->
+    <span>第 {{ rulePagination.page }} / {{ Math.ceil(rulePagination.total / rulePagination.size) }} 页</span>
 
-  <!-- 编辑规则弹窗 -->
-  <div v-if="editWarningRuleModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-    <div class="bg-white p-6 rounded shadow-lg w-96">
-      <h4 class="text-xl mb-4">编辑预警规则</h4>
-      <form @submit.prevent="saveWarningRule">
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">预警等级</label>
-          <input type="text" v-model="editingRule.level" class="input w-full" disabled />
-        </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">触发方式</label>
-          <input type="text" v-model="editingRule.triggerType" class="input w-full" disabled />
-        </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">描述信息</label>
-          <input type="text" v-model="editingRule.description" class="input w-full" />
-        </div>
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">条件表达式</label>
-          <textarea v-model="editingRule.condition" rows="3" class="input w-full"></textarea>
-        </div>
-        <div class="flex justify-end gap-3 mt-6">
-          <button type="button" class="btn btn-secondary" @click="closeEditRuleModal">取消</button>
-          <button type="submit" class="btn btn-primary">保存规则</button>
-        </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-<!--        &lt;!&ndash; 法规库管理 &ndash;&gt;-->
-<!--        <div v-if="activeTab === 'rules'">-->
-<!--          <h3 class="font-bold text-gray-800 mb-6">法规库管理</h3>-->
-<!--          <p class="text-sm text-gray-500 mb-4">维护违法行为与交通法规的对应关系、处罚标准。</p>-->
-<!--          <table class="min-w-full divide-y divide-gray-200">-->
-<!--            <thead class="bg-gray-50">-->
-<!--            <tr>-->
-<!--              <th class="px-6 py-3 text-left">违法类型</th>-->
-<!--              <th class="px-6 py-3 text-left">对应条款</th>-->
-<!--              <th class="px-6 py-3 text-left">罚款(元)</th>-->
-<!--              <th class="px-6 py-3 text-left">记分</th>-->
-<!--              <th class="px-6 py-3 text-right">操作</th>-->
-<!--            </tr>-->
-<!--            </thead>-->
-<!--            <tbody class="divide-y">-->
-<!--            <tr>-->
-<!--              <td class="px-6 py-4">闯红灯</td>-->
-<!--              <td class="px-6 py-4">第26条, 第90条</td>-->
-<!--              <td class="px-6 py-4">200</td>-->
-<!--              <td class="px-6 py-4">6</td>-->
-<!--              <td class="px-6 py-4 text-right">-->
-<!--                <button class="text-primary">编辑</button>-->
-<!--              </td>-->
-<!--            </tr>-->
-<!--            </tbody>-->
-<!--          </table>-->
-<!--          <div class="text-right mt-6">-->
-<!--            <button class="btn btn-primary">添加新条款</button>-->
-<!--          </div>-->
-<!--        </div>-->
-
-          <!-- 法规库管理 -->
-<div v-if="activeTab === 'rules'">
-  <h3 class="font-bold text-gray-800 mb-6">法规库管理</h3>
-  <p class="text-sm text-gray-500 mb-4">维护违法行为与交通法规的对应关系、处罚标准。</p>
-
-  <table class="min-w-full divide-y divide-gray-200">
-    <thead class="bg-gray-50">
-      <tr>
-        <th class="px-6 py-3 text-left">违法类型</th>
-        <th class="px-6 py-3 text-left">对应条款</th>
-        <th class="px-6 py-3 text-left">罚款(元)</th>
-        <th class="px-6 py-3 text-left">记分</th>
-        <th class="px-6 py-3 text-right">操作</th>
-      </tr>
-    </thead>
-    <tbody class="divide-y">
-      <tr v-for="rule in rules" :key="rule.id">
-        <td class="px-6 py-4">{{ rule.type }}</td>
-        <td class="px-6 py-4">{{ rule.clauses }}</td>
-        <td class="px-6 py-4">{{ rule.fine }}</td>
-        <td class="px-6 py-4">{{ rule.points }}</td>
-        <td class="px-6 py-4 text-right">
-          <button class="text-primary" @click="openEditRule(rule)">编辑</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="text-right mt-6">
-    <button class="btn btn-primary" @click="openEditRule()">添加新条款</button>
+    <button
+      @click="handleRulePageChange(rulePagination.page + 1)"
+      :disabled="rulePagination.page >= Math.ceil(rulePagination.total / rulePagination.size)"
+      class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+    >
+      下一页
+    </button>
   </div>
 </div>
+        </div>
 
 
-<!-- 法规库编辑弹窗 -->
-<div v-if="showRuleModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-  <div class="bg-white p-6 rounded shadow-lg w-96">
-    <h4 class="text-xl mb-4">{{ editingLegalRule.id ? '编辑条款' : '添加新条款' }}</h4>
-    <form @submit.prevent="saveRule">
-      <div class="mb-3">
-        <label class="block text-sm font-medium text-gray-700 mb-1">违法类型</label>
-        <input v-model="editingLegalRule.type" type="text" class="input w-full" required />
-      </div>
-      <div class="mb-3">
-        <label class="block text-sm font-medium text-gray-700 mb-1">对应条款</label>
-        <input v-model="editingLegalRule.clauses" type="text" class="input w-full" required />
-      </div>
-      <div class="mb-3">
-        <label class="block text-sm font-medium text-gray-700 mb-1">罚款(元)</label>
-        <input v-model.number="editingLegalRule.fine" type="number" class="input w-full" required min="0" />
-      </div>
-      <div class="mb-3">
-        <label class="block text-sm font-medium text-gray-700 mb-1">记分</label>
-        <input v-model.number="editingLegalRule.points" type="number" class="input w-full" required min="0" />
-      </div>
-      <div class="flex justify-end gap-3 mt-6">
-        <button type="button" class="btn btn-secondary" @click="closeRuleModal">取消</button>
-        <button type="submit" class="btn btn-primary">{{ editingLegalRule.id ? '保存' : '添加' }}</button>
-      </div>
-    </form>
-  </div>
+
+        <!-- 法规库编辑弹窗 -->
+        <div v-if="showRuleModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div class="bg-white p-6 rounded shadow-lg w-96">
+            <h4 class="text-xl mb-4">{{ editingLegalRule.id ? '编辑条款' : '添加新条款' }}</h4>
+            <form @submit.prevent="saveRule">
+         <div class="mb-3">
+  <label class="block text-sm font-medium text-gray-700 mb-1">违法类型</label>
+  <input v-model="editingLegalRule.violationType" type="text" class="input w-full" required />
 </div>
+<div class="mb-3">
+  <label class="block text-sm font-medium text-gray-700 mb-1">对应条款</label>
+  <input v-model="editingLegalRule.legalReference" type="text" class="input w-full" required />
+</div>
+<div class="mb-3">
+  <label class="block text-sm font-medium text-gray-700 mb-1">罚款(元)</label>
+  <input v-model.number="editingLegalRule.baseFine" type="number" class="input w-full" required min="0" />
+</div>
+<div class="mb-3">
+  <label class="block text-sm font-medium text-gray-700 mb-1">记分</label>
+  <input v-model.number="editingLegalRule.baseDemeritPoints" type="number" class="input w-full" required min="0" />
+</div>
+
+              <div class="flex justify-end gap-3 mt-6">
+                <button type="button" class="btn btn-secondary" @click="closeRuleModal">取消</button>
+                <button type="submit" class="btn btn-primary">{{ editingLegalRule.id ? '保存' : '添加' }}</button>
+              </div>
+            </form>
+          </div>
+        </div>
 
 
 
@@ -618,54 +450,98 @@
 
 
 
-<div v-if="activeTab === 'logs'">
-  <h3 class="font-bold text-gray-800 mb-6">操作日志</h3>
-  <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-3">
-    <div class="relative w-full md:w-auto">
-      <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-      <input
-        v-model="searchLogKeyword"
-        type="text"
-        placeholder="搜索操作或用户..."
-        class="input pl-10 w-full"
-      />
-    </div>
-    <input v-model="selectedDate" type="date" class="input w-full md:w-auto" />
+        <div v-if="activeTab === 'logs'">
+          <h3 class="font-bold text-gray-800 mb-6">操作日志</h3>
+          <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-3">
+            <div class="relative w-full md:w-auto">
+              <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              <input
+                v-model="searchLogKeyword"
+                type="text"
+                placeholder="搜索操作或用户..."
+                class="input pl-10 w-full"
+              />
+            </div>
+            <input v-model="selectedDate" type="date" class="input w-full md:w-auto" />
 
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left">时间</th>
+                <th class="px-6 py-3 text-left">用户</th>
+                <th class="px-6 py-3 text-left">IP地址</th>
+                <th class="px-6 py-3 text-left">操作详情</th>
+              </tr>
+              </thead>
+             <tbody class="divide-y">
+            <tr v-for="log in logs" :key="log.id">
+
+  <td class="px-6 py-4">{{ log.time }}</td>
+  <td class="px-6 py-4">{{ log.user }}</td>
+  <td class="px-6 py-4">{{ log.ip }}</td>
+  <td class="px-6 py-4">{{ log.action }}</td>
+
+</tr>
+
+
+             </tbody>
+
+            </table>
+
+
+            <div class="mt-4 flex flex-col md:flex-row justify-between items-center text-sm text-gray-600">
+  <div class="mb-2 md:mb-0">
+    显示第 {{ (logPagination.page - 1) * logPagination.size + 1 }} 到
+    {{ Math.min(logPagination.page * logPagination.size, logPagination.total) }} 条，共 {{ logPagination.total }} 条记录
   </div>
+  <div class="flex items-center space-x-2">
+    <button
+      @click="handleLogPageChange(logPagination.page - 1)"
+      :disabled="logPagination.page === 1"
+      class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+    >
+      上一页
+    </button>
 
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-6 py-3 text-left">时间</th>
-          <th class="px-6 py-3 text-left">用户</th>
-          <th class="px-6 py-3 text-left">IP地址</th>
-          <th class="px-6 py-3 text-left">操作详情</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y">
-        <tr v-for="log in filteredLogs" :key="log.id">
-          <td class="px-6 py-4">{{ log.time }}</td>
-          <td class="px-6 py-4">{{ log.user }}</td>
-          <td class="px-6 py-4">{{ log.ip }}</td>
-          <td class="px-6 py-4">{{ log.action }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <span>第 {{ logPagination.page }} / {{ Math.ceil(logPagination.total / logPagination.size) }} 页</span>
+
+    <button
+      @click="handleLogPageChange(logPagination.page + 1)"
+      :disabled="logPagination.page >= Math.ceil(logPagination.total / logPagination.size)"
+      class="px-3 py-1 border rounded hover:bg-gray-100 disabled:opacity-50"
+    >
+      下一页
+    </button>
   </div>
 </div>
 
 
 
+          </div>
+        </div>
 
 
 
 
 
+
+
+
+
+
+
+      </div>
     </div>
   </div>
-  </div>
+
+
+
+
+
+
 </template>
 
 
@@ -674,10 +550,11 @@
 
 <script setup>
 // import { ref, onMounted } from 'vue'
-import { ref, onMounted, computed ,watch} from 'vue'
+import {ref, onMounted, computed, watch} from 'vue'
 
 import axios from 'axios'
-const activeTab = ref('profile')
+
+const activeTab = ref('notifications')
 const searchKeyword = ref('')
 
 // import request from '@/utils/request' // 注意路径
@@ -689,39 +566,10 @@ const showUserModal = ref(false)
 // 当前编辑或添加的用户对象
 const editingUser = ref({})
 
-
-
-// 控制弹窗显示
-const showRoleModal = ref(false)
-// 当前编辑或添加的角色
-const editingRole = ref({})
-
-
-
-
-
-// 当前角色列表
-const roles = ref([
-  { id: 1, name: '系统管理员', members: 5, description: '拥有系统所有权限，可管理所有功能', disabled: false },
-  { id: 2, name: '交通执法员', members: 42, description: '可查看和处理违法记录，管理设备', disabled: false },
-  { id: 3, name: '数据分析师', members: 8, description: '可查看统计报表，无管理权限', disabled: false },
-  { id: 4, name: '设备维护员', members: 12, description: '可管理监控设备，查看设备状态', disabled: false },
-])
-
-
-
-
 // const user = ref({ name: '', email: '', phone: '' })
 
 const user = ref({})
 const users = ref([])
-
-
-
-
-
-
-
 
 
 const avatarFileInput = ref(null)
@@ -766,12 +614,6 @@ function handleUserAvatarChange(event) {
 }
 
 
-
-
-
-
-
-
 const total = ref(0)         // 总条数
 const page = ref(1)          // 当前页
 const size = ref(5)          // 每页数量
@@ -786,7 +628,6 @@ async function fetchUserData() {
     console.error('请求失败：', error)
   }
 }
-
 
 
 async function fetchUsersData() {
@@ -807,36 +648,6 @@ async function fetchUsersData() {
 }
 
 
-//
-// //要分页的
-// async function fetchUsersData() {
-//   try {
-//     console.log('fetchUsers 被调用了，当前 page:', page.value)
-//     const response = await axios.get('http://localhost:8080/api/users/getUsers',{
-//       params: {
-//         page: page.value,
-//         size: size.value,
-//         keyword: searchKeyword.value // 后端可选接收关键词
-//       }
-//     })
-//     // users.value = response.data
-//     users.value = response.data.data
-//     total.value = response.data.total
-//   } catch (error) {
-//     console.error('请求失败：', error)
-//   }
-// }
-
-
-// 判断用户姓名是否包含搜索关键词。
-// 判断用户邮箱是否包含搜索关键词。
-// const filteredUsers = computed(() => {
-//   if (!searchKeyword.value) return users.value
-//   return users.value.filter(user =>
-//     user.name.includes(searchKeyword.value) || user.email.includes(searchKeyword.value)
-//   )
-// })
-
 
 // 打开添加用户弹窗
 function openAddUser() {
@@ -854,7 +665,7 @@ function openAddUser() {
 
 // 打开编辑用户弹窗，传入用户数据
 function openEditUser(user) {
-  editingUser.value = { ...user }  // 克隆一份，避免直接修改原数组
+  editingUser.value = {...user}  // 克隆一份，避免直接修改原数组
   showUserModal.value = true
 }
 
@@ -864,7 +675,7 @@ function closeUserModal() {
 }
 
 // 保存用户（添加或编辑）
-async function  saveUser() {
+async function saveUser() {
   try {
     if (editingUser.value.id) {
       // 编辑用户：找到索引，更新数据
@@ -899,9 +710,6 @@ function toggleUserStatus(user) {
 }
 
 
-
-
-
 // 搜索关键词变化时重新加载第一页
 watch(searchKeyword, () => {
   page.value = 1
@@ -927,42 +735,72 @@ const filteredUsers = computed(() => users.value) // 后端分页，不需要本
 
 
 
-
+const logPagination = ref({
+  page: 1,
+  size: 5,
+  total: 0
+})
 
 // 操作日志数据源
 const logs = ref([
-  { id: 1, time: '2025-06-09 16:10', user: '张三', ip: '192.168.1.101', action: '登录系统' },
-  { id: 2, time: '2025-06-09 15:45', user: '李四', ip: '202.55.10.18', action: '更新了ID为 "R003" 的角色权限' },
-  { id: 3, time: '2025-06-09 15:30', user: '李四', ip: '202.55.10.18', action: '处理了违法记录 "V20250609-0123"' }
 ])
 
 // 搜索关键词
 const searchLogKeyword = ref('')
 const selectedDate = ref('')
 
+async function fetchLogsData() {
+  try {
+    const { page, size } = logPagination.value
+    const keyword = searchLogKeyword.value || ''
+    const date = selectedDate.value || ''
 
-// 响应式过滤后的日志
-const filteredLogs = computed(() => {
-  let result = logs.value
+    const response = await apiClient.get('/logs/page', {
+      params: {
+        page,
+        size,
+        keyword,
+        date
+      }
+    })
 
-  // 先按用户和操作详情过滤
-  if (searchLogKeyword.value) {
-    const keyword = searchLogKeyword.value.toLowerCase()
-    result = result.filter(log =>
-      log.user.toLowerCase().includes(keyword) ||
-      log.action.toLowerCase().includes(keyword)
-    )
+    logs.value = response.data.items.map(log => ({
+      id: log.logId,
+      user: log.username, // ✅ 修正
+      actionType: log.actionType,
+      targetType: log.targetEntityType,
+      targetId: log.targetEntityId,
+      action: log.details,
+      ip: log.clientIpAddress,
+      time: new Date(log.createdAt).toLocaleString('zh-CN', { hour12: false })
+    }))
+
+    logPagination.value.total = response.data.totalItems // ✅ 修正字段名
+
+    console.log('fetchLogsData:', response.data)
+    console.log("logs", logs.value)
+  } catch (error) {
+    console.error('获取日志失败:', error)
+    alert('获取日志失败')
   }
+}
 
-  // 再按日期过滤
-  if (selectedDate.value) {
-    result = result.filter(log =>
-      log.time.startsWith(selectedDate.value)
-    )
-  }
 
-  return result
+watch([searchLogKeyword, selectedDate], () => {
+  logPagination.value.page = 1
+  fetchLogsData()
 })
+
+
+function handleLogPageChange(newPage) {
+  const maxPage = Math.ceil(logPagination.value.total / logPagination.value.size)
+  if (newPage < 1 || newPage > maxPage) return
+  logPagination.value.page = newPage
+  fetchLogsData()
+}
+
+
+
 
 
 
@@ -976,48 +814,124 @@ const filteredLogs = computed(() => {
 
 
 // === 法规库模块相关 ===
+
+// 法规模块分页
+const rulePagination = ref({
+  page: 1,
+  size: 5,
+  total: 0
+})
+
+
 const rules = ref([
-  { id: 1, type: '闯红灯', clauses: '第26条, 第90条', fine: 200, points: 6 },
-  { id: 2, type: '超速20%', clauses: '第42条, 第99条', fine: 500, points: 3 },
-  { id: 3, type: '逆行', clauses: '第35条, 第90条', fine: 200, points: 3 }
 ])
 
+async function fetchrulesData() {
+  try {
+    const { page, size } = rulePagination.value
+    const offset = (page - 1) * size
+    const response = await apiClient.get('/rules/page', {
+      params: {
+        page,
+        size
+      }
+    })
+
+    console.log('fetchrulesData:', response.data)
+
+    rules.value = response.data.items.map(rule => ({
+      ruleId: rule.ruleId,
+      violationType: rule.violationType,
+      legalReference: rule.legalReference,
+      baseFine: rule.baseFine,
+      baseDemeritPoints: rule.baseDemeritPoints
+    }))
+
+    rulePagination.value.total = response.data.total
+  } catch (error) {
+    console.error('请求失败：', error)
+  }
+}
+
+
+
 const showRuleModal = ref(false)
-const editingLegalRule = ref(null) // ✅ 改用新变量名
+// const editingLegalRule = ref(null)
+const editingLegalRule = ref({
+  ruleId: null,
+  violationType: '',
+  legalReference: '',
+  baseFine: 0,
+  baseDemeritPoints: 0
+})
+
 
 function openEditRule(rule = null) {
-  editingLegalRule.value = rule ? { ...rule } : {
-    id: null,
-    type: '',
-    clauses: '',
-    fine: '',
-    points: ''
+  editingLegalRule.value = rule ? {
+    ruleId: rule.ruleId,
+    violationType: rule.violationType,
+    legalReference: rule.legalReference,
+    baseFine: rule.baseFine,
+    baseDemeritPoints: rule.baseDemeritPoints
+  } : {
+    ruleId: null,
+    violationType: '',
+    legalReference: '',
+    baseFine: null,
+    baseDemeritPoints: null
   }
   showRuleModal.value = true
 }
 
-function saveRule() {
-  if (!editingLegalRule.value.type || !editingLegalRule.value.clauses || !editingLegalRule.value.fine || !editingLegalRule.value.points) {
+
+async function saveRule() {
+  const { ruleId, violationType, legalReference, baseFine, baseDemeritPoints } = editingLegalRule.value
+
+  if (!violationType || !legalReference || baseFine === null || baseDemeritPoints === null) {
     alert('请完整填写所有字段')
     return
   }
 
-  if (editingLegalRule.value.id) {
-    const index = rules.value.findIndex(r => r.id === editingLegalRule.value.id)
-    if (index !== -1) {
-      rules.value[index] = { ...editingLegalRule.value }
+  const payload = {
+    ruleId,
+    violationType,
+    legalReference,
+    baseFine: parseFloat(baseFine),
+    baseDemeritPoints: parseInt(baseDemeritPoints)
+  }
+
+  try {
+    if (ruleId) {
+      // 编辑已有规则
+      await apiClient.put(`/rules/${ruleId}`, payload)
+    } else {
+      // 新增规则
+      const res = await apiClient.post('/rules', payload)
+      payload.ruleId = res.data.ruleId
     }
-  } else {
-    editingLegalRule.value.id = Date.now()
-    rules.value.push({ ...editingLegalRule.value })
+
+
+    // 更新本地列表
+    const index = rules.value.findIndex(r => r.ruleId === ruleId)
+    await fetchrulesData();
+  } catch (error) {
+    console.error('保存规则失败:', error)
+    alert('保存失败，请重试')
   }
 
   closeRuleModal()
 }
 
+
 function closeRuleModal() {
   showRuleModal.value = false
   editingLegalRule.value = null
+}
+function handleRulePageChange(newPage) {
+  const maxPage = Math.ceil(rulePagination.value.total / rulePagination.value.size)
+  if (newPage < 1 || newPage > maxPage) return
+  rulePagination.value.page = newPage
+  fetchrulesData()
 }
 
 
@@ -1026,6 +940,68 @@ function closeRuleModal() {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 角色权限管理模块相关
+
+// 控制弹窗显示
+const showRoleModal = ref(false)
+// 当前编辑或添加的角色
+const editingRole = ref({})
+
+
+// 当前角色列表
+const roles = ref([
+  {
+    id: 1,
+    name: '系统管理员',
+    members: 5,
+    description: '拥有系统所有权限，可管理所有功能',
+    disabled: false
+  },
+  {
+    id: 2,
+    name: '交通执法员',
+    members: 42,
+    description: '可查看和处理违法记录，管理设备',
+    disabled: false
+  },
+  {
+    id: 3,
+    name: '数据分析师',
+    members: 8,
+    description: '可查看统计报表，无管理权限',
+    disabled: false
+  },
+  {
+    id: 4,
+    name: '设备维护员',
+    members: 12,
+    description: '可管理监控设备，查看设备状态',
+    disabled: false
+  },
+])
 
 
 // 打开添加角色弹窗
@@ -1042,7 +1018,7 @@ function openAddRole() {
 
 // 打开编辑角色弹窗
 function openEditRole(role) {
-  editingRole.value = { ...role } // 克隆避免直接修改
+  editingRole.value = {...role} // 克隆避免直接修改
   showRoleModal.value = true
 }
 
@@ -1057,12 +1033,12 @@ function saveRole() {
     // 编辑角色
     const index = roles.value.findIndex(r => r.id === editingRole.value.id)
     if (index !== -1) {
-      roles.value[index] = { ...editingRole.value }
+      roles.value[index] = {...editingRole.value}
     }
   } else {
     // 添加角色，简单生成id
     editingRole.value.id = Date.now()
-    roles.value.push({ ...editingRole.value })
+    roles.value.push({...editingRole.value})
   }
   closeRoleModal()
 }
@@ -1074,6 +1050,13 @@ function toggleRoleStatus(role) {
     roles.value[index].disabled = !roles.value[index].disabled
   }
 }
+
+
+
+
+
+
+
 // 预警规则数据
 const warningRules = ref([
   {
@@ -1099,7 +1082,7 @@ const editingRule = ref(null)
 
 // 打开编辑规则弹窗
 function openEditRuleModal(rule) {
-  editingRule.value = { ...rule } // 克隆当前规则用于编辑
+  editingRule.value = {...rule} // 克隆当前规则用于编辑
   editWarningRuleModal.value = true
 }
 
@@ -1109,7 +1092,7 @@ function saveWarningRule() {
 
   const index = warningRules.value.findIndex(r => r.level === editingRule.value.level)
   if (index !== -1) {
-    warningRules.value[index] = { ...editingRule.value }
+    warningRules.value[index] = {...editingRule.value}
   }
 
   closeEditRuleModal()
@@ -1124,6 +1107,8 @@ function closeEditRuleModal() {
 watch(activeTab, (newVal) => {
   if (newVal === 'users') {
     fetchUsersData()
+  } else if (newVal === 'logs') {
+    fetchLogsData()
   }
 })
 
@@ -1131,6 +1116,7 @@ watch(activeTab, (newVal) => {
 // 挂载时调用请求函数
 onMounted(() => {
   fetchUserData()
+  fetchrulesData()
 })
 
 
