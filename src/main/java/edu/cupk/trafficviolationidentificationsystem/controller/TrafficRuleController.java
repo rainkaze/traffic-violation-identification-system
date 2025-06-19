@@ -38,10 +38,15 @@ public class TrafficRuleController {
     @GetMapping("/page")
     public ResponseEntity<Map<String, Object>> getRulesPage(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "5") int size
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "") String searchRuleKeyword
     ) {
+//        System.out.println("page"+ page);
+//        System.out.println("size"+ size);
+//        System.out.println("searchRuleKeyword"+ searchRuleKeyword);
+
         int offset = (page - 1) * size;
-        List<TrafficRuleDto> items = trafficRuleService.getRulesByPage(offset, size);
+        List<TrafficRuleDto> items = trafficRuleService.getRulesByPage(offset, size, searchRuleKeyword);
         int total = trafficRuleService.countAllRules();
 
         Map<String, Object> response = new HashMap<>();
@@ -65,6 +70,12 @@ public class TrafficRuleController {
     }
 
 
+    @DeleteMapping("/{ruleId}")
+    public ResponseEntity updateRule(@PathVariable Long ruleId) {
+            //删除
+        trafficRuleService.deleteRule(ruleId);
+        return ResponseEntity.ok().build();
+    }
 
 
 }

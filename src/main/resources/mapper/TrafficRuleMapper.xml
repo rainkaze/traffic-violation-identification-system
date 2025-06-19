@@ -3,8 +3,12 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.TrafficRuleMapper">
+    <delete id="deleteRule">
+            DELETE FROM traffic_rules
+            WHERE rule_id = #{ruleId}
+    </delete>
 
- <select id="findAllViolationTypes" resultType="java.lang.String">
+    <select id="findAllViolationTypes" resultType="java.lang.String">
   SELECT DISTINCT violation_type
   FROM traffic_rules
   ORDER BY violation_type
@@ -33,6 +37,12 @@
     base_fine,
     base_demerit_points
   FROM traffic_rules
+#   判断不为空才查
+  <if test="searchRuleKeyword != null and searchRuleKeyword != ''">
+      WHERE violation_type LIKE CONCAT('%', #{searchRuleKeyword}, '%')
+      OR legal_reference LIKE CONCAT('%', #{searchRuleKeyword}, '%')
+  </if>
+
   ORDER BY rule_id
   LIMIT #{size} OFFSET #{offset}
 </select>

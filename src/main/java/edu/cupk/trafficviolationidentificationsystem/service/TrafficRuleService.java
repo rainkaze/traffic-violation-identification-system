@@ -12,12 +12,15 @@ public interface TrafficRuleService {
 
     int countAllRules();
     // 新增：分页查询
-    List<TrafficRuleDto> getRulesByPage(int offset, int size);
+    List<TrafficRuleDto> getRulesByPage(int offset, int size, String searchRuleKeyword);
 
 
     TrafficRuleDto createRule(TrafficRuleDto trafficRuleDto);
 
     TrafficRuleDto updateRule(TrafficRuleDto trafficRuleDto);
+
+    //删除
+    void deleteRule(Long ruleId);
 }
 
 @Service
@@ -41,8 +44,8 @@ class TrafficRuleServiceImpl implements TrafficRuleService {
 
 
     @Override
-    public List<TrafficRuleDto> getRulesByPage(int offset, int size) {
-        return trafficRuleMapper.findRulesByOffsetAndSize(offset, size);
+    public List<TrafficRuleDto> getRulesByPage(int offset, int size, String searchRuleKeyword) {
+        return trafficRuleMapper.findRulesByOffsetAndSize(offset, size, searchRuleKeyword);
     }
 
     @Override
@@ -64,6 +67,10 @@ class TrafficRuleServiceImpl implements TrafficRuleService {
     }
 
 
+
+    public void deleteRule(Long ruleId) {
+        trafficRuleMapper.deleteRule(ruleId);
+    }
 
 
 

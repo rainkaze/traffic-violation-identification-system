@@ -303,11 +303,24 @@
         <div v-if="activeTab === 'rules'">
           <h3 class="font-bold text-gray-800 mb-6">法规库管理</h3>
           <p class="text-sm text-gray-500 mb-4">维护违法行为与交通法规的对应关系、处罚标准。</p>
-          <!-- 表格头部 + 添加按钮 -->
-          <div class="flex justify-between items-center mb-4">
-            <h4 class="font-medium text-gray-700">法规列表</h4>
+<!--          &lt;!&ndash; 表格头部 + 添加按钮 &ndash;&gt;-->
+<!--          <div class="flex justify-between items-center mb-4">-->
+<!--            <h4 class="font-medium text-gray-700">法规列表</h4>-->
+<!--            <button class="btn btn-primary" @click="openEditRule()">添加新条款</button>-->
+<!--          </div>-->
+
+          <!-- 表格头部 + 搜索 + 添加按钮 -->
+          <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-2">
+            <input
+              v-model="searchRuleKeyword"
+              type="text"
+              placeholder="搜索违法类型或条款..."
+              class="border px-3 py-1 rounded w-full md:w-1/3"
+            />
             <button class="btn btn-primary" @click="openEditRule()">添加新条款</button>
           </div>
+
+
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
             <tr>
@@ -326,6 +339,7 @@
   <td class="px-6 py-4">{{ rule.baseDemeritPoints }}</td>
   <td class="px-6 py-4 text-right">
     <button class="text-primary" @click="openEditRule(rule)">编辑</button>
+    <button class="text-red-500" @click="deleteRule(rule.ruleId)">删除</button>
   </td>
 </tr>
 
@@ -362,28 +376,27 @@
         </div>
 
 
-
         <!-- 法规库编辑弹窗 -->
         <div v-if="showRuleModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
           <div class="bg-white p-6 rounded shadow-lg w-96">
             <h4 class="text-xl mb-4">{{ editingLegalRule.id ? '编辑条款' : '添加新条款' }}</h4>
             <form @submit.prevent="saveRule">
-         <div class="mb-3">
-  <label class="block text-sm font-medium text-gray-700 mb-1">违法类型</label>
-  <input v-model="editingLegalRule.violationType" type="text" class="input w-full" required />
-</div>
-<div class="mb-3">
-  <label class="block text-sm font-medium text-gray-700 mb-1">对应条款</label>
-  <input v-model="editingLegalRule.legalReference" type="text" class="input w-full" required />
-</div>
-<div class="mb-3">
-  <label class="block text-sm font-medium text-gray-700 mb-1">罚款(元)</label>
-  <input v-model.number="editingLegalRule.baseFine" type="number" class="input w-full" required min="0" />
-</div>
-<div class="mb-3">
-  <label class="block text-sm font-medium text-gray-700 mb-1">记分</label>
-  <input v-model.number="editingLegalRule.baseDemeritPoints" type="number" class="input w-full" required min="0" />
-</div>
+              <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">违法类型</label>
+                <input v-model="editingLegalRule.violationType" type="text" class="input w-full" required />
+              </div>
+              <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">对应条款</label>
+                <input v-model="editingLegalRule.legalReference" type="text" class="input w-full" required />
+              </div>
+              <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">罚款(元)</label>
+                <input v-model.number="editingLegalRule.baseFine" type="number" class="input w-full" required min="0" />
+              </div>
+              <div class="mb-3">
+                <label class="block text-sm font-medium text-gray-700 mb-1">记分</label>
+                <input v-model.number="editingLegalRule.baseDemeritPoints" type="number" class="input w-full" required min="0" />
+              </div>
 
               <div class="flex justify-end gap-3 mt-6">
                 <button type="button" class="btn btn-secondary" @click="closeRuleModal">取消</button>
@@ -392,7 +405,6 @@
             </form>
           </div>
         </div>
-
 
 
 
@@ -632,7 +644,7 @@ async function fetchUserData() {
 
 async function fetchUsersData() {
   try {
-    console.log('fetchUsers 被调用了，当前 page:', page.value)
+    // console.log('fetchUsers 被调用了，当前 page:', page.value)
     const response = await apiClient.get('/users/getUsers', {
       params: {
         page: page.value,
@@ -717,7 +729,7 @@ watch(searchKeyword, () => {
 })
 
 const handlePageChange = (newPage) => {
-  console.log('跳转页码:', newPage) // ✅ 确认是否触发
+  // console.log('跳转页码:', newPage) // 确认是否触发
   if (newPage < 1 || newPage > Math.ceil(total.value / size.value)) return
   page.value = newPage
   fetchUsersData()
@@ -777,7 +789,7 @@ async function fetchLogsData() {
 
     logPagination.value.total = response.data.totalItems // ✅ 修正字段名
 
-    console.log('fetchLogsData:', response.data)
+    // console.log('fetchLogsData:', response.data)
     console.log("logs", logs.value)
   } catch (error) {
     console.error('获取日志失败:', error)
@@ -815,6 +827,9 @@ function handleLogPageChange(newPage) {
 
 // === 法规库模块相关 ===
 
+
+
+
 // 法规模块分页
 const rulePagination = ref({
   page: 1,
@@ -822,9 +837,9 @@ const rulePagination = ref({
   total: 0
 })
 
-
 const rules = ref([
 ])
+const searchRuleKeyword = ref('')
 
 async function fetchrulesData() {
   try {
@@ -833,11 +848,12 @@ async function fetchrulesData() {
     const response = await apiClient.get('/rules/page', {
       params: {
         page,
-        size
+        size,
+        searchRuleKeyword: searchRuleKeyword.value // ✅ 正确：拿到实际字符串值
       }
     })
 
-    console.log('fetchrulesData:', response.data)
+    // console.log('fetchrulesData:', response.data)
 
     rules.value = response.data.items.map(rule => ({
       ruleId: rule.ruleId,
@@ -867,6 +883,8 @@ const editingLegalRule = ref({
 
 
 function openEditRule(rule = null) {
+  // console.log('openEditRule', rule)
+  // console.log(showRuleModal.value)
   editingLegalRule.value = rule ? {
     ruleId: rule.ruleId,
     violationType: rule.violationType,
@@ -927,6 +945,7 @@ function closeRuleModal() {
   showRuleModal.value = false
   editingLegalRule.value = null
 }
+
 function handleRulePageChange(newPage) {
   const maxPage = Math.ceil(rulePagination.value.total / rulePagination.value.size)
   if (newPage < 1 || newPage > maxPage) return
@@ -934,6 +953,58 @@ function handleRulePageChange(newPage) {
   fetchrulesData()
 }
 
+
+
+// 删除操作
+const  deleteRule = async (ruleId) => {
+  // if (confirm('确定要删除该条法规吗？')) {
+  //   rules.value = rules.value.filter(rule => rule.ruleId !== ruleId)
+  //   if (rulePagination.value.page > Math.ceil(filteredRules.value.length / rulePagination.value.size)) {
+  //     rulePagination.value.page = Math.max(1, rulePagination.value.page - 1)
+  //   }
+  // }
+
+
+
+  // console.log('deleteRule', ruleId)
+  if (!confirm('确定要删除该条法规吗？')) return
+
+  try {
+    // 调用后端删除接口
+    await apiClient.delete(`/rules/${ruleId}`)
+
+    // 从本地列表中移除该条规则
+    rules.value = rules.value.filter(rule => rule.ruleId !== ruleId)
+
+    // 如果当前页数据为空，则跳转到上一页
+    const totalItems = rulePagination.value.total - 1
+    const maxPage = Math.ceil(totalItems / rulePagination.value.size)
+    if (rulePagination.value.page > maxPage && maxPage >= 1) {
+      rulePagination.value.page = maxPage
+    }
+
+    // 更新分页总数
+    rulePagination.value.total = totalItems
+
+    // 可选：刷新当前页数据以保持一致性（或根据返回结果重新加载）
+    fetchrulesData()
+  } catch (error) {
+    console.error('删除法规失败:', error)
+    alert('删除失败，请重试')
+  }
+
+
+
+
+
+
+}
+
+// 搜索时自动重置页码为第一页
+watch(searchRuleKeyword, () => {
+  fetchrulesData()
+  rulePagination.value.page = 1
+})
 
 
 
