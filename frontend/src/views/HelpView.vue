@@ -182,23 +182,34 @@
         <div v-else-if="activeTab === 'video'" class="p-4">
           <h3 class="font-bold text-gray-800 mb-4">视频教程</h3>
 
-          <!-- 第一个：在线视频 -->
+          <!-- 第一个：测试视频1 -->
           <div class="mb-6">
-            <h4 class="text-gray-700 font-medium mb-2">在线教学视频</h4>
-            <video src="https://vj85.bmwca.cn/VzcLvc"
-                   controls
-                   autoplay
-                   muted
-                   class="w-full max-w-lg mx-auto rounded shadow">
-            </video>
+            <h4 class="text-gray-700 font-medium mb-2">测试视频1</h4>
+            <div class="w-full max-w-lg mx-auto rounded shadow overflow-hidden aspect-video">
+              <iframe
+                class="w-full h-full"
+                :src="`https://player.bilibili.com/player.html?bvid=${getBvid(testVideo1)}&high_quality=1&danmaku=0`"
+                frameborder="0"
+                allowfullscreen>
+              </iframe>
+            </div>
           </div>
 
-          <!-- 第二个：本地视频 -->
+          <!-- 第二个：测试视频2 -->
           <div>
-            <h4 class="text-gray-700 font-medium mb-2">本地操作演示视频</h4>
-            <video :src="testVideo" controls class="w-full max-w-lg mx-auto rounded shadow"></video>
+            <h4 class="text-gray-700 font-medium mb-2">测试视频2</h4>
+            <div class="w-full max-w-lg mx-auto rounded shadow overflow-hidden aspect-video">
+              <iframe
+                class="w-full h-full"
+                :src="`https://player.bilibili.com/player.html?bvid=${getBvid(testVideo2)}&high_quality=1&danmaku=0`"
+                frameborder="0"
+                allowfullscreen>
+              </iframe>
+            </div>
           </div>
+
         </div>
+
 
         <div v-else-if="activeTab === 'changelog'" class="p-4">
           <h3 class="font-bold text-gray-800 mb-4">系统更新日志</h3>
@@ -260,11 +271,22 @@
 
 <script setup>
 import { ref } from 'vue';
+// import testVideo1 from '@/assets/测试视频1.mp4'; // 引入本地视频1
+// import testVideo2 from '@/assets/测试视频2.mp4'; // 引入本地视频2
 
 const activeTab = ref('faq');
 const switchTab = (tabName) => {
   activeTab.value = tabName;
 };
+// 使用新的远程视频 URL
+const testVideo1 = 'https://www.bilibili.com/video/BV1iTN4zcEQS/?share_source=copy_web&vd_source=b9141f24c7341116073bc1682ecd5e93';
+const testVideo2 = 'https://www.bilibili.com/video/BV1iTN4zcEJX/?share_source=copy_web&vd_source=b9141f24c7341116073bc1682ecd5e93';
+// 从完整 URL 提取 bvid
+function getBvid(url) {
+  const match = url.match(/BV[0-9A-Za-z]{10}/);
+  return match ? match[0] : '';
+}
+
 
 const activeFaq = ref(null);
 const faqs = ref([
