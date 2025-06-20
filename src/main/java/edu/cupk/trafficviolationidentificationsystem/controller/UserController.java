@@ -10,8 +10,10 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/users")
@@ -48,4 +50,24 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
         }
     }
+
+
+    @GetMapping("/getUserId")
+    public Integer getUserId() {
+        System.out.println("hhhhhhhhh");
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username="";
+        if (principal instanceof UserDetails userDetails) {
+//            System.out.println( userDetails.getUsername());
+            username= userDetails.getUsername();
+        } else {
+            System.out.println(principal.toString());
+        }
+
+        Optional<User> byUsername = userMapper.findByUsername(username);
+        Integer userId=byUsername.get().getUserId();
+        System.out.println(userId);
+        return userId;
+    }
+
 }

@@ -2,9 +2,12 @@ package edu.cupk.trafficviolationidentificationsystem.controller;
 
 import edu.cupk.trafficviolationidentificationsystem.dto.TrafficRuleDto;
 import edu.cupk.trafficviolationidentificationsystem.service.TrafficRuleService;
+import edu.cupk.trafficviolationidentificationsystem.websocket.WebSocketServer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +15,9 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/rules") // 我们为法规相关的API创建一个新的路径
 public class TrafficRuleController {
+
+    @Autowired
+    private WebSocketServer webSocketServer;
 
     private final TrafficRuleService trafficRuleService;
 
@@ -58,6 +64,12 @@ public class TrafficRuleController {
 
     @PostMapping
     public ResponseEntity<TrafficRuleDto> createRule(@RequestBody TrafficRuleDto trafficRuleDto) {
+
+
+//        List<Integer> a=new ArrayList<>();
+//        a.add(8);
+//        webSocketServer.sendToClientsByInt(a,"新增条款");
+
     TrafficRuleDto createdRule = trafficRuleService.createRule(trafficRuleDto);
     return ResponseEntity.ok(createdRule);
     }

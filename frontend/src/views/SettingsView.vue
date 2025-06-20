@@ -220,14 +220,11 @@
           <h3 class="font-bold text-gray-800 mb-6">通知设置</h3>
           <div class="space-y-6">
             <div><h4 class="font-medium text-gray-700">系统内通知</h4><p class="text-sm text-gray-500 mb-3">选择您想在系统仪表盘上看到的通知类型。</p><div class="space-y-2"><label class="flex items-center gap-2"><input type="checkbox" class="rounded" checked><span>出现一级预警时</span></label><label class="flex items-center gap-2"><input type="checkbox" class="rounded" checked><span>收到新任务指派时</span></label><label class="flex items-center gap-2"><input type="checkbox" class="rounded"><span>系统发布重要公告时</span></label></div></div>
+
             <div><h4 class="font-medium text-gray-700">邮件通知</h4><p class="text-sm text-gray-500 mb-3">选择您希望通过邮件接收的事件通知。</p><div class="space-y-2"><label class="flex items-center gap-2"><input type="checkbox" class="rounded" checked><span>每日安全报告</span></label><label class="flex items-center gap-2"><input type="checkbox" class="rounded"><span>每周数据摘要</span></label><label class="flex items-center gap-2"><input type="checkbox" class="rounded" checked><span>密码或安全设置被更改时</span></label></div></div>
           </div>
           <div class="flex justify-end gap-3 mt-6"><button class="btn btn-primary">保存设置</button></div>
         </div>
-
-
-
-        <!--        <div v-if="activeTab === 'warnings'"><h3 class="font-bold text-gray-800 mb-6">预警规则管理</h3><div class="space-y-4"><div class="p-4 border rounded-lg"><h4 class="font-medium">一级预警 <span class="badge bg-danger text-white">即时推送</span></h4><p class="text-sm text-gray-500 my-2">当违法行为满足以下任一条件时，触发最高级别预警。</p><p><code>(违法类型 = 闯红灯 OR 逆行) AND (置信度 >= 0.8)</code></p></div><div class="p-4 border rounded-lg"><h4 class="font-medium">二级预警 <span class="badge bg-warning text-white">每日汇总</span></h4><p class="text-sm text-gray-500 my-2">当违法行为满足以下条件时，触发二级预警。</p><p><code>(违法类型 = 超速) AND (置信度 >= 0.6)</code></p></div></div><div class="text-right mt-6"><button class="btn btn-primary">编辑规则</button></div></div>-->
 
 
 
@@ -1184,8 +1181,15 @@ watch(activeTab, (newVal) => {
 })
 
 
+
+import auth from '@/store/auth'
+
+const userId = auth.currentUser()?.id
+
+
 // 挂载时调用请求函数
 onMounted(() => {
+  console.log('userId:', userId)
   fetchUserData()
   fetchrulesData()
 })

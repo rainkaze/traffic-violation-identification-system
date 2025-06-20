@@ -50,6 +50,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // 公开端点
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
+
                         // 为数据接口添加明确的访问角色
                         .requestMatchers("/api/violations/**", "/api/statistics/**").hasAnyRole("管理员", "警员", "小队长", "中队长", "大队长")
                         // 只有 '管理员' 可以访问 admin 接口

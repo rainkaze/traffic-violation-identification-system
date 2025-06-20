@@ -4,8 +4,14 @@ package edu.cupk.trafficviolationidentificationsystem.controller;
 import edu.cupk.trafficviolationidentificationsystem.dto.AudilVo;
 import edu.cupk.trafficviolationidentificationsystem.dto.AuditLog;
 import edu.cupk.trafficviolationidentificationsystem.dto.PageResultDto;
+import edu.cupk.trafficviolationidentificationsystem.model.User;
 import edu.cupk.trafficviolationidentificationsystem.repository.AuditLogMapper;
+import edu.cupk.trafficviolationidentificationsystem.repository.UserMapper;
+import edu.cupk.trafficviolationidentificationsystem.service.UserService;
+import edu.cupk.trafficviolationidentificationsystem.websocket.WebSocketServer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -24,12 +31,39 @@ public class AuditLogController {
 
     @Autowired
     AuditLogMapper auditLogMapper;
+    @Autowired
+    UserMapper userMapper;
+
+    @Autowired
+    private WebSocketServer webSocketServer;
+
     @GetMapping("/page")
     public PageResultDto<AudilVo> listLogs(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String date) {
+
+
+        List<Integer> a=new ArrayList<>();
+        a.add(1);
+        a.add(11);
+        a.add(8);
+        webSocketServer.sendToClientsByInt(a,"6666");
+        webSocketServer.sendToAllClient("你好啊");
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username="";
+        if (principal instanceof UserDetails userDetails) {
+            System.out.println( userDetails.getUsername());
+            username= userDetails.getUsername();
+        } else {
+            System.out.println(principal.toString());
+        }
+
+        Optional<User> byUsername = userMapper.findByUsername(username);
+        Integer userId=byUsername.get().getUserId();
+        System.out.println(userId);
+//        System.out.println(byUsername.toString());
 
 
 
