@@ -66,6 +66,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import apiClient from '@/services/api';
+import { useWebRTC } from '@/composables/useWebRTC'; // 引入
 
 const props = defineProps({
   id: {
@@ -78,12 +79,10 @@ const device = ref(null);
 const isLoading = ref(true);
 const error = ref(null);
 
-const videoPlayer = ref(null);
 let peerConnection = null;
 let webSocket = null;
-const connectionStatus = ref('未连接');
-const isConnected = ref(false);
-const isConnecting = ref(false);
+
+const { videoPlayer, connectionStatus, isConnected, isConnecting, startViewer, stopConnection } = useWebRTC();
 
 const ICE_SERVERS = {
   iceServers: [
@@ -180,12 +179,8 @@ const setupWebSocket = () => {
 };
 
 const startStreaming = () => {
-  if (isConnecting.value || isConnected.value) return;
-  isConnecting.value = true;
-  connectionStatus.value = '正在连接...';
-  setupWebSocket();
+  startViewer(props.id);
 };
-
 const stopStreaming = () => {
   if (peerConnection) {
     peerConnection.close();
@@ -212,7 +207,7 @@ onMounted(async () => {
     device.value = response.data;
   } catch (err) {
     console.error("加载设备详情失败:", err);
-    error.value = "无法加载设备信息，请检查设备ID是否正确或联系管理员。";
+    error.value = "无法加载设备信息。";
   } finally {
     isLoading.value = false;
   }

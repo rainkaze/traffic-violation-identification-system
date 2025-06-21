@@ -20,4 +20,8 @@ public class Device {
     private LocalDate installedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    // [新增]
+    private String bindingCode;
+    private LocalDateTime bindingCodeExpiresAt;
+    private LocalDateTime boundAt;
 }

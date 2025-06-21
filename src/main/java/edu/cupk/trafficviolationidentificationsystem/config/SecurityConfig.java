@@ -51,13 +51,19 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // 公开认证端点
                         .requestMatchers("/api/auth/**").permitAll()
-                        // 【新增】公开给手机摄像头App使用的匿名接口
-                        .requestMatchers(HttpMethod.POST, "/api/devices/register").permitAll() // 允许设备匿名注册
-                        .requestMatchers(HttpMethod.PUT, "/api/devices/*/status").permitAll()    // 允许设备匿名更新心跳状态
+                        .requestMatchers(HttpMethod.POST, "/api/devices/bind").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/devices/*/status").permitAll()   // 允许设备匿名更新心跳状态
                         .requestMatchers("/api/signal/**").permitAll()
+                        // [核心修正] 对设备管理接口进行更精细的授权
+                        .requestMatchers(HttpMethod.GET, "/api/devices/**").authenticated() // 任何登录用户都可以查看设备
+                        .requestMatchers(HttpMethod.POST, "/api/devices").hasRole("管理员") // 只有管理员可以新建
+                        .requestMatchers(HttpMethod.PUT, "/api/devices/**").hasRole("管理员")   // 只有管理员可以修改
+                        .requestMatchers(HttpMethod.DELETE, "/api/devices/**").hasRole("管理员") // 只有管理员可以删除
+
+
 
                         // 为数据接口添加明确的访问角色
-                        .requestMatchers("/api/violations/**", "/api/statistics/**", "/api/devices/**").hasAnyRole("管理员", "警员", "小队长", "中队长", "大队长")
+                        .requestMatchers("/api/violations/**", "/api/statistics/**").hasAnyRole("管理员", "警员", "中队长", "大队长")
                         // 只有 '管理员' 可以访问 admin 接口
                         .requestMatchers("/api/admin/**").hasRole("管理员")
                         // 其他所有请求都需要认证

@@ -1,15 +1,13 @@
 package edu.cupk.trafficviolationidentificationsystem.service;
 
-import edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.DeviceUpsertDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.MonitoringCameraDto;
+import edu.cupk.trafficviolationidentificationsystem.dto.*;
 import edu.cupk.trafficviolationidentificationsystem.model.Device;
 import edu.cupk.trafficviolationidentificationsystem.repository.DeviceMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.apache.commons.lang3.RandomStringUtils; // 导入这个库
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
 
@@ -62,6 +60,10 @@ public class DeviceServiceImpl implements DeviceService {
 
         Device device = new Device();
         mapDtoToEntity(deviceDto, device);
+        device.setStatus("UNBOUND");
+        device.setBindingCode(RandomStringUtils.randomAlphanumeric(8).toUpperCase());
+        device.setBindingCodeExpiresAt(LocalDateTime.now().plusHours(24)); // 绑定码24小时有效
+
 
         deviceMapper.insertDevice(device);
         return device;
@@ -83,13 +85,23 @@ public class DeviceServiceImpl implements DeviceService {
         Device device = deviceMapper.findById(deviceId)
                 .orElseThrow(() -> new RuntimeException("设备不存在，ID: " + deviceId));
 
-        mapDtoToEntity(deviceDto, device);
+        // [核心修改] 调用一个安全的映射方法
+        mapDtoToEntityForUpdate(deviceDto, device);
         device.setDeviceId(deviceId); // 确保ID不变
 
         deviceMapper.updateDevice(device);
         return device;
     }
-
+    // [新增] 一个专门用于更新的安全映射方法
+    private void mapDtoToEntityForUpdate(DeviceUpsertDto dto, Device entity) {
+        entity.setDeviceName(dto.getDeviceName());
+        entity.setDeviceType(dto.getDeviceType());
+        entity.setDistrictId(dto.getDistrictId());
+        entity.setAddress(dto.getAddress());
+        entity.setModelName(dto.getModelName());
+        entity.setIpAddress(dto.getIpAddress());
+        // 注意：这里我们故意不映射 status 字段，因为状态由系统自动管理
+    }
     @Override
     @Transactional
     public void deleteDevice(Integer deviceId) {
@@ -133,5 +145,48 @@ public class DeviceServiceImpl implements DeviceService {
     @Override
     public List<CountByLabelDto> getDeviceTypeCounts() {
         return deviceMapper.countByType();
+    }
+
+    // [新增] 实现设备绑定逻辑
+    @Override
+    @Transactional
+    public Device bindDevice(DeviceBindingDto bindingDto) {
+        Device device = deviceMapper.findByBindingCode(bindingDto.getBindingCode())
+                .orElseThrow(() -> new RuntimeException("无效的绑定码。"));
+
+        if (device.getBindingCodeExpiresAt() != null && device.getBindingCodeExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("绑定码已过期，请联系管理员重新生成。");
+        }
+
+        // 绑定成功
+        device.setStatus("OFFLINE"); // 绑定后状态为离线，等待心跳
+        device.setBoundAt(LocalDateTime.now());
+        device.setBindingCode(null); // 绑定码一次性使用，用后作废
+        device.setBindingCodeExpiresAt(null);
+        deviceMapper.updateDevice(device);
+
+        return device;
+    }
+
+    // [新增] 实现状态更新
+    @Override
+    @Transactional
+    public void updateDeviceStatus(Integer deviceId, String status) {
+        deviceMapper.updateDeviceStatus(deviceId, status);
+    }
+
+    // [新增] 实现重新生成绑定码
+    @Override
+    @Transactional
+    public String generateNewBindingCode(Integer deviceId) {
+        Device device = deviceMapper.findById(deviceId)
+                .orElseThrow(() -> new RuntimeException("设备不存在，ID: " + deviceId));
+
+        String newBindingCode = RandomStringUtils.randomAlphanumeric(8).toUpperCase();
+        device.setBindingCode(newBindingCode);
+        device.setBindingCodeExpiresAt(LocalDateTime.now().plusHours(24));
+        deviceMapper.updateDevice(device);
+
+        return newBindingCode;
     }
 }

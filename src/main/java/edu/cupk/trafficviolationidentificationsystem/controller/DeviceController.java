@@ -1,14 +1,12 @@
 package edu.cupk.trafficviolationidentificationsystem.controller;
 
-import edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.DeviceUpsertDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.MonitoringCameraDto;
+import edu.cupk.trafficviolationidentificationsystem.dto.*;
 import edu.cupk.trafficviolationidentificationsystem.model.Device;
 import edu.cupk.trafficviolationidentificationsystem.service.DeviceService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
@@ -147,5 +145,20 @@ public class DeviceController {
             System.out.println("Device " + id + " status updated to: " + status);
         }
         return ResponseEntity.ok().build();
+    }
+
+    // [新增] 供手机App使用的绑定接口
+    @PostMapping("/bind")
+    public ResponseEntity<Device> bindDevice(@Valid @RequestBody DeviceBindingDto bindingDto) {
+        Device boundDevice = deviceService.bindDevice(bindingDto);
+        return ResponseEntity.ok(boundDevice);
+    }
+
+    // [新增] 重新生成绑定码的接口（需要管理员权限）
+    @PreAuthorize("hasRole('管理员')")
+    @PostMapping("/{id}/new-binding-code")
+    public ResponseEntity<Map<String, String>> generateNewBindingCode(@PathVariable Integer id) {
+        String newCode = deviceService.generateNewBindingCode(id);
+        return ResponseEntity.ok(Map.of("bindingCode", newCode));
     }
 }

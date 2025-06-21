@@ -28,4 +28,11 @@ public interface DeviceMapper {
 
     // 新增：按类型统计设备数量
     List<CountByLabelDto> countByType();
+
+    // [新增] 根据绑定码查找设备
+    Optional<Device> findByBindingCode(@Param("bindingCode") String bindingCode);
+
+    // [新增] 更新设备状态
+    int updateDeviceStatus(@Param("deviceId") Integer deviceId, @Param("status") String status);
+
 }

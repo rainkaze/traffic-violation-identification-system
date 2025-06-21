@@ -16,21 +16,7 @@
   <result property="modelName" column="model_name"/>
  </resultMap>
 
- <select id="findAllDevices" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto">
-  SELECT
-   d.device_id,
-   d.device_code,
-   d.device_name,
-   d.device_type,
-   dist.district_name,
-   d.address,
-   d.status,
-   d.ip_address
-  FROM
-   devices d
-    LEFT JOIN districts dist ON d.district_id = dist.district_id
-  ORDER BY d.created_at DESC
- </select>
+
 
  <select id="findById" resultMap="DeviceResultMap">
   SELECT * FROM devices WHERE device_id = #{deviceId}
@@ -41,8 +27,14 @@
  </select>
 
  <insert id="insertDevice" useGeneratedKeys="true" keyProperty="deviceId">
-  INSERT INTO devices (device_code, device_name, device_type, district_id, address, model_name, ip_address, status)
-  VALUES (#{deviceCode}, #{deviceName}, #{deviceType}, #{districtId}, #{address}, #{modelName}, #{ipAddress}, #{status})
+  INSERT INTO devices (
+   device_code, device_name, device_type, district_id, address, model_name, ip_address, status,
+   binding_code, binding_code_expires_at
+  )
+  VALUES (
+          #{deviceCode}, #{deviceName}, #{deviceType}, #{districtId}, #{address}, #{modelName}, #{ipAddress}, #{status},
+          #{bindingCode}, #{bindingCodeExpiresAt}
+         )
  </insert>
 
  <update id="updateDevice">
@@ -54,6 +46,10 @@
    <if test="address != null">address = #{address},</if>
    <if test="modelName != null">model_name = #{modelName},</if>
    <if test="ipAddress != null">ip_address = #{ipAddress},</if>
+
+   <if test="bindingCode != null">binding_code = #{bindingCode},</if>
+   <if test="bindingCodeExpiresAt != null">binding_code_expires_at = #{bindingCodeExpiresAt},</if>
+   <if test="boundAt != null">bound_at = #{boundAt},</if>
    <if test="status != null">status = #{status},</if>
   </set>
   WHERE device_id = #{deviceId}
@@ -76,6 +72,44 @@
    device_type = '高清摄像头'
  </select>
 
+
+
+ <select id="countByStatus" resultType="edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto">
+  SELECT status AS label, COUNT(*) AS value FROM devices GROUP BY status
+ </select>
+
+ <select id="countByType" resultType="edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto">
+  SELECT device_type AS label, COUNT(*) AS value FROM devices GROUP BY device_type
+ </select>
+
+ <select id="findByBindingCode" resultMap="DeviceResultMap">
+  SELECT * FROM devices WHERE binding_code = #{bindingCode}
+ </select>
+
+ <update id="updateDeviceStatus">
+  UPDATE devices
+  SET status = #{status}, updated_at = NOW()
+  WHERE device_id = #{deviceId}
+ </update>
+
+ <select id="findAllDevices" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto">
+  SELECT
+   d.device_id,
+   d.device_code,
+   d.device_name,
+   d.device_type,
+   dist.district_name,
+   d.address,
+   d.status,
+   d.ip_address,
+   d.binding_code, /* [新增] */
+   d.binding_code_expires_at /* [新增] */
+  FROM
+   devices d
+    LEFT JOIN districts dist ON d.district_id = dist.district_id
+  ORDER BY d.created_at DESC
+ </select>
+
  <select id="findDtoById" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto">
   SELECT
    d.device_id,
@@ -86,19 +120,12 @@
    d.address,
    d.status,
    d.ip_address,
-   d.model_name
+   d.model_name,
+   d.binding_code, /* [新增] */
+   d.binding_code_expires_at /* [新增] */
   FROM
    devices d
     LEFT JOIN districts dist ON d.district_id = dist.district_id
   WHERE d.device_id = #{deviceId}
  </select>
-
- <select id="countByStatus" resultType="edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto">
-  SELECT status AS label, COUNT(*) AS value FROM devices GROUP BY status
- </select>
-
- <select id="countByType" resultType="edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto">
-  SELECT device_type AS label, COUNT(*) AS value FROM devices GROUP BY device_type
- </select>
-
 </mapper>

@@ -24,6 +24,5 @@ public class DeviceUpsertDto {
     private String modelName;
     private String ipAddress;
 
-    @NotEmpty(message = "设备状态不能为空")
     private String status;
 }
