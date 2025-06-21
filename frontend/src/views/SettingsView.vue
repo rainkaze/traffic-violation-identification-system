@@ -217,13 +217,59 @@
 
 
         <div v-if="activeTab === 'notifications'">
-          <h3 class="font-bold text-gray-800 mb-6">通知设置</h3>
-          <div class="space-y-6">
-            <div><h4 class="font-medium text-gray-700">系统内通知</h4><p class="text-sm text-gray-500 mb-3">选择您想在系统仪表盘上看到的通知类型。</p><div class="space-y-2"><label class="flex items-center gap-2"><input type="checkbox" class="rounded" checked><span>出现一级预警时</span></label><label class="flex items-center gap-2"><input type="checkbox" class="rounded" checked><span>收到新任务指派时</span></label><label class="flex items-center gap-2"><input type="checkbox" class="rounded"><span>系统发布重要公告时</span></label></div></div>
+          <div>
+            <h3 class="font-bold text-gray-800 mb-6">通知设置</h3>
+            <div class="space-y-6">
+              <!-- 系统内通知设置 -->
+              <div>
+                <h4 class="font-medium text-gray-700">系统内通知</h4>
+                <p class="text-sm text-gray-500 mb-3">
+                  选择您想在系统仪表盘上看到的通知类型。
+                </p>
+                <div class="space-y-2">
+                  <label
+                    class="flex items-center gap-2"
+                    v-for="item in systemNotifications"
+                    :key="item.typeKey"
+                  >
+                    <input
+                      type="checkbox"
+                      class="rounded"
+                      v-model="item.enabled"
+                    />
+                    <span>{{ item.label }}</span>
+                  </label>
+                </div>
+              </div>
 
-            <div><h4 class="font-medium text-gray-700">邮件通知</h4><p class="text-sm text-gray-500 mb-3">选择您希望通过邮件接收的事件通知。</p><div class="space-y-2"><label class="flex items-center gap-2"><input type="checkbox" class="rounded" checked><span>每日安全报告</span></label><label class="flex items-center gap-2"><input type="checkbox" class="rounded"><span>每周数据摘要</span></label><label class="flex items-center gap-2"><input type="checkbox" class="rounded" checked><span>密码或安全设置被更改时</span></label></div></div>
+              <!-- 邮件通知设置 -->
+              <div>
+                <h4 class="font-medium text-gray-700">邮件通知</h4>
+                <p class="text-sm text-gray-500 mb-3">
+                  选择您希望通过邮件接收的事件通知。
+                </p>
+                <div class="space-y-2">
+                  <label
+                    class="flex items-center gap-2"
+                    v-for="item in emailNotifications"
+                    :key="item.typeKey"
+                  >
+                    <input
+                      type="checkbox"
+                      class="rounded"
+                      v-model="item.enabled"
+                    />
+                    <span>{{ item.label }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- 保存按钮 -->
+            <div class="flex justify-end gap-3 mt-6">
+              <button class="btn btn-primary" @click="saveSettings">保存设置</button>
+            </div>
           </div>
-          <div class="flex justify-end gap-3 mt-6"><button class="btn btn-primary">保存设置</button></div>
         </div>
 
 
@@ -1184,12 +1230,62 @@ watch(activeTab, (newVal) => {
 
 import auth from '@/store/auth'
 
-const userId = auth.currentUser()?.id
+const userid=ref()
+
+  // 从后端获取 userId 并保存
+const fetchUserIdFromBackend = async () => {
+  try {
+    const response = await apiClient.get('/users/getUserId');
+    userid.value = response.data; // 通常是 Long 类型
+  } catch (err) {
+    console.error("获取 userId 失败", err);
+  }
+};
+
+
+
+
+
+// 通知设置相关代码
+
+
+const systemNotifications = ref([
+  { typeKey: 'alert_level_one', label: '出现一级预警时', enabled: true },
+  { typeKey: 'new_task_assigned', label: '收到新任务指派时', enabled: true },
+  { typeKey: 'important_announcement', label: '系统发布重要公告时', enabled: false },
+])
+
+const emailNotifications = ref([
+  { typeKey: 'daily_security_report', label: '每日安全报告', enabled: true },
+  { typeKey: 'weekly_summary', label: '每周数据摘要', enabled: false },
+  { typeKey: 'password_change_alert', label: '密码或安全设置被更改时', enabled: true },
+])
+
+const saveSettings = async () => {
+  const settings = [...systemNotifications.value, ...emailNotifications.value].map(item => ({
+    userId: userid.value,                   // 添加 userId 字段
+    typeKey: item.typeKey,
+    enabled: item.enabled
+  }))
+
+  console.log('设置已保存:', settings)
+
+
+  try {
+    await apiClient.post('notifications/put',settings)
+    alert('设置已保存')
+  } catch (err) {
+    alert('保存失败')
+  }
+}
+
+
 
 
 // 挂载时调用请求函数
-onMounted(() => {
-  console.log('userId:', userId)
+onMounted(async () => {
+  await fetchUserIdFromBackend()         //必须先让这个函数执行完才行！！！ 不然后面打印会获取不到值！！！
+  console.log('userId:', userid.value)
   fetchUserData()
   fetchrulesData()
 })

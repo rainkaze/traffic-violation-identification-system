@@ -242,6 +242,7 @@ watch(route, () => {
     isSidebarOpen.value = false;
   }
 });
+
 </script>
 
 <style>
