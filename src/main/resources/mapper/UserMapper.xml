@@ -121,4 +121,7 @@
   </if>
   ORDER BY u.full_name
  </select>
+    <select id="findEmailByUserId" resultType="java.lang.String">
+        SELECT email FROM users WHERE user_id = #{userId}
+    </select>
 </mapper>

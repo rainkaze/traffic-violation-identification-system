@@ -29,4 +29,6 @@ public interface UserMapper {
 
     List<User> findUsersForAssignment(@Param("districtId") Integer districtId);
 
+    //根据userid获取邮箱
+    String findEmailByUserId(@Param("userId") Integer userId);
 }
