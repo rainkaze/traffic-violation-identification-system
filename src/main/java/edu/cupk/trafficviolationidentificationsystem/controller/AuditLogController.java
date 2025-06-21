@@ -51,6 +51,10 @@ public class AuditLogController {
         a.add(8);
         webSocketServer.sendToClientsByInt(a,"6666");
         webSocketServer.sendToAllClient("你好啊");
+
+
+
+
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username="";
         if (principal instanceof UserDetails userDetails) {

@@ -4,7 +4,13 @@ import edu.cupk.trafficviolationidentificationsystem.entity.Notification;
 import edu.cupk.trafficviolationidentificationsystem.entity.NotificationSetting;
 import edu.cupk.trafficviolationidentificationsystem.repository.NotificationMapper;
 import edu.cupk.trafficviolationidentificationsystem.repository.NotificationSettingMapper;
+import edu.cupk.trafficviolationidentificationsystem.websocket.WebSocketServer;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -19,6 +25,10 @@ public class NotificationController {
     private NotificationMapper notificationMapper;
     @Autowired
     private NotificationSettingMapper notificationSettingMapper;
+
+    @Autowired
+    private WebSocketServer webSocketServer;
+
     @GetMapping
     public List<Notification> getNotificationsByUserId(@RequestParam Long userId) {
 
@@ -90,5 +100,45 @@ public class NotificationController {
         return "success";
     }
 
+    @PostMapping("/send")
+    public ResponseEntity<String> sendNotification(@RequestBody NotificationRequest request) {
+        // 打印接收到的数据（前期调试用）
+        System.out.println("接收到通知请求：");
+        System.out.println("主题: " + request.getSubject());
+        System.out.println("内容: " + request.getMessage());
+        System.out.println("收件人ID列表: " + request.getRecipientIds());
 
-}
+
+        List<Integer> a=new ArrayList<>();
+        a=request.getRecipientIds();
+        webSocketServer.sendToClientsByInt(a,"主题"+request.getSubject()+"  内容  "+request.getMessage());
+//        webSocketServer.sendToAllClient("你好啊");
+//        websocket发通知是在连接的情况下可以即时发 不管在线离线 你都要存通知数据库里
+
+        for (Integer recipientId : request.getRecipientIds()) {
+            Notification notification = Notification.builder()
+                    .userId(Long.valueOf(recipientId))
+                    .message("主题" + request.getSubject() + "  内容  " + request.getMessage())
+                    .timestamp(LocalDateTime.now())
+                    .isRead(false)
+                    .build();
+            notificationMapper.insertNotification(notification);
+            System.out.println("插入通知：" + notification);
+
+        }
+        // 这里只返回一个简单的响应
+        return ResponseEntity.ok("通知接收成功");
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class NotificationRequest {
+        private String subject;
+        private String message;
+        private List<Integer> recipientIds;
+
+    }
+
+    }

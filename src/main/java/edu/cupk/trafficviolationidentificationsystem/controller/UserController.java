@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -96,6 +97,39 @@ public class UserController {
         Integer userId=byUsername.get().getUserId();
         System.out.println(userId);
         return userId;
+    }
+
+
+
+
+
+    @GetMapping("/search")
+    public List<User> searchUsers(@RequestParam(required = false) String keyword) {
+        System.out.println("搜索关键字：" + keyword);
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return userMapper.getAllUsers(); // 你需要写这个方法
+        }
+        List<User> a=userMapper.searchUsersByKeyword(keyword);
+        System.out.println(a);
+        return a;
+//        // 实际应查数据库，这里只是模拟
+//        List<User> all = List.of(
+//                User.builder().userId(101).username("张三").build(),
+//                User.builder().userId(102).username("李四").build(),
+//                User.builder().userId(103).username("王五").build(),
+//                User.builder().userId(104).username("赵六").build(),
+//                User.builder().userId(105).username("小红").build()
+//        );
+//
+//        // 如果不传 keyword 就返回所有
+//        if (keyword == null || keyword.isBlank()) {
+//            return all;
+//        }
+//
+//        // 否则返回模糊匹配的
+//        return all.stream()
+//                .filter(user -> user.getUsername().contains(keyword))
+//                .collect(Collectors.toList());
     }
 
 }

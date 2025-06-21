@@ -72,6 +72,25 @@
         </div>
       </div>
 
+
+      <!-- 通知按钮 -->
+      <div class="relative">
+        <!-- 发送通知按钮 -->
+        <button
+          @click="emit('update:show1', !props.show1)"
+          class="bg-primary text-white px-4 py-2 rounded hover:bg-blue-600 transition"
+        >
+          发布任务
+        </button>
+
+
+
+
+
+        </div>
+
+
+
       <!-- 用户头像菜单按钮 -->
       <div class="relative group">
         <button class="flex items-center gap-2 text-gray-700 hover:text-primary">
@@ -111,8 +130,13 @@ import { useNotificationStore } from '@/store/notification';
 
 const props = defineProps({
   userId: Number,
-  toggleSidebar: Function
+  toggleSidebar: Function,
+  show1: Boolean
 });
+const emit = defineEmits(['update:show1'])
+
+
+
 
 const router = useRouter();
 const notificationStore = useNotificationStore();
