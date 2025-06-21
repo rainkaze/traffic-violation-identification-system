@@ -343,11 +343,11 @@ const sendMessage = async () => {
 
   let systemPrompt = '';
   if (aiModel.value === 'v3') {
-    systemPrompt = "你是一个智能客服助手，请回答用户的问题";
+    systemPrompt = "你是一个智能客服助手，请回答用户的问题。请保持回答简洁、准确。";
   } else if (aiModel.value === 'r1') {
     systemPrompt = showReasoning.value
-      ? "请展示你的推理过程，然后给出最终答案。"
-      : "你是一个智能客服助手，请回答用户的问题";
+      ? "你是一个智能客服助手。请先逐步分析问题，详细展示你的推理过程，最后用【最终答案】分隔符给出简洁的答案。"
+      : "你是一个智能客服助手，请回答用户的问题。请保持回答简洁、准确。";
   }
 
   try {
@@ -363,9 +363,9 @@ const sendMessage = async () => {
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
         ],
-        max_tokens: 300,
-        temperature: 0.5,
-        stream: true // 启用流式输出
+        max_tokens: 500,
+        temperature: 0.7,
+        stream: true
       })
     });
 
@@ -375,7 +375,6 @@ const sendMessage = async () => {
     const decoder = new TextDecoder();
     let accumulatedText = '';
 
-    // 添加一个空消息用于逐步填充
     chatMessages.value.push({ text: '', isUser: false, sender: '智能客服' });
 
     while (true) {
@@ -391,8 +390,16 @@ const sendMessage = async () => {
             const json = JSON.parse(line.replace(/^data: /, ''));
             const content = json.choices[0]?.delta?.content || '';
             accumulatedText += content;
-            chatMessages.value[chatMessages.value.length - 1].text = accumulatedText;
-            setTimeout(scrollToBottom, 10); // 滚动到底部
+
+            // 分离显示：只显示【最终答案】之后的内容（当未勾选显示推理过程）
+            if (!showReasoning.value && accumulatedText.includes("【最终答案】")) {
+              const finalAnswer = accumulatedText.split("【最终答案】")[1].trim();
+              chatMessages.value[chatMessages.value.length - 1].text = finalAnswer;
+            } else {
+              chatMessages.value[chatMessages.value.length - 1].text = accumulatedText;
+            }
+
+            setTimeout(scrollToBottom, 10);
           } catch (e) {
             console.error('解析错误:', e);
           }
@@ -407,10 +414,14 @@ const sendMessage = async () => {
     setTimeout(scrollToBottom, 50);
   }
 };
-const history = chatMessages.value.map(msg => ({
-  role: msg.isUser ? "user" : "assistant",
-  content: msg.text
-}));
+import { watch } from 'vue';
+
+watch(aiModel, () => {
+  chatMessages.value = [
+    { text: `已切换至 ${aiModel.value === 'v3' ? 'V3 精简模式' : 'R1 推理模式'}`, isUser: false, sender: '系统' }
+  ];
+});
+
 
 import markdownIt from 'markdown-it';
 const md = markdownIt(); // 初始化 Markdown 解析器
