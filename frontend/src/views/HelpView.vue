@@ -492,7 +492,16 @@ const toggleFaq = (index) => {
 };
 </script>
 
-<style scoped>.messages pre {
+<style scoped>
+.sidebar-item {
+  @apply flex items-center gap-2 px-3 py-2 rounded text-sm font-medium text-[#333] transition-colors;
+}
+
+.sidebar-item:hover {
+  @apply bg-gray-100;
+}
+
+.messages pre {
   background-color: #f1f1f1;
   padding: 0.5rem;
   border-radius: 0.25rem;
