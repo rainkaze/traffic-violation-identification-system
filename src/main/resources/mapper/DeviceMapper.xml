@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.DeviceMapper">
+
+ <resultMap id="DeviceResultMap" type="edu.cupk.trafficviolationidentificationsystem.model.Device">
+  <id property="deviceId" column="device_id"/>
+  <result property="deviceCode" column="device_code"/>
+  <result property="deviceName" column="device_name"/>
+  <result property="deviceType" column="device_type"/>
+  <result property="districtId" column="district_id"/>
+  <result property="address" column="address"/>
+  <result property="status" column="status"/>
+  <result property="ipAddress" column="ip_address"/>
+  <result property="modelName" column="model_name"/>
+ </resultMap>
+
+ <select id="findAllDevices" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto">
+  SELECT
+   d.device_id,
+   d.device_code,
+   d.device_name,
+   d.device_type,
+   dist.district_name,
+   d.address,
+   d.status,
+   d.ip_address
+  FROM
+   devices d
+    LEFT JOIN districts dist ON d.district_id = dist.district_id
+  ORDER BY d.created_at DESC
+ </select>
+
+ <select id="findById" resultMap="DeviceResultMap">
+  SELECT * FROM devices WHERE device_id = #{deviceId}
+ </select>
+
+ <select id="findByDeviceCode" resultMap="DeviceResultMap">
+  SELECT * FROM devices WHERE device_code = #{deviceCode}
+ </select>
+
+ <insert id="insertDevice" useGeneratedKeys="true" keyProperty="deviceId">
+  INSERT INTO devices (device_code, device_name, device_type, district_id, address, model_name, ip_address, status)
+  VALUES (#{deviceCode}, #{deviceName}, #{deviceType}, #{districtId}, #{address}, #{modelName}, #{ipAddress}, #{status})
+ </insert>
+
+ <update id="updateDevice">
+  UPDATE devices
+  <set>
+   <if test="deviceName != null">device_name = #{deviceName},</if>
+   <if test="deviceType != null">device_type = #{deviceType},</if>
+   <if test="districtId != null">district_id = #{districtId},</if>
+   <if test="address != null">address = #{address},</if>
+   <if test="modelName != null">model_name = #{modelName},</if>
+   <if test="ipAddress != null">ip_address = #{ipAddress},</if>
+   <if test="status != null">status = #{status},</if>
+  </set>
+  WHERE device_id = #{deviceId}
+ </update>
+
+ <delete id="deleteDeviceById">
+  DELETE FROM devices WHERE device_id = #{deviceId}
+ </delete>
+
+ <select id="findActiveCameras" resultType="edu.cupk.trafficviolationidentificationsystem.dto.MonitoringCameraDto">
+  SELECT
+   device_id,
+   device_code,
+   device_name,
+   address,
+   status
+  FROM
+   devices
+  WHERE
+   device_type = '高清摄像头'
+ </select>
+
+ <select id="findDtoById" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto">
+  SELECT
+   d.device_id,
+   d.device_code,
+   d.device_name,
+   d.device_type,
+   dist.district_name,
+   d.address,
+   d.status,
+   d.ip_address,
+   d.model_name
+  FROM
+   devices d
+    LEFT JOIN districts dist ON d.district_id = dist.district_id
+  WHERE d.device_id = #{deviceId}
+ </select>
+
+ <select id="countByStatus" resultType="edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto">
+  SELECT status AS label, COUNT(*) AS value FROM devices GROUP BY status
+ </select>
+
+ <select id="countByType" resultType="edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto">
+  SELECT device_type AS label, COUNT(*) AS value FROM devices GROUP BY device_type
+ </select>
+
+</mapper>

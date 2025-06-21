@@ -8,122 +8,100 @@
     <div class="card mb-6">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <div class="flex flex-col sm:flex-row gap-3">
-          <select class="input w-full sm:w-60">
+          <select v-model="selectedDistrict" class="input w-full sm:w-60">
             <option value="">全部区域</option>
-            <option value="kmq">克拉玛依区</option>
-            <option value="dsz">独山子区</option>
-            <option value="bjt">白碱滩区</option>
-            <option value="weh">乌尔禾区</option>
+            <option v-for="district in districts" :key="district.districtId" :value="district.districtName">{{ district.districtName }}</option>
           </select>
-          <select class="input w-full sm:w-60">
-            <option value="">全部设备</option>
-            <option value="cam001">KMQ-CAM-001 (世纪大道与友谊路口)</option>
-            <option value="cam002">GS-RADAR-002 (G30高速K3550)</option>
-            <option value="cam003">BJT-CAM-003 (和平路)</option>
+          <select v-model="selectedDevice" class="input w-full sm:w-60">
+            <option value="">全部摄像头</option>
+            <option v-for="camera in cameras" :key="camera.deviceId" :value="camera.deviceCode">{{ camera.deviceName }} ({{ camera.deviceCode }})</option>
           </select>
         </div>
         <div class="flex gap-2">
-          <button class="btn btn-secondary">
+          <button @click="fetchCameras" class="btn btn-secondary">
             <i class="fa fa-refresh mr-1"></i> 刷新
-          </button>
-          <button class="btn btn-primary">
-            <i class="fa fa-video-camera mr-1"></i> 全部直播
           </button>
         </div>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="card bg-gray-900 p-0 overflow-hidden">
+      <div v-if="isLoading" class="text-center py-10">加载中...</div>
+      <div v-else-if="filteredCameras.length === 0" class="text-center py-10">无匹配的监控设备</div>
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        <router-link
+          v-for="camera in filteredCameras"
+          :key="camera.deviceId"
+          :to="{ name: 'monitoring-detail', params: { id: camera.deviceId } }"
+          class="card bg-gray-900 p-0 overflow-hidden transition-all duration-300 hover:shadow-2xl hover:ring-2 hover:ring-primary"
+        >
           <div class="relative">
-            <img src="https://picsum.photos/id/1016/800/450" alt="监控画面" class="w-full h-48 object-cover">
-            <div class="absolute top-2 left-2 bg-danger/80 text-white text-xs px-2 py-1 rounded">
-              <i class="fa fa-circle mr-1 animate-pulse"></i> 直播中
+            <img :src="camera.imageUrl" :alt="camera.deviceName" class="w-full h-48 object-cover">
+            <div class="absolute top-2 left-2 text-white text-xs px-2 py-1 rounded" :class="camera.status === 'online' ? 'bg-danger/80' : 'bg-gray-500/80'">
+              <i class="fa mr-1" :class="camera.status === 'online' ? 'fa-circle animate-pulse' : 'fa-power-off'"></i>
+              {{ camera.status === 'online' ? '直播中' : '离线' }}
             </div>
             <div class="absolute top-2 right-2 bg-dark/80 text-white text-xs px-2 py-1 rounded">
-              KMQ-CAM-001
+              {{ camera.deviceCode }}
             </div>
-            <div class="absolute bottom-2 left-2 bg-dark/80 text-white text-xs px-2 py-1 rounded max-w-[60%] truncate">
-              克拉玛依区世纪大道与友谊路口
+            <div class="absolute bottom-2 left-2 bg-dark/80 text-white text-xs px-2 py-1 rounded max-w-[60%] truncate" :title="camera.address">
+              {{ camera.address }}
             </div>
             <div class="absolute bottom-2 right-2 bg-dark/80 text-white text-xs px-2 py-1 rounded">
-              <i class="fa fa-exclamation-triangle text-warning mr-1"></i> 2起违法
+              <i class="fa fa-exclamation-triangle text-warning mr-1"></i> {{ camera.violationCount }}起违法
             </div>
           </div>
           <div class="p-4">
-            <div class="flex justify-between items-center mb-2">
-              <h4 class="font-medium text-white">最近违法行为</h4>
-              <button class="text-xs text-primary hover:text-primary/80">查看全部</button>
-            </div>
-            <div class="space-y-2">
-              <div class="flex items-center gap-2 bg-gray-800 p-2 rounded">
-                <img src="https://picsum.photos/id/1071/100/100" alt="违法截图" class="w-12 h-12 object-cover rounded">
-                <div>
-                  <p class="text-white text-sm font-medium">新K·A12345</p>
-                  <p class="text-gray-400 text-xs">闯红灯 · 10:23</p>
-                </div>
-              </div>
-            </div>
+            <h4 class="font-medium text-white">{{ camera.deviceName }}</h4>
           </div>
-        </div>
-
-        <div class="card bg-gray-900 p-0 overflow-hidden">
-          <div class="relative">
-            <img src="https://picsum.photos/id/1018/800/450" alt="监控画面" class="w-full h-48 object-cover">
-            <div class="absolute top-2 left-2 bg-danger/80 text-white text-xs px-2 py-1 rounded">
-              <i class="fa fa-circle mr-1 animate-pulse"></i> 直播中
-            </div>
-            <div class="absolute top-2 right-2 bg-dark/80 text-white text-xs px-2 py-1 rounded">
-              BJT-CAM-003
-            </div>
-            <div class="absolute bottom-2 left-2 bg-dark/80 text-white text-xs px-2 py-1 rounded max-w-[60%] truncate">
-              白碱滩区和平路
-            </div>
-            <div class="absolute bottom-2 right-2 bg-dark/80 text-white text-xs px-2 py-1 rounded">
-              <i class="fa fa-exclamation-triangle text-warning mr-1"></i> 1起违法
-            </div>
-          </div>
-          <div class="p-4">
-            <div class="flex justify-between items-center mb-2">
-              <h4 class="font-medium text-white">最近违法行为</h4>
-              <button class="text-xs text-primary hover:text-primary/80">查看全部</button>
-            </div>
-            <div class="space-y-2">
-              <div class="flex items-center gap-2 bg-gray-800 p-2 rounded">
-                <img src="https://picsum.photos/id/1073/100/100" alt="违法截图" class="w-12 h-12 object-cover rounded">
-                <div>
-                  <p class="text-white text-sm font-medium">新K·C24681</p>
-                  <p class="text-gray-400 text-xs">逆行 · 08:15</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card bg-gray-900 p-0 overflow-hidden">
-          <div class="relative">
-            <img src="https://picsum.photos/id/1019/800/450" alt="监控画面" class="w-full h-48 object-cover">
-            <div class="absolute top-2 left-2 bg-gray-500/80 text-white text-xs px-2 py-1 rounded">
-              <i class="fa fa-power-off mr-1"></i> 离线
-            </div>
-            <div class="absolute top-2 right-2 bg-dark/80 text-white text-xs px-2 py-1 rounded">
-              DSZ-CAM-004
-            </div>
-            <div class="absolute bottom-2 left-2 bg-dark/80 text-white text-xs px-2 py-1 rounded max-w-[60%] truncate">
-              独山子区石化大道
-            </div>
-          </div>
-          <div class="p-4">
-            <div class="flex justify-between items-center mb-2">
-              <h4 class="font-medium text-white">离线设备</h4>
-              <p class="text-xs text-gray-400">最后在线: 2小时前</p>
-            </div>
-          </div>
+        </router-link>
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
-// 这个页面目前是纯静态展示，没有特定的脚本逻辑
+import { ref, onMounted, computed } from 'vue';
+import apiClient from '@/services/api';
+
+const cameras = ref([]);
+const districts = ref([]);
+const isLoading = ref(true);
+
+const selectedDistrict = ref('');
+const selectedDevice = ref('');
+
+const filteredCameras = computed(() => {
+  return cameras.value.filter(camera => {
+    // 检查地址是否包含所选区域的名称
+    const matchDistrict = !selectedDistrict.value || camera.address.includes(selectedDistrict.value);
+    const matchDevice = !selectedDevice.value || camera.deviceCode === selectedDevice.value;
+    return matchDistrict && matchDevice;
+  });
+});
+
+const fetchCameras = async () => {
+  isLoading.value = true;
+  try {
+    const response = await apiClient.get('/devices/cameras/active');
+    cameras.value = response.data;
+  } catch (error) {
+    console.error("加载摄像头列表失败:", error);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const fetchDistricts = async () => {
+  try {
+    const response = await apiClient.get('/districts');
+    districts.value = response.data;
+  } catch (error) {
+    console.error("加载辖区列表失败:", error);
+  }
+};
+
+onMounted(() => {
+  fetchCameras();
+  fetchDistricts();
+});
 </script>

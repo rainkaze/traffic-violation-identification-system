@@ -19,6 +19,8 @@ import RegisterView from '../views/auth/RegisterView.vue';
 import UserManagementView from '../views/admin/UserManagementView.vue';
 import WorkflowManagementView from '../views/admin/WorkflowManagementView.vue';
 import WorkflowForm from '../views/admin/WorkflowForm.vue';
+import DeviceFormView from '../views/DeviceFormView.vue'; // 新增导入
+import WebRTCTestView from '../views/WebRTCTestView.vue'; // 1. 导入新页面
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -56,6 +58,13 @@ const router = createRouter({
       name: 'monitoring',
       component: MonitoringView,
       meta: { requiresAuth: true }
+    }, // --- 新增监控详情页路由 ---
+    {
+      path: '/monitoring/:id',
+      name: 'monitoring-detail',
+      component: () => import('../views/MonitoringDetailView.vue'), // 懒加载方式导入
+      props: true, // 允许将路由参数:id作为props传入组件
+      meta: { requiresAuth: true }
     },
     {
       path: '/enforcement',
@@ -80,6 +89,19 @@ const router = createRouter({
       name: 'devices',
       component: DevicesView,
       meta: { requiresAuth: true }
+    },// --- 新增设备表单路由 ---
+    {
+      path: '/devices/new',
+      name: 'device-new',
+      component: DeviceFormView,
+      meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/devices/:id',
+      name: 'device-edit',
+      component: DeviceFormView,
+      props: true, // 允许将路由参数id作为props传入组件
+      meta: { requiresAuth: true, requiresAdmin: true }
     },
     {
       path: '/settings',
@@ -126,6 +148,12 @@ const router = createRouter({
       component: WorkflowForm,
       props: true, // 允许将路由参数作为props传入组件
       meta: { requiresAuth: true, requiresAdmin: true }
+    }, // 2. 添加新路由
+    {
+      path: '/webrtc-test',
+      name: 'webrtc-test',
+      component: WebRTCTestView,
+      meta: { requiresAuth: true } // 假设也需要登录才能访问
     },
     { path: '/:pathMatch(.*)*', redirect: '/dashboard' }
   ],

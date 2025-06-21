@@ -3,6 +3,7 @@ package edu.cupk.trafficviolationidentificationsystem.config;
 import edu.cupk.trafficviolationidentificationsystem.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -48,10 +49,15 @@ public class SecurityConfig {
                 .cors(withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
-                        // 公开端点
+                        // 公开认证端点
                         .requestMatchers("/api/auth/**").permitAll()
+                        // 【新增】公开给手机摄像头App使用的匿名接口
+                        .requestMatchers(HttpMethod.POST, "/api/devices/register").permitAll() // 允许设备匿名注册
+                        .requestMatchers(HttpMethod.PUT, "/api/devices/*/status").permitAll()    // 允许设备匿名更新心跳状态
+                        .requestMatchers("/api/signal/**").permitAll()
+
                         // 为数据接口添加明确的访问角色
-                        .requestMatchers("/api/violations/**", "/api/statistics/**").hasAnyRole("管理员", "警员", "小队长", "中队长", "大队长")
+                        .requestMatchers("/api/violations/**", "/api/statistics/**", "/api/devices/**").hasAnyRole("管理员", "警员", "小队长", "中队长", "大队长")
                         // 只有 '管理员' 可以访问 admin 接口
                         .requestMatchers("/api/admin/**").hasRole("管理员")
                         // 其他所有请求都需要认证
@@ -64,16 +70,33 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+//    @Bean
+//    public CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration configuration = new CorsConfiguration();
+//        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+//        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+//        configuration.setAllowedHeaders(List.of("*"));
+//        configuration.setAllowCredentials(true);
+//
+//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//        source.registerCorsConfiguration("/**", configuration);
+//        return source;
+//    }
+@Bean
+public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+    // ===== 开始修改：临时允许所有来源 =====
+    // 注意：为了调试，我们暂时允许所有来源。联调成功后，可以改回 List.of("http://localhost:5173")
+    configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+    // ===== 结束修改 =====
+
+    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(List.of("*"));
+    configuration.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+}
 }
