@@ -1,4 +1,3 @@
-
 <template>
   <div class="p-4">
     <div class="mb-6">
@@ -15,31 +14,23 @@
           <!-- 筛选框容器 -->
           <div class="flex flex-nowrap gap-3 overflow-x-auto">
             <!-- 设备状态 -->
-            <select class="input w-full sm:w-40 flex-shrink-0">
+            <select class="input w-full sm:w-40 flex-shrink-0" v-model="selectedStatus">
               <option value="" disabled selected>设备状态</option>
-              <option value="online">在线</option>
-              <option value="offline">离线</option>
-              <option value="error">异常</option>
+              <option value="online">online</option>
+              <option value="offline">offline</option>
+              <option value="warning">warning</option>
+              <option value="maintenance">maintenance</option>
             </select>
 
-            <!-- 负责人 -->
-            <select class="input w-full sm:w-40 flex-shrink-0">
+            <!-- 辖区 -->
+            <select class="input w-full sm:w-40 flex-shrink-0" v-model="selectedDistrict">
               <option value="" disabled selected>辖区</option>
-              <option value="zhangsan">辖区一</option>
-              <option value="lisi">辖区二</option>
-              <option value="wangwu">辖区三</option>
-            </select>
-
-            <!-- 事故等级 -->
-            <select class="input w-full sm:w-40 flex-shrink-0">
-              <option value="" disabled selected>事故等级</option>
-              <option value="level1" class="text-red-500">一级预警</option>
-              <option value="level2" class="text-yellow-600">二级预警</option>
-              <option value="level3" class="text-blue-600">三级预警</option>
+              <option value="克拉玛依区">克拉玛依区</option>
+              <option value="独山子区">独山子区</option>
+              <option value="白碱滩区">白碱滩区</option>
             </select>
           </div>
         </div>
-
 
         <!-- 百度地图容器 -->
         <div class="relative w-full h-[600px] bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
@@ -97,9 +88,16 @@
   </div>
 </template>
 
-<script setup>import { onMounted } from 'vue';
+<script setup>
+import { ref, onMounted, watch } from 'vue';
+import apiClient from '@/services/api';
 
-// 动态加载百度地图 SDK
+// 筛选条件
+const selectedStatus = ref('');
+const selectedDistrict = ref('');
+
+let map; // 在顶层定义 map 变量
+
 const loadBaiduMap = () => {
   return new Promise((resolve, reject) => {
     if (window.BMap) {
@@ -118,29 +116,114 @@ const loadBaiduMap = () => {
   });
 };
 
+const createDefaultStyleMarkerIcon = () => {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+
+  // 设置图标大小（放大一倍）
+  const size = 25;
+  canvas.width = size;
+  canvas.height = size;
+
+  // 绘制红色圆底
+  ctx.beginPath();
+  ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+  ctx.fillStyle = '#FF0000';
+  ctx.fill();
+
+  // 白色中心小圆
+  ctx.beginPath();
+  ctx.arc(size / 2, size / 2, (size / 2) * 0.6, 0, Math.PI * 2);
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fill();
+
+  // 返回 BMap.Icon 对象
+  return new BMap.Icon(canvas.toDataURL(), new BMap.Size(size, size), {
+    imageSize: new BMap.Size(size, size),
+    anchor: new BMap.Size(size / 2, size) // 锚点在底部中间
+  });
+};
+
+
 onMounted(async () => {
   try {
     await loadBaiduMap();
 
-    // 初始化地图
-    const map = new BMap.Map("baiduMap");
+    map = new BMap.Map("baiduMap"); // 将 map 赋值给顶层变量
     const point = new BMap.Point(84.87, 45.59); // 克拉玛依经纬度
     map.centerAndZoom(point, 12);
     map.enableScrollWheelZoom(true);
 
-    // 添加事故点标记
-    const accidentPoint = new BMap.Point(84.87, 45.59); // 示例坐标，可替换为真实事故点
-    const marker = new BMap.Marker(accidentPoint);
-    map.addOverlay(marker);
+    const response = await apiClient.get('/accidents/devices');
+    const devices = response.data;
 
-    // 点击标记弹出信息窗口
-    const infoWindow = new BMap.InfoWindow("世纪大道与和平路口\n疑似事故");
-    marker.addEventListener("click", () => {
-      map.openInfoWindow(infoWindow, accidentPoint);
+    devices.forEach(device => {
+      if (!device.longitude || !device.latitude) return;
+
+      const devicePoint = new BMap.Point(device.longitude, device.latitude);
+
+      // 使用我们自定义的大号默认风格图标
+      const marker = new BMap.Marker(devicePoint, { icon: createDefaultStyleMarkerIcon() });
+
+      map.addOverlay(marker);
+
+      const infoWindow = new BMap.InfoWindow(`    <div class="p-2">
+      <p class="font-bold">${device.deviceName}</p>
+      <p>设备编号: ${device.deviceCode}</p>
+      <p>类型: ${device.deviceType}</p>
+      <p>地址: ${device.address}</p>
+      <p>状态: ${device.status}</p>
+    </div>
+  `);
+
+      marker.addEventListener("click", () => {
+        map.openInfoWindow(infoWindow, devicePoint);
+      });
     });
 
   } catch (error) {
-    console.error('百度地图加载失败:', error);
+    console.error('百度地图或设备数据加载失败:', error.response || error.message || error);
+  }
+});
+
+watch([selectedStatus, selectedDistrict], async () => {
+  try {
+    const params = {};
+    if (selectedStatus.value) params.status = selectedStatus.value;
+    if (selectedDistrict.value) params.districtName = selectedDistrict.value;
+
+    const response = await apiClient.get('/accidents/devices', { params });
+    const devices = response.data;
+
+    // 清除原有标记
+    map.clearOverlays(); // 使用顶层变量 map
+
+    // 添加新标记
+    devices.forEach(device => {
+      if (!device.longitude || !device.latitude) return;
+
+      const devicePoint = new BMap.Point(device.longitude, device.latitude);
+      const marker = new BMap.Marker(devicePoint, { icon: createDefaultStyleMarkerIcon() });
+      map.addOverlay(marker);
+
+      const infoWindow = new BMap.InfoWindow(`        <div class="p-2">
+          <p class="font-bold">${device.deviceName}</p>
+          <p>设备编号: ${device.deviceCode}</p>
+          <p>类型: ${device.deviceType}</p>
+          <p>地址: ${device.address}</p>
+          <p>状态: ${device.status}</p>
+        </div>
+      `);
+
+      marker.addEventListener("click", () => {
+        map.openInfoWindow(infoWindow, devicePoint);
+      });
+    });
+
+  } catch (error) {
+    console.error('设备数据加载失败:', error);
   }
 });
 </script>
+
+

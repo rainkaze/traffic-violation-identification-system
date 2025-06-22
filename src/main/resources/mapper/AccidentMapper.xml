@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.AccidentMapper">
+
+
+    <select id="getDevicesWithLocation" resultType="edu.cupk.trafficviolationidentificationsystem.dto.AccidentDto">
+        SELECT
+        d.device_id AS deviceId,
+        d.device_code AS deviceCode,
+        d.device_name AS deviceName,
+        d.device_type AS deviceType,
+        d.address,
+        d.latitude,
+        d.longitude,
+        d.status
+        FROM devices d
+        LEFT JOIN districts dst ON d.district_id = dst.district_id
+        WHERE d.latitude IS NOT NULL AND d.longitude IS NOT NULL
+        <if test="status != null and status != ''">
+            AND d.status = #{status}
+        </if>
+        <if test="districtName != null and districtName != ''">
+            AND dst.district_name = #{districtName}
+        </if>
+    </select>
+
+
+
+
+</mapper>
