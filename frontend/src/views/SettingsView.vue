@@ -485,21 +485,42 @@
 
         <!-- 数据管理 -->
         <div v-if="activeTab === 'data'">
-          <h3 class="font-bold text-gray-800 mb-6">数据管理</h3>
-          <div class="space-y-6">
-            <div class="p-4 border rounded-lg">
-              <h4 class="font-medium">数据备份</h4>
-              <p class="text-sm text-gray-500 my-2">创建系统数据的完整备份。上次备份时间：2025-06-08 02:00:00</p>
-              <button class="btn btn-secondary">立即备份</button>
-            </div>
-            <div class="p-4 border border-warning/50 rounded-lg bg-warning/5">
-              <h4 class="font-medium text-warning">数据恢复</h4>
-              <p class="text-sm text-gray-500 my-2">从备份文件恢复数据。注意：此操作将覆盖现有数据且不可逆。</p>
-              <input type="file" class="text-sm" />
-              <button class="btn btn-warning ml-4">开始恢复</button>
+            <h3 class="font-bold text-gray-800 mb-6">数据管理</h3>
+
+            <div class="space-y-6">
+              <!-- 数据备份 -->
+              <div class="p-4 border rounded-lg">
+                <h4 class="font-medium">数据备份</h4>
+                <p class="text-sm text-gray-500 my-2">上次备份文件：{{ latestBackup }}</p>
+                <button @click="backup" class="btn btn-secondary">立即备份</button>
+              </div>
+
+              <!-- 数据恢复 -->
+              <div class="p-4 border rounded-lg bg-yellow-50 border-yellow-300">
+                <h4 class="font-medium text-yellow-700">数据恢复</h4>
+                <select v-model="selectedFile" class="border rounded px-2 py-1 w-full">
+                  <option v-for="file in backupFiles" :value="file" :key="file">{{ file }}</option>
+                </select>
+
+                <button
+                  @click="restore"
+                  class="btn btn-warning mt-2 mr-2"
+                  :disabled="!selectedFile"
+                >
+                  开始恢复
+                </button>
+
+                <button
+                  @click="deleteBackup"
+                  class="btn btn-danger mt-2"
+                  :disabled="!selectedFile"
+                >
+                  删除选中备份
+                </button>
+
+              </div>
             </div>
           </div>
-        </div>
 
 
 
@@ -606,7 +627,7 @@
 <script setup>
 // import { ref, onMounted } from 'vue'
 import {ref, onMounted, computed, watch} from 'vue'
-
+import { ElMessage } from 'element-plus'
 import axios from 'axios'
 
 const activeTab = ref('notifications')
@@ -1282,12 +1303,82 @@ const saveSettings = async () => {
 
 
 
+const backupFiles = ref([])
+const selectedFile = ref('')
+const latestBackup = ref('')
+
+const fetchBackups = async () => {
+  try {
+    const res = await apiClient.get('/db/listBackups')
+    backupFiles.value = res.data
+    latestBackup.value = res.data.length ? res.data[res.data.length - 1] : ''
+    ElMessage.success('备份文件列表获取成功')
+  } catch (error) {
+    console.error('获取备份列表失败:', error)
+    ElMessage.error('获取备份列表失败，请检查网络或服务器')
+  }
+}
+
+const backup = async () => {
+  try {
+    ElMessage.info('开始备份数据库...')
+    await apiClient.post('/db/backup')
+    await fetchBackups()
+    ElMessage.success('数据库备份并上传成功')
+  } catch (error) {
+    console.error('备份失败:', error)
+    ElMessage.error('备份失败，请稍后再试')
+  }
+}
+
+const restore = async () => {
+  if (!selectedFile.value) {
+    ElMessage.warning('请选择一个备份文件')
+    return
+  }
+  try {
+    ElMessage.info('正在恢复数据库...')
+    await apiClient.post('/db/restore', { fileUrl: selectedFile.value })
+    ElMessage.success('数据库恢复成功')
+  } catch (error) {
+    console.error('恢复失败:', error)
+    ElMessage.error('恢复失败，请检查备份文件或服务器状态')
+  }
+}
+
+const deleteBackup = async () => {
+  if (!selectedFile.value) {
+    ElMessage.warning('请先选择备份文件')
+    return
+  }
+  if (!confirm(`确定删除备份文件：${selectedFile.value}？`)) return
+
+  try {
+    ElMessage.info('正在删除备份文件...')
+    await apiClient.post('/db/deleteBackup', { fileUrl: selectedFile.value })
+    ElMessage.success('备份文件删除成功')
+    await fetchBackups()
+    selectedFile.value = ''
+  } catch (error) {
+    console.error('删除失败:', error)
+    ElMessage.error('删除失败，请稍后再试')
+  }
+}
+
+
+
 // 挂载时调用请求函数
 onMounted(async () => {
   await fetchUserIdFromBackend()         //必须先让这个函数执行完才行！！！ 不然后面打印会获取不到值！！！
   console.log('userId:', userid.value)
   fetchUserData()
   fetchrulesData()
+})
+
+watch(() => activeTab.value, (newVal) => {
+  if (newVal === 'data') {
+    fetchBackups()
+  }
 })
 
 
