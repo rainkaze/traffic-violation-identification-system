@@ -119,6 +119,13 @@ import {useNotificationStore} from './store/notification';
 import debounce from 'lodash/debounce'
 import { ElMessage } from 'element-plus'
 
+import { useSystemConfigStore } from '@/store/systemConfig'
+const configStore = useSystemConfigStore()
+
+onMounted(() => {
+  configStore.fetchConfig()
+})
+
 
 const searchKeyword = ref('')
 // const userList = ref([])

@@ -499,21 +499,33 @@
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700">系统名称</label>
-              <input type="text" v-model="config.systemName" class="mt-1 block w-full input" />
+              <input type="text" v-model="configStore.systemName" class="mt-1 block w-full input" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700">会话超时时间 (分钟)</label>
-              <input type="number" v-model="config.sessionTimeout" class="mt-1 block w-full input" />
+              <input type="number" v-model="configStore.sessionTimeout" class="mt-1 block w-full input" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700">数据保留策略 (天)</label>
-              <input type="number" v-model="config.dataRetentionDays" class="mt-1 block w-full input" />
+              <input type="number" v-model="configStore.dataRetentionDays" class="mt-1 block w-full input" />
               <p class="text-xs text-gray-500 mt-1">系统将自动清除超过此天数的历史操作日志和违法记录。</p>
             </div>
           </div>
           <div class="flex justify-end gap-3 mt-6">
             <button @click="saveConfig" class="btn btn-primary">保存参数</button>
           </div>
+<!--          <div>-->
+<!--            <label>系统名称</label>-->
+<!--            <input v-model="configStore.systemName" type="text" />-->
+
+<!--            <label>会话超时时间</label>-->
+<!--            <input v-model.number="configStore.sessionTimeout" type="number" />-->
+
+<!--            <label>数据保留策略（天）</label>-->
+<!--            <input v-model.number="configStore.dataRetentionDays" type="number" />-->
+
+<!--            <button @click="saveConfig">保存配置</button>-->
+<!--          </div>-->
         </div>
 
 
@@ -1497,23 +1509,19 @@ const deleteBackup = async () => {
 }
 
 
+import { useSystemConfigStore } from '@/store/systemConfig'
 
-const config = ref({
-  systemName: '',
-  sessionTimeout: 0,
-  dataRetentionDays: 0
-})
+const configStore = useSystemConfigStore()
 
 onMounted(async () => {
-  const res = await apiClient.get('/system/config')
-  config.value = res.data
+  await configStore.fetchConfig()
 })
 
+// 保存按钮点击时调用
 const saveConfig = async () => {
-  await apiClient.put('/system/config', config.value)
+  await configStore.saveConfig()
   alert('保存成功')
 }
-
 
 
 

@@ -3,7 +3,8 @@
     <div class="p-4 border-b border-gray-700">
       <h1 class="text-white text-xl font-bold flex items-center gap-2">
         <i class="fa fa-road"></i>
-        <span>交通违法管理系统</span>
+<!--        <span>交通违法管理系统</span>-->
+        {{ systemName }}
       </h1>
     </div>
     <nav class="p-4">
@@ -155,6 +156,14 @@
 import {computed} from 'vue';
 import {useRouter} from 'vue-router';
 import authStore from '@/store/auth';
+
+
+import { useSystemConfigStore } from '@/store/systemConfig'
+
+const configStore = useSystemConfigStore()
+
+// 计算属性绑定系统名称，自动响应变化
+const systemName = computed(() => configStore.systemName)
 
 defineProps({
   isMobileOpen: Boolean,
