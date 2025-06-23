@@ -278,59 +278,92 @@
         <!-- 预警规则 -->
         <div v-if="activeTab === 'warnings'">
           <h3 class="font-bold text-gray-800 mb-6">预警规则管理</h3>
-          <div class="space-y-4">
-            <div v-for="(rule, index) in warningRules" :key="index" class="p-4 border rounded-lg">
-              <h4 class="font-medium">
-                {{ rule.level }}
-                <span class="badge" :class="rule.badgeClass">{{ rule.triggerType }}</span>
-              </h4>
-              <p class="text-sm text-gray-500 my-2">
-                {{ rule.description }}
-              </p>
-              <p><code>{{ rule.condition }}</code></p>
 
-              <!-- 编辑按钮：绑定当前规则 -->
-              <div class="mt-3 text-right">
-                <button class="btn btn-sm btn-secondary" @click="openEditRuleModal(rule)">编辑规则</button>
+          <!-- 规则列表容器，限制高度，垂直滚动 -->
+          <div class="rules-list max-h-[500px] overflow-y-auto space-y-6 border rounded p-4 bg-white">
+            <div v-for="(group, level) in sortedGroupedRules" :key="level">
+              <h4 class="text-lg font-semibold mb-2">
+                {{ level }}
+                <span class="text-sm text-gray-500 ml-2">（{{ group.length }} 条规则）</span>
+              </h4>
+
+              <div class="space-y-2">
+                <div
+                  v-for="rule in group"
+                  :key="rule.id"
+                  class="p-4 border rounded-md bg-gray-50 flex justify-between items-center"
+                >
+                  <div>
+                    <p class="text-gray-800 text-sm">
+                      <strong>违法类型：</strong>{{ rule.violationType }}，
+                      <strong>置信度 ≥</strong> {{ rule.minConfidence }}
+                    </p>
+                    <p class="text-xs text-gray-500 mt-1">{{ rule.description }}</p>
+                  </div>
+                  <button class="text-blue-600 hover:underline text-sm" @click="openEditRuleModal(rule)">
+                    编辑
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- 所有规则统一编辑入口（可选） -->
-          <!-- <div class="text-right mt-6">
-            <button class="btn btn-primary" @click="openEditAllRules">批量编辑</button>
-          </div> -->
+          <!-- 编辑弹窗 -->
+          <div
+            v-if="editWarningRuleModal"
+            class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
+          >
+            <div class="bg-white p-6 rounded shadow-lg w-[420px] max-h-[80vh] overflow-hidden flex flex-col">
+              <h4 class="text-xl font-semibold mb-4">编辑 {{ editingLevel }} 预警规则</h4>
 
-          <!-- 编辑规则弹窗 -->
-          <div v-if="editWarningRuleModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-            <div class="bg-white p-6 rounded shadow-lg w-96">
-              <h4 class="text-xl mb-4">编辑预警规则</h4>
-              <form @submit.prevent="saveWarningRule">
-                <div class="mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">预警等级</label>
-                  <input type="text" v-model="editingRule.level" class="input w-full" disabled />
+              <!-- 规则列表容器，固定高度，滚动 -->
+              <div
+                class="rules-container flex-grow overflow-y-auto mb-4"
+                style="max-height: 300px;"
+              >
+                <div
+                  v-for="(rule, i) in editingRules"
+                  :key="i"
+                  class="mb-4 border p-3 rounded bg-gray-50"
+                >
+                  <label class="block text-sm font-medium text-gray-700 mb-1">违法类型</label>
+                  <input
+                    type="text"
+                    v-model="rule.violationType"
+                    class="input w-full mb-2"
+                  />
+                  <label class="block text-sm font-medium text-gray-700 mb-1">最低置信度</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="1"
+                    v-model.number="rule.minConfidence"
+                    class="input w-full"
+                  />
+                  <!-- 编辑弹窗规则块内删除按钮处改为： -->
+                  <div class="text-right mt-2">
+                    <button
+                      class="text-red-500 text-sm"
+                      @click="canDeleteRule(i) ? removeRule(i) : alert('至少保留一条规则，不能删除！')"
+                    >
+                      删除
+                    </button>
+                  </div>
+
                 </div>
-                <div class="mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">触发方式</label>
-                  <input type="text" v-model="editingRule.triggerType" class="input w-full" disabled />
+              </div>
+
+              <div class="flex justify-between items-center">
+                <button class="text-sm text-green-600" @click="addRule">+ 添加规则</button>
+                <div class="flex gap-3">
+                  <button class="btn btn-secondary" @click="closeEditRuleModal">取消</button>
+                  <button class="btn btn-primary" @click="saveWarningRule">保存</button>
                 </div>
-                <div class="mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">描述信息</label>
-                  <input type="text" v-model="editingRule.description" class="input w-full" />
-                </div>
-                <div class="mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-1">条件表达式</label>
-                  <textarea v-model="editingRule.condition" rows="3" class="input w-full"></textarea>
-                </div>
-                <div class="flex justify-end gap-3 mt-6">
-                  <button type="button" class="btn btn-secondary" @click="closeEditRuleModal">取消</button>
-                  <button type="submit" class="btn btn-primary">保存规则</button>
-                </div>
-              </form>
+              </div>
             </div>
           </div>
         </div>
-
 
 
 
@@ -1193,50 +1226,144 @@ function toggleRoleStatus(role) {
 
 
 // 预警规则数据
-const warningRules = ref([
-  {
-    level: '一级预警',
-    badgeClass: 'bg-danger text-white',
-    triggerType: '即时推送',
-    description: '当违法行为满足以下任一条件时，触发最高级别预警。',
-    condition: '(违法类型 = 闯红灯 OR 逆行) AND (置信度 >= 0.8)',
-  },
-  {
-    level: '二级预警',
-    badgeClass: 'bg-warning text-white',
-    triggerType: '每日汇总',
-    description: '当违法行为满足以下条件时，触发二级预警。',
-    condition: '(违法类型 = 超速) AND (置信度 >= 0.6)',
+// 模拟数据：预警规则
+const warningRules = ref([])
+
+async function fetchWarningRules() {
+  try {
+    const res = await apiClient.get('/warningRules')
+    warningRules.value = res.data
+  } catch (err) {
+    console.error('获取预警规则失败', err)
   }
-])
+}
 
-// 控制预警规则弹窗显示
+onMounted(() => {
+  fetchWarningRules()
+})
+
+// 分组
+const groupedRules = computed(() => {
+  const groups = {}
+  for (const rule of warningRules.value) {
+    if (!groups[rule.level]) groups[rule.level] = []
+    groups[rule.level].push(rule)
+  }
+  return groups
+})
+
+// 排序分组，保证一级在前，二级次之，其他按字母
+const sortedGroupedRules = computed(() => {
+  const order = ['一级预警', '二级预警']
+  const groups = groupedRules.value
+  const entries = Object.entries(groups)
+
+  entries.sort((a, b) => {
+    const indexA = order.indexOf(a[0])
+    const indexB = order.indexOf(b[0])
+    if (indexA === -1 && indexB === -1) return a[0].localeCompare(b[0])
+    if (indexA === -1) return 1
+    if (indexB === -1) return -1
+    return indexA - indexB
+  })
+
+  return Object.fromEntries(entries)
+})
+
+// 弹窗控制和编辑相关变量
 const editWarningRuleModal = ref(false)
-// 当前正在编辑的规则
-const editingRule = ref(null)
+const editingLevel = ref('')
+const editingRules = ref([])
 
-// 打开编辑规则弹窗
+// 打开编辑弹窗，加载该等级的规则克隆到编辑区
 function openEditRuleModal(rule) {
-  editingRule.value = {...rule} // 克隆当前规则用于编辑
+  editingLevel.value = rule.level
+  editingRules.value = warningRules.value
+    .filter(r => r.level === rule.level)
+    .map(r => ({ ...r }))  // 深拷贝避免直接修改原数组
   editWarningRuleModal.value = true
 }
 
-// 保存编辑后的规则
-function saveWarningRule() {
-  if (!editingRule.value) return
-
-  const index = warningRules.value.findIndex(r => r.level === editingRule.value.level)
-  if (index !== -1) {
-    warningRules.value[index] = {...editingRule.value}
-  }
-
-  closeEditRuleModal()
+// 添加新规则
+function addRule() {
+  editingRules.value.push({
+    id: null,
+    level: editingLevel.value,
+    violationType: '',
+    minConfidence: 0.6,
+    description: ''
+  })
 }
 
-// 关闭弹窗
+// 删除规则（从编辑区删除）
+function removeRule(index) {
+  editingRules.value.splice(index, 1)
+}
+
+// 保存编辑后的规则（调用后端增删改接口）
+async function saveWarningRule() {
+  // 先过滤空违法类型
+  editingRules.value = editingRules.value.filter(r => r.violationType.trim() !== '')
+
+  // 取出数据库已有规则（warningRules）同等级的ID列表
+  const existingIds = warningRules.value
+    .filter(r => r.level === editingLevel.value)
+    .map(r => r.id)
+
+  // 编辑框当前规则ID列表
+  const editingIds = editingRules.value.map(r => r.id).filter(id => id != null)
+
+  // 要删除的ID = existingIds - editingIds
+  const deletedIds = existingIds.filter(id => !editingIds.includes(id))
+
+  try {
+    // 1. 先删除缺失的规则
+    for (const id of deletedIds) {
+      await apiClient.delete(`/warningRules/${id}`)
+    }
+
+    // 2. 更新已有规则和新增规则
+    for (const rule of editingRules.value) {
+      // 构造描述
+      rule.description = `${rule.violationType}且置信度不低于${rule.minConfidence}，触发${rule.level}`
+
+      if (rule.id) {
+        await apiClient.put(`/warningRules/${rule.id}`, rule)
+      } else {
+        await apiClient.post('/warningRules', rule)
+      }
+    }
+
+    // 3. 如果全部删空，调用批量删除接口（确保后台也没残留）
+    if (editingRules.value.length === 0 && existingIds.length > 0) {
+      await apiClient.delete(`/warningRules/level/${encodeURIComponent(editingLevel.value)}`)
+    }
+
+    // 4. 刷新数据，关闭弹窗
+    await fetchWarningRules()
+    closeEditRuleModal()
+  } catch (err) {
+    console.error('保存预警规则失败', err)
+    alert('保存失败，请稍后重试')
+  }
+}
+// 部分添加判断函数
+function canDeleteRule(index) {
+  // 同等级规则数量
+  return editingRules.value.length > 1
+}
+
+
+// 关闭编辑弹窗
 function closeEditRuleModal() {
   editWarningRuleModal.value = false
+  editingRules.value = []
+  editingLevel.value = ''
 }
+
+
+
+
 
 
 watch(activeTab, (newVal) => {
