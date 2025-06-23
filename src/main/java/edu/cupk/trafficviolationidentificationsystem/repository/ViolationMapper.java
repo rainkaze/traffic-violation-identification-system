@@ -2,8 +2,11 @@ package edu.cupk.trafficviolationidentificationsystem.repository;
 
 import edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.ViolationQueryDto;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -24,4 +27,10 @@ public interface ViolationMapper {
      * @return 总记录数
      */
     long countViolationsByCriteria(@Param("query") ViolationQueryDto query);
+
+
+    @Delete("DELETE FROM violations WHERE violations.created_at < #{threshold}")
+    int deleteBefore(@Param("threshold") LocalDateTime threshold);
+
+
 }

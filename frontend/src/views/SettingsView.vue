@@ -499,22 +499,26 @@
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700">系统名称</label>
-              <input type="text" value="城市交通智能执法平台" class="mt-1 block w-full input" />
+              <input type="text" v-model="config.systemName" class="mt-1 block w-full input" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700">会话超时时间 (分钟)</label>
-              <input type="number" value="30" class="mt-1 block w-full input" />
+              <input type="number" v-model="config.sessionTimeout" class="mt-1 block w-full input" />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700">数据保留策略 (天)</label>
-              <input type="number" value="365" class="mt-1 block w-full input" />
+              <input type="number" v-model="config.dataRetentionDays" class="mt-1 block w-full input" />
               <p class="text-xs text-gray-500 mt-1">系统将自动清除超过此天数的历史操作日志和违法记录。</p>
             </div>
           </div>
           <div class="flex justify-end gap-3 mt-6">
-            <button class="btn btn-primary">保存参数</button>
+            <button @click="saveConfig" class="btn btn-primary">保存参数</button>
           </div>
         </div>
+
+
+
+
 
         <!-- 数据管理 -->
         <div v-if="activeTab === 'data'">
@@ -1491,6 +1495,25 @@ const deleteBackup = async () => {
     ElMessage.error('删除失败，请稍后再试')
   }
 }
+
+
+
+const config = ref({
+  systemName: '',
+  sessionTimeout: 0,
+  dataRetentionDays: 0
+})
+
+onMounted(async () => {
+  const res = await apiClient.get('/system/config')
+  config.value = res.data
+})
+
+const saveConfig = async () => {
+  await apiClient.put('/system/config', config.value)
+  alert('保存成功')
+}
+
 
 
 

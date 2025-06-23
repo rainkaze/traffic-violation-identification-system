@@ -44,15 +44,15 @@ public class AuditLogController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String date) {
 
+//
+//        List<Integer> a=new ArrayList<>();
+//        a.add(1);
+//        a.add(11);
+//        a.add(8);
+//        webSocketServer.sendToClientsByInt(a,"6666");
+//        webSocketServer.sendToAllClient("你好啊");
 
-        List<Integer> a=new ArrayList<>();
-        a.add(1);
-        a.add(11);
-        a.add(8);
-        webSocketServer.sendToClientsByInt(a,"6666");
-        webSocketServer.sendToAllClient("你好啊");
-
-
+        System.out.println("获取日志");
 
 
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
