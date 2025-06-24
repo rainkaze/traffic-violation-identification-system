@@ -14,9 +14,17 @@
         d.address,
         d.latitude,
         d.longitude,
-        d.status
+        d.status,
+
+        v.violation_id AS violationId,
+        v.plate_number AS plateNumber,
+        v.violation_time AS violationTime,
+        v.confidence_score AS confidenceScore,
+        v.status AS violationStatus
+
         FROM devices d
         LEFT JOIN districts dst ON d.district_id = dst.district_id
+        LEFT JOIN violations v ON d.device_id = v.device_id
         WHERE d.latitude IS NOT NULL AND d.longitude IS NOT NULL
         <if test="status != null and status != ''">
             AND d.status = #{status}
