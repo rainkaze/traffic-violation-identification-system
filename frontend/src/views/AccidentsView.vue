@@ -127,21 +127,28 @@
         <!-- 卡片容器 -->
         <div class="card">
           <!-- 新增按钮到卡片顶部 -->
-          <div class="mb-4">
+          <div class="mb-4 relative">
             <button
               @click="generateStrategyWithAI"
-              :disabled="isGenerating.value || !selectedAccidentInfo || !selectedAccidentLevel.value"
+              :disabled="isGenerating || !selectedAccidentInfo || !selectedAccidentLevel"
               class="btn btn-success w-full"
             >
               <i class="fa fa-magic mr-2"></i>
-              {{ isGenerating.value ? '生成中...' : '智能生成处置策略' }}
+              {{ isGenerating ? '生成中...' : '智能生成处置策略' }}
             </button>
+            <div v-if="isGenerating" class="my-2 text-blue-600 font-medium flex items-center gap-2">
+              <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+              </svg>
+              正在智能生成处置策略，请稍候...
+            </div>
           </div>
 
           <h3 class="font-bold text-gray-800 mb-4">处置策略生成</h3>
           <div class="space-y-4">
             <div class="p-3 bg-gray-50 rounded-lg">
-              <p class="font-medium mb-2">AI 生成的处置指令:</p>
+              <p class="font-medium mb-2">智能生成的处置指令:</p>
               <div class="text-sm text-gray-700 whitespace-pre-line" v-if="generatedStrategy">
                 {{ generatedStrategy }}
               </div>
@@ -152,10 +159,35 @@
 
             <!-- 可选：用于调试的状态输出 -->
             <!-- <pre>调试状态: {{ { isGenerating, selectedAccidentInfo, selectedAccidentLevel } }}</pre> -->
-            <pre>调试状态: {{ { isGenerating, selectedAccidentInfo, selectedAccidentLevel } }}</pre>
             <div class="flex gap-2">
-              <button class="btn btn-primary w-full"><i class="fa fa-map-signs mr-2"></i>推送绕行路线至App</button>
-              <button class="btn btn-warning w-full"><i class="fa fa-lightbulb-o mr-2"></i>执行信号灯联动</button>
+              <button class="btn btn-primary w-full" @click="showConfirmDialog = true">
+                <i class="fa fa-map-signs mr-2"></i>推送策略至App</button>
+
+              <!-- 确认对话框 -->
+              <div v-if="showConfirmDialog" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+                <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+                  <h3 class="text-lg font-bold mb-4">确认操作</h3>
+                  <p class="mb-6">您确定要推送处置策略至App吗？</p>
+                  <div class="flex justify-end gap-4">
+                    <button @click="showConfirmDialog = false" class="btn btn-secondary">取消</button>
+                    <button @click="confirmPushStrategy" class="btn btn-primary">确定</button>
+                  </div>
+                </div>
+              </div>
+
+              <button class="btn btn-warning w-full" @click="showTrafficLightDialog = true">
+                <i class="fa fa-lightbulb-o mr-2"></i>执行信号灯联动</button>
+
+              <!-- 信号灯联动对话框 -->
+              <div v-if="showTrafficLightDialog" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+                <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+                  <h3 class="text-lg font-bold mb-4">信号灯联动</h3>
+                  <p class="mb-6">已经通知相关部门，对救援车辆优先放行</p>
+                  <div class="flex justify-end">
+                    <button @click="showTrafficLightDialog = false" class="btn btn-primary">确定</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -180,6 +212,8 @@ const isGenerating = ref(false);     // 加载状态
 const selectedStatus = ref('');
 const selectedDistrict = ref('');
 const selectedAccidentLevel = ref(''); // 事故等级选择器
+const showConfirmDialog = ref(false); // 控制确认对话框显示
+const showTrafficLightDialog = ref(false); // 控制信号灯联动对话框显示
 
 let map; // 在顶层定义 map 变量
 
@@ -418,5 +452,19 @@ const generateStrategyWithAI = async () => {
     isGenerating.value = false;
   }
 };
+
+// 确认推送策略方法
+const confirmPushStrategy = () => {
+  if (!generatedStrategy.value) {
+    alert('没有可推送的处置策略');
+    return;
+  }
+
+  // 这里可以添加实际的推送逻辑，例如调用API
+  console.log('推送处置策略:', generatedStrategy.value);
+  alert('处置策略已成功推送至App');
+  showConfirmDialog.value = false; // 关闭对话框
+};
+
 </script>
 
