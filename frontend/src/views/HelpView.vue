@@ -104,7 +104,26 @@
                   <!-- AI 客服对话框 -->
                   <div v-if="showAiChat" class="ai-chat-dialog card fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[60rem] p-6 z-50 shadow-xl rounded-lg bg-white border border-primary">
                     <h3 class="font-bold text-gray-800 mb-4">智能客服</h3>
-                    <div ref="chatContainer" class="messages h-64 overflow-y-auto rounded-md p-3 mb-4 bg-gray-50 border border-gray-200">
+                    <!-- 模型选择 -->
+                    <div class="mb-4 flex items-center gap-4">
+                      <label class="inline-flex items-center">
+                        <input type="radio" v-model="aiModel" value="v3" class="form-radio h-4 w-4 text-primary">
+                        <span class="ml-2">V3 模式</span>
+                      </label>
+                      <label class="inline-flex items-center">
+                        <input type="radio" v-model="aiModel" value="r1" class="form-radio h-4 w-4 text-primary">
+                        <span class="ml-2">R1 模式</span>
+                      </label>
+                    </div>
+
+                    <!-- 显示推理内容（仅 R1） -->
+                    <div v-if="aiModel === 'r1'" class="mb-4">
+                      <label class="inline-flex items-center">
+                        <input type="checkbox" v-model="showReasoning" class="form-checkbox h-4 w-4 text-primary">
+                        <span class="ml-2">显示思考过程</span>
+                      </label>
+                    </div>
+                    <div ref="chatContainer" class="messages h-96 overflow-y-auto rounded-md p-3 mb-4 bg-gray-50 border border-gray-200">
                       <div v-for="(msg, index) in chatMessages" :key="index" class="mb-3 flex" :class="{ 'justify-end': msg.isUser }">
                         <!-- AI 消息头像 -->
                         <div class="flex-shrink-0 w-8 h-8 rounded-full overflow-hidden mr-2" v-if="!msg.isUser">
@@ -113,10 +132,10 @@
 
                         <!-- 气泡消息 -->
                         <div
-                          :class="['max-w-xs px-4 py-2 rounded-lg',
-                          msg.isUser ? 'bg-primary text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none border border-gray-300']">
+                          :class="['max-w-lg px-4 py-2 rounded-lg',msg.isUser ? 'bg-primary text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none border border-gray-300']">
                           <strong :class="{'text-white': msg.isUser}" class="block mb-1">{{ msg.sender }}:</strong>
-                          <p class="whitespace-pre-line">{{ msg.text }}</p>
+                          <!-- 这里仍然是 Markdown 渲染 -->
+                          <div class="whitespace-pre-line" v-html="renderMarkdown(msg.text)"></div>
                         </div>
 
                         <!-- 用户头像 -->
@@ -125,6 +144,9 @@
                         </div>
                       </div>
                     </div>
+                    <div v-if="isAiTyping" class="text-gray-500 italic">AI 正在思考中...</div>
+
+
                     <div class="flex gap-2">
                       <input v-model="userInput" @keyup.enter="sendMessage" placeholder="输入问题..." class="flex-grow p-3 border border-gray-300 rounded text-base focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" />
                       <button @click="sendMessage" class="btn btn-primary px-4 py-2 hover:bg-blue-600 transition-colors">
@@ -159,23 +181,35 @@
 
         <div v-else-if="activeTab === 'video'" class="p-4">
           <h3 class="font-bold text-gray-800 mb-4">视频教程</h3>
-          <p class="text-gray-600 mb-4">请选择本地视频文件进行上传或预览（可选择多个）：</p>
-          <input type="file" accept="video/*" multiple @change="handleMultipleVideoUpload" class="mb-4" />
-          <div class="space-y-6 mt-6">
-            <div v-for="(url, index) in videoPreviewUrls" :key="index" class="relative group">
-              <video :src="url" controls class="w-full max-w-lg mx-auto rounded shadow">
-                您的浏览器不支持视频播放。
-              </video>
-              <button
-                @click="removeVideo(index)"
-                class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                title="移除视频"
-              >
-                <i class="fa fa-trash"></i>
-              </button>
+
+          <!-- 第一个：测试视频1 -->
+          <div class="mb-6">
+            <h4 class="text-gray-700 font-medium mb-2">测试视频1</h4>
+            <div class="w-full max-w-lg mx-auto rounded shadow overflow-hidden aspect-video">
+              <iframe
+                class="w-full h-full"
+                :src="`https://player.bilibili.com/player.html?bvid=${getBvid(testVideo1)}&high_quality=1&danmaku=0`"
+                frameborder="0"
+                allowfullscreen>
+              </iframe>
             </div>
           </div>
+
+          <!-- 第二个：测试视频2 -->
+          <div>
+            <h4 class="text-gray-700 font-medium mb-2">测试视频2</h4>
+            <div class="w-full max-w-lg mx-auto rounded shadow overflow-hidden aspect-video">
+              <iframe
+                class="w-full h-full"
+                :src="`https://player.bilibili.com/player.html?bvid=${getBvid(testVideo2)}&high_quality=1&danmaku=0`"
+                frameborder="0"
+                allowfullscreen>
+              </iframe>
+            </div>
+          </div>
+
         </div>
+
 
         <div v-else-if="activeTab === 'changelog'" class="p-4">
           <h3 class="font-bold text-gray-800 mb-4">系统更新日志</h3>
@@ -237,11 +271,22 @@
 
 <script setup>
 import { ref } from 'vue';
+// import testVideo1 from '@/assets/测试视频1.mp4'; // 引入本地视频1
+// import testVideo2 from '@/assets/测试视频2.mp4'; // 引入本地视频2
 
 const activeTab = ref('faq');
 const switchTab = (tabName) => {
   activeTab.value = tabName;
 };
+// 使用新的远程视频 URL
+const testVideo1 = 'https://www.bilibili.com/video/BV1iTN4zcEQS/?share_source=copy_web&vd_source=b9141f24c7341116073bc1682ecd5e93';
+const testVideo2 = 'https://www.bilibili.com/video/BV1iTN4zcEJX/?share_source=copy_web&vd_source=b9141f24c7341116073bc1682ecd5e93';
+// 从完整 URL 提取 bvid
+function getBvid(url) {
+  const match = url.match(/BV[0-9A-Za-z]{10}/);
+  return match ? match[0] : '';
+}
+
 
 const activeFaq = ref(null);
 const faqs = ref([
@@ -276,11 +321,6 @@ const openAiChat = () => {
   showAiChat.value = true;
   chatMessages.value = [
     { text: '你好，请问有什么可以帮助你的吗？', isUser: false, sender: '智能客服' },
-    {
-      text: `请输入以下数字编号获取帮助：\n\n1. 如何添加新的监控设备\n2. 如何处理违法记录\n3. 如何导出统计数据\n4. 系统登录问题排查\n5. 如何申请权限变更`,
-      isUser: false,
-      sender: '智能客服'
-    }
   ];
   scrollToBottom();
 };
@@ -290,37 +330,104 @@ const closeAiChat = () => {
   userInput.value = '';
 };
 
-const sendMessage = () => {
+const isAiTyping = ref(false);
+const aiModel = ref('v3'); // 当前 AI 模型：'v3' 或 'r1'
+const showReasoning = ref(false); // 是否显示推理过程（仅 r1 模式）
+const sendMessage = async () => {
   const message = userInput.value.trim();
   if (!message) return;
 
   chatMessages.value.push({ text: message, isUser: true, sender: '用户' });
+  userInput.value = '';
+  isAiTyping.value = true;
 
-  let reply = '';
-  switch (message) {
-    case '1':
-      reply = '进入"设备管理"页面，点击右上角的"添加设备"按钮，填写设备基本信息（名称、类型、位置等），输入设备的IP地址和访问凭据，点击"保存"完成添加。';
-      break;
-    case '2':
-      reply = '在“违法记录”页面，找到需要处理的记录，点击右侧的“处理”按钮，即可进入处理流程。';
-      break;
-    case '3':
-      reply = '在“统计分析”页面，设置好您需要的筛选条件后，点击右上角的“导出报告”按钮即可。';
-      break;
-    case '4':
-      reply = '请确认您的用户名和密码是否正确，并检查网络连接。如果忘记密码，请点击登录页面的“忘记密码”链接进行重置。';
-      break;
-    case '5':
-      reply = '请联系您的上级主管或系统管理员，在“系统设置”的“用户管理”中进行权限调整。';
-      break;
-    default:
-      reply = '请输入 1~5 中的任意数字，我会为您提供相应帮助。';
+  let systemPrompt = '';
+  if (aiModel.value === 'v3') {
+    systemPrompt = "你是一个智能客服助手，请回答用户的问题。请保持回答简洁、准确。";
+  } else if (aiModel.value === 'r1') {
+    systemPrompt = showReasoning.value
+      ? "你是一个智能客服助手。请先逐步分析问题，详细展示你的推理过程，最后用【最终答案】分隔符给出简洁的答案。"
+      : "你是一个智能客服助手，请回答用户的问题。请保持回答简洁、准确。";
   }
 
-  chatMessages.value.push({ text: reply, isUser: false, sender: '智能客服' });
-  userInput.value = '';
-  setTimeout(scrollToBottom, 50);
+  try {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer sk-c87575e411794a84b99dfbfd4d706052'
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ],
+        max_tokens: 500,
+        temperature: 0.7,
+        stream: true
+      })
+    });
+
+    if (!response.ok) throw new Error('网络响应失败');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let accumulatedText = '';
+
+    chatMessages.value.push({ text: '', isUser: false, sender: '智能客服' });
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+
+      for (const line of lines) {
+        if (line.startsWith('data: ') && !line.includes('[DONE]')) {
+          try {
+            const json = JSON.parse(line.replace(/^data: /, ''));
+            const content = json.choices[0]?.delta?.content || '';
+            accumulatedText += content;
+
+            // 分离显示：只显示【最终答案】之后的内容（当未勾选显示推理过程）
+            if (!showReasoning.value && accumulatedText.includes("【最终答案】")) {
+              const finalAnswer = accumulatedText.split("【最终答案】")[1].trim();
+              chatMessages.value[chatMessages.value.length - 1].text = finalAnswer;
+            } else {
+              chatMessages.value[chatMessages.value.length - 1].text = accumulatedText;
+            }
+
+            setTimeout(scrollToBottom, 10);
+          } catch (e) {
+            console.error('解析错误:', e);
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    chatMessages.value.push({ text: '网络错误或模型不支持流式输出。', isUser: false, sender: '智能客服' });
+  } finally {
+    isAiTyping.value = false;
+    setTimeout(scrollToBottom, 50);
+  }
 };
+import { watch } from 'vue';
+
+watch(aiModel, () => {
+  chatMessages.value = [
+    { text: `已切换至 ${aiModel.value === 'v3' ? 'V3 精简模式' : 'R1 推理模式'}`, isUser: false, sender: '系统' }
+  ];
+});
+
+
+import markdownIt from 'markdown-it';
+const md = markdownIt(); // 初始化 Markdown 解析器
+function renderMarkdown(text) {
+  return md.render(text || '');
+}
 
 const scrollToBottom = () => {
   if (chatContainer.value) {
@@ -375,36 +482,17 @@ const manualSections = ref([
   }
 ]);
 
+import testVideo from '@/assets/测试视频1.mp4'; // 引入本地视频
+
+
+
+
 const toggleManualSection = (index) => {
   activeManualSection.value === index
     ? (activeManualSection.value = null)
     : (activeManualSection.value = index);
 };
 
-const selectedVideos = ref([]);
-const videoPreviewUrls = ref([]);
-
-const handleMultipleVideoUpload = (event) => {
-  const files = Array.from(event.target.files);
-  if (!files.length) return;
-
-  const validVideos = files.filter(file => file.type.startsWith('video/'));
-
-  if (validVideos.length === 0) {
-    alert('请选择有效的视频文件');
-    return;
-  }
-
-  selectedVideos.value = [...selectedVideos.value, ...validVideos];
-  const urls = validVideos.map(file => URL.createObjectURL(file));
-  videoPreviewUrls.value = [...videoPreviewUrls.value, ...urls];
-};
-
-const removeVideo = (index) => {
-  URL.revokeObjectURL(videoPreviewUrls.value[index]);
-  videoPreviewUrls.value.splice(index, 1);
-  selectedVideos.value.splice(index, 1);
-};
 
 const contactSupport = () => {
   window.location.href = "mailto:support@traffic-system.com?subject=技术支持请求";
@@ -414,3 +502,26 @@ const toggleFaq = (index) => {
   activeFaq.value === index ? (activeFaq.value = null) : (activeFaq.value = index);
 };
 </script>
+
+<style scoped>
+.sidebar-item {
+  @apply flex items-center gap-2 px-3 py-2 rounded text-sm font-medium text-[#333] transition-colors;
+}
+
+.sidebar-item:hover {
+  @apply bg-gray-100;
+}
+
+.messages pre {
+  background-color: #f1f1f1;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  overflow-x: auto;
+}
+
+.messages code {
+  background-color: #eee;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+}
+</style>
