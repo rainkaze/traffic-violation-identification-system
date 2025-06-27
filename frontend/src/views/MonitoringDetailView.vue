@@ -66,7 +66,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import apiClient from '@/services/api';
-import { useWebRTC } from '@/composables/useWebRTC'; // 引入
+import Hls from 'hls.js'; // 导入 Hls.js
 
 const props = defineProps({
   id: {
@@ -79,127 +79,77 @@ const device = ref(null);
 const isLoading = ref(true);
 const error = ref(null);
 
-let peerConnection = null;
-let webSocket = null;
+const videoPlayer = ref(null);
+let hls = null;
+const streamStatus = ref('未连接');
+const isPlaying = ref(false);
 
-const { videoPlayer, connectionStatus, isConnected, isConnecting, startViewer, stopConnection } = useWebRTC();
-
-const ICE_SERVERS = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' }
-  ]
-};
-
-const createPeerConnection = () => {
-  peerConnection = new RTCPeerConnection(ICE_SERVERS);
-
-  peerConnection.onicecandidate = (event) => {
-    if (event.candidate && webSocket && webSocket.readyState === WebSocket.OPEN) {
-      const message = {
-        type: 'ice-candidate',
-        candidate: event.candidate,
-        targetDeviceId: props.id, // 发给摄像头端
-      };
-      webSocket.send(JSON.stringify(message));
-    }
-  };
-
-  peerConnection.ontrack = (event) => {
-    if (videoPlayer.value && event.streams[0]) {
-      videoPlayer.value.srcObject = event.streams[0];
-    }
-  };
-
-  peerConnection.onconnectionstatechange = () => {
-    connectionStatus.value = peerConnection.connectionState;
-    isConnected.value = peerConnection.connectionState === 'connected';
-    if(peerConnection.connectionState !== 'connecting') {
-      isConnecting.value = false;
-    }
-  };
-};
-
-const setupWebSocket = () => {
-  const viewerId = `viewer-${Math.random().toString(36).substr(2, 9)}`;
-  const wsUrl = `ws://localhost:8080/api/signal?deviceId=${viewerId}`;
-
-  webSocket = new WebSocket(wsUrl);
-
-  webSocket.onopen = async () => {
-    connectionStatus.value = '信令已连接，正在协商...';
-    if (!peerConnection) createPeerConnection();
-
-    try {
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
-
-      const message = {
-        type: 'offer',
-        sdp: peerConnection.localDescription,
-        targetDeviceId: props.id,
-      };
-      webSocket.send(JSON.stringify(message));
-    } catch (e) {
-      console.error("Error creating offer: ", e);
-      connectionStatus.value = '创建Offer失败';
-      isConnecting.value = false;
-    }
-  };
-
-  webSocket.onmessage = async (event) => {
-    const message = JSON.parse(event.data);
-    if (!peerConnection) return;
-
-    try {
-      switch (message.type) {
-        case 'answer':
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(message.sdp));
-          connectionStatus.value = '收到应答，建立连接中...';
-          break;
-        case 'ice-candidate':
-          await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
-          break;
-      }
-    } catch (e) {
-      console.error("Error handling message: ", e);
-    }
-  };
-
-  webSocket.onclose = () => {
-    if (connectionStatus.value !== 'connected') {
-      connectionStatus.value = '信令连接失败';
-    }
-    isConnecting.value = false;
-  };
-  webSocket.onerror = (err) => {
-    console.error('WebSocket Error:', err);
-    connectionStatus.value = '信令错误';
-    isConnecting.value = false;
-  };
-};
-
+// 启动视频流
 const startStreaming = () => {
-  startViewer(props.id);
-};
-const stopStreaming = () => {
-  if (peerConnection) {
-    peerConnection.close();
-    peerConnection = null;
+  // 这就是您在VLC中成功播放的地址
+  const streamName = 'live'; // 这个名称与 OBS RTSP 服务器的路径匹配
+  const hlsUrl = `http://localhost:8888/${streamName}/index.m3u8`;
+
+  if (Hls.isSupported()) {
+    if (hls) {
+      hls.destroy();
+    }
+    // 为 hls.js 添加低延迟优化配置
+    const hlsConfig = {
+      lowLatencyMode: true, // 开启低延迟模式
+      backBufferLength: 90, // 保留90秒的回看缓冲区
+    };
+    hls = new Hls(hlsConfig);
+    hls.loadSource(hlsUrl);
+    hls.attachMedia(videoPlayer.value);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      videoPlayer.value.play();
+      streamStatus.value = '播放中';
+      isPlaying.value = true;
+    });
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      if (data.fatal) {
+        console.error('HLS 致命错误:', data);
+        streamStatus.value = `错误: ${data.details}`;
+        isPlaying.value = false;
+        // 尝试恢复
+        if(data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+          console.log("尝试重新连接...");
+          hls.startLoad();
+        }
+      }
+    });
+  } else if (videoPlayer.value.canPlayType('application/vnd.apple.mpegurl')) {
+    // 对于 Safari 等原生支持HLS的浏览器
+    videoPlayer.value.src = hlsUrl;
+    videoPlayer.value.addEventListener('loadedmetadata', () => {
+      videoPlayer.value.play();
+      streamStatus.value = '播放中';
+      isPlaying.value = true;
+    });
   }
-  if (webSocket) {
-    webSocket.close();
-    webSocket = null;
+};
+
+// 停止视频流
+const stopStreaming = () => {
+  if (hls) {
+    hls.destroy();
+    hls = null;
   }
   if (videoPlayer.value) {
-    videoPlayer.value.srcObject = null;
+    videoPlayer.value.pause();
+    videoPlayer.value.src = '';
   }
-  connectionStatus.value = '未连接';
-  isConnected.value = false;
-  isConnecting.value = false;
+  streamStatus.value = '已停止';
+  isPlaying.value = false;
 };
 
-onUnmounted(stopStreaming);
+// 在组件卸载时确保清理资源
+onUnmounted(() => {
+  stopStreaming();
+});
 
+// 加载设备基本信息
 onMounted(async () => {
   isLoading.value = true;
   try {
@@ -213,13 +163,7 @@ onMounted(async () => {
   }
 });
 
-// --- 辅助数据和方法 ---
-const recentViolations = ref([
-  { id: 1, plate: '新K·A8888', type: '压线行驶', time: '2分钟前', img: 'https://picsum.photos/id/1071/100/100' },
-  { id: 2, plate: '新K·B1234', type: '违章停车', time: '5分钟前', img: 'https://picsum.photos/id/1072/100/100' },
-  { id: 3, plate: '新K·C5678', type: '超速20%', time: '12分钟前', img: 'https://picsum.photos/id/1073/100/100' }
-]);
-
+// 模板中用到的辅助函数
 const statusBgColor = (status) => {
   const map = { online: 'bg-success', offline: 'bg-danger', warning: 'bg-warning', maintenance: 'bg-gray-400' };
   return map[status] || 'bg-gray-300';
