@@ -16,6 +16,7 @@ public class DeviceListDto {
     private String address;
     private String status;
     private String ipAddress;
+    private String rtspUrl;
     private String modelName; // 在 DeviceFormView 加载时需要
 
     private String bindingCode;

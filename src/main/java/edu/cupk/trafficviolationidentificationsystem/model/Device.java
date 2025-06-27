@@ -16,6 +16,7 @@ public class Device {
     private Double longitude;
     private String modelName;
     private String ipAddress;
+    private String rtspUrl;
     private String status;
     private LocalDate installedAt;
     private LocalDateTime createdAt;
