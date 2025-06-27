@@ -93,11 +93,11 @@
 
 
       <main class="flex-1 overflow-y-auto bg-gray-50 p-4">
-        <input id="text" type="text" />
-        <button @click="send()">发送消息</button>
-        <button @click="closeWebSocket()">关闭连接</button>
-        <button @click="hdfxx">让后端给所有客户端发消息(测试用)</button>
-        <div id="message"></div>
+<!--        <input id="text" type="text" />-->
+<!--        <button @click="send()">发送消息</button>-->
+<!--        <button @click="closeWebSocket()">关闭连接</button>-->
+<!--        <button @click="hdfxx">让后端给所有客户端发消息(测试用)</button>-->
+<!--        <div id="message"></div>-->
         <router-view />
       </main>
     </div>

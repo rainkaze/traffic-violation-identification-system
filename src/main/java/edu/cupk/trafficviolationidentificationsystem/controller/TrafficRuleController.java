@@ -47,9 +47,6 @@ public class TrafficRuleController {
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "") String searchRuleKeyword
     ) {
-//        System.out.println("page"+ page);
-//        System.out.println("size"+ size);
-//        System.out.println("searchRuleKeyword"+ searchRuleKeyword);
 
         int offset = (page - 1) * size;
         List<TrafficRuleDto> items = trafficRuleService.getRulesByPage(offset, size, searchRuleKeyword);
@@ -65,10 +62,6 @@ public class TrafficRuleController {
     @PostMapping
     public ResponseEntity<TrafficRuleDto> createRule(@RequestBody TrafficRuleDto trafficRuleDto) {
 
-
-//        List<Integer> a=new ArrayList<>();
-//        a.add(8);
-//        webSocketServer.sendToClientsByInt(a,"新增条款");
 
     TrafficRuleDto createdRule = trafficRuleService.createRule(trafficRuleDto);
     return ResponseEntity.ok(createdRule);

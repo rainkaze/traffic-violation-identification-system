@@ -42,9 +42,13 @@ public class UserController {
 
     @GetMapping("/{username}")
     public ResponseEntity<UserDto> getUserByUsername(@PathVariable String username) {
-        User user = userMapper.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        return ResponseEntity.ok(new UserDto(user));
+        Optional<User> optionalUser = userMapper.findByUsername(username);
+        if (optionalUser.isPresent()) {
+            return ResponseEntity.ok(new UserDto(optionalUser.get()));
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
     }
 
     @PutMapping("/profile")
@@ -54,6 +58,7 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
+
     @PostMapping("/profile/change-password")
     public ResponseEntity<?> changePassword(@Valid @RequestBody PasswordChangeDto passwordChangeDto) {
         try {
@@ -61,6 +66,7 @@ public class UserController {
             userService.changePassword(username, passwordChangeDto);
 
 
+//           对设置了密码修改发通知的人   成功后发送邮件给用户
             Optional<User> byUsername = userMapper.findByUsername(username);
             Integer userId = byUsername.get().getUserId();
             List<Integer> userIds =notificationSettingMapper.getUserIdsByTypeKey("password_change_alert");
@@ -71,9 +77,6 @@ public class UserController {
             }
 
 
-
-
-
             return ResponseEntity.ok(Map.of("message", "密码修改成功。"));
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
@@ -81,9 +84,11 @@ public class UserController {
     }
 
 
+
+//    获取用户id的方法 因为token里没存id 我后续都是调用这个来获取对应用户id的
     @GetMapping("/getUserId")
     public Integer getUserId() {
-        System.out.println("hhhhhhhhh");
+//        System.out.println("hhhhhhhhh");
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username="";
         if (principal instanceof UserDetails userDetails) {
@@ -95,14 +100,14 @@ public class UserController {
 
         Optional<User> byUsername = userMapper.findByUsername(username);
         Integer userId=byUsername.get().getUserId();
-        System.out.println(userId);
+//        System.out.println(userId);
         return userId;
     }
 
 
 
 
-
+//    这个是发布任务功能的搜索框函数 查找用户的
     @GetMapping("/search")
     public List<User> searchUsers(@RequestParam(required = false) String keyword) {
         System.out.println("搜索关键字：" + keyword);
@@ -112,24 +117,6 @@ public class UserController {
         List<User> a=userMapper.searchUsersByKeyword(keyword);
         System.out.println(a);
         return a;
-//        // 实际应查数据库，这里只是模拟
-//        List<User> all = List.of(
-//                User.builder().userId(101).username("张三").build(),
-//                User.builder().userId(102).username("李四").build(),
-//                User.builder().userId(103).username("王五").build(),
-//                User.builder().userId(104).username("赵六").build(),
-//                User.builder().userId(105).username("小红").build()
-//        );
-//
-//        // 如果不传 keyword 就返回所有
-//        if (keyword == null || keyword.isBlank()) {
-//            return all;
-//        }
-//
-//        // 否则返回模糊匹配的
-//        return all.stream()
-//                .filter(user -> user.getUsername().contains(keyword))
-//                .collect(Collectors.toList());
     }
 
 }

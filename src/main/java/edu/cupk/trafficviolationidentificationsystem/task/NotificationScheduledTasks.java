@@ -30,8 +30,8 @@ public class NotificationScheduledTasks {
      */
     @Scheduled(cron = "0 0 1 * * ?")
     public void sendDailySecurityReports() {
-        List<Integer> userIds = notificationSettingMapper.getUserIdsByTypeKey("daily_security_report");
 
+        List<Integer> userIds = notificationSettingMapper.getUserIdsByTypeKey("daily_security_report");
         for (Integer userId : userIds) {
             String email = userMapper.findEmailByUserId(userId); // 假设根据 userId 获取邮箱地址
             String subject = "每日安全报告";

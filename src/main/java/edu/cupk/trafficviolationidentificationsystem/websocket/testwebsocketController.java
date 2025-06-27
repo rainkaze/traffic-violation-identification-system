@@ -17,8 +17,9 @@ public class testwebsocketController {
     private WebSocketServer webSocketServer;
     @GetMapping("websocket")
     public String test() {
+//        发通知这么写就行
 //        List<Integer> a=new ArrayList<>();
-//        a.add(8);
+//        a.add(8);                 这里是需要发送给的用户ids
 //        webSocketServer.sendToClientsByInt(a,"新增条款");
         webSocketServer.sendToAllClient("这是后端发给所有前端的消息");
         return "test";

@@ -44,7 +44,6 @@ public class NotificationController {
     @PutMapping("/markAllAsRead")
     public String markAllAsRead(@RequestBody MarkReadRequest request) {
         Long userId = request.getUserId();
-        // 这里写死逻辑，实际需要数据库操作将该用户所有未读通知标记为已读
         System.out.println("标记用户 " + userId + " 的所有通知为已读");
         notificationMapper.markAllAsRead(userId);
         return "success";
@@ -63,50 +62,38 @@ public class NotificationController {
     //插入数据库
     @PostMapping("/insert")
     public String insertNotification(@RequestBody Notification notification) {
-        // 这里写死逻辑，实际需要数据库操作将该用户所有未读通知标记为已读
         notificationMapper.insertNotification(notification);
         System.out.println("插入通知：" + notification);
         return "success";
     }
-
-//    设置通知
+    //设置通知
+//就是通知设置那块的选项
     @PostMapping("/set")
     public String setNotification(@RequestBody List<NotificationSetting> settings) {
-        // 这里写死逻辑，实际需要数据库操作将该用户所有未读通知标记为已读
-        System.out.println("在设置了");
+//        这个是初始用户时 拿来设置通知的
         System.out.println("设置通知：" + settings);
-
         notificationSettingMapper.insertNotificationSetting(settings);
-
         return "success";
     }
 
-//    @PostMapping("/set")
-//    public String setNotification(@RequestBody String rawJson) {
-//        System.out.println("收到原始请求体：" + rawJson);
-//        return "ok";
-//    }
+
     @PostMapping("/put")
     public String putNotification(@RequestBody List<NotificationSetting> settings) {
-        // 这里写死逻辑，实际需要数据库操作将该用户所有未读通知标记为已读
-        System.out.println("在更新了");
+//        修改通知设置的时候调用
         System.out.println("更新：" + settings);
-
         notificationSettingMapper.putNotificationSetting(settings);
-        List<Integer> userIds =notificationSettingMapper.getUserIdsByTypeKey("password_change_alert");
-        System.out.println("用户的ids："+userIds);
-
-
         return "success";
     }
 
+
+//    发送通知  发布任务的那个功能调用的
     @PostMapping("/send")
     public ResponseEntity<String> sendNotification(@RequestBody NotificationRequest request) {
-        // 打印接收到的数据（前期调试用）
-        System.out.println("接收到通知请求：");
-        System.out.println("主题: " + request.getSubject());
-        System.out.println("内容: " + request.getMessage());
-        System.out.println("收件人ID列表: " + request.getRecipientIds());
+//        // 打印接收到的数据（前期调试用）
+//        System.out.println("接收到通知请求：");
+//        System.out.println("主题: " + request.getSubject());
+//        System.out.println("内容: " + request.getMessage());
+//        System.out.println("收件人ID列表: " + request.getRecipientIds());
 
 
         List<Integer> a=new ArrayList<>();
@@ -140,5 +127,6 @@ public class NotificationController {
         private List<Integer> recipientIds;
 
     }
+
 
     }

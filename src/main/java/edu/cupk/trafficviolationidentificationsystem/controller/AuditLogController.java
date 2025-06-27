@@ -44,13 +44,6 @@ public class AuditLogController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String date) {
 
-//
-//        List<Integer> a=new ArrayList<>();
-//        a.add(1);
-//        a.add(11);
-//        a.add(8);
-//        webSocketServer.sendToClientsByInt(a,"6666");
-//        webSocketServer.sendToAllClient("你好啊");
 
         System.out.println("获取日志");
 
@@ -66,13 +59,11 @@ public class AuditLogController {
 
         Optional<User> byUsername = userMapper.findByUsername(username);
         Integer userId=byUsername.get().getUserId();
-        System.out.println(userId);
-//        System.out.println(byUsername.toString());
+//        System.out.println(userId);
 
 
 
-//        int offset = (page - 1) * size;
-        // 替换 mockData 为数据库分页查询结果
+
         List<AudilVo> mockData = auditLogMapper.selectPage1();
 
 //        List<AudilVo> mockData = Arrays.asList(

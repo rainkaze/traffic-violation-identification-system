@@ -538,11 +538,38 @@
 
             <div class="space-y-6">
               <!-- 数据备份 -->
+              <!-- 数据备份 -->
               <div class="p-4 border rounded-lg">
                 <h4 class="font-medium">数据备份</h4>
                 <p class="text-sm text-gray-500 my-2">上次备份文件：{{ latestBackup }}</p>
-                <button @click="backup" class="btn btn-secondary">立即备份</button>
+
+                <!-- 加载中按钮 -->
+                <button
+                  v-if="isBackingUp"
+                  class="btn btn-secondary flex items-center"
+                  disabled
+                >
+                  <svg class="animate-spin w-4 h-4 mr-2 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                            stroke="currentColor" stroke-width="4" />
+                    <path class="opacity-75" fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 100 16v-4l-3 3 3 3v-4a8 8 0 01-8-8z" />
+                  </svg>
+                  正在备份...
+                </button>
+
+                <!-- 默认按钮 -->
+                <button
+                  v-else
+                  @click="backup"
+                  class="btn btn-secondary"
+                >
+                  立即备份
+                </button>
               </div>
+
+
+
 
               <!-- 数据恢复 -->
               <div class="p-4 border rounded-lg bg-yellow-50 border-yellow-300">
@@ -849,14 +876,6 @@ const handlePageChange = (newPage) => {
 }
 
 const filteredUsers = computed(() => users.value) // 后端分页，不需要本地过滤
-
-
-
-
-
-
-
-
 
 
 
@@ -1449,6 +1468,8 @@ const saveSettings = async () => {
 const backupFiles = ref([])
 const selectedFile = ref('')
 const latestBackup = ref('')
+const isBackingUp = ref(false)
+
 
 const fetchBackups = async () => {
   try {
@@ -1464,6 +1485,7 @@ const fetchBackups = async () => {
 
 const backup = async () => {
   try {
+    isBackingUp.value = true  // 开始 loading
     ElMessage.info('开始备份数据库...')
     await apiClient.post('/db/backup')
     await fetchBackups()
@@ -1471,6 +1493,8 @@ const backup = async () => {
   } catch (error) {
     console.error('备份失败:', error)
     ElMessage.error('备份失败，请稍后再试')
+  } finally {
+    isBackingUp.value = false  // 结束 loading
   }
 }
 
@@ -1507,6 +1531,12 @@ const deleteBackup = async () => {
     ElMessage.error('删除失败，请稍后再试')
   }
 }
+
+
+
+
+
+
 
 
 import { useSystemConfigStore } from '@/store/systemConfig'
