@@ -34,7 +34,7 @@
  <!-- 其他查询语句保持不变 -->
  <select id="findAllDevices" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto">
   SELECT
-   d.device_id, d.device_name, d.device_type,
+   d.device_id, d.device_code, d.device_name, d.device_type,
    dist.district_name, d.address, d.status, d.rtsp_url
   FROM
    devices d
