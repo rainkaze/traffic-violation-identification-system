@@ -19,7 +19,6 @@
             <i class="fa fa-book w-5 text-center text-gray-500"></i>
             <span>使用手册</span>
           </button>
-
           <button class="sidebar-item w-full text-left" :class="{ 'bg-primary/10 text-primary': activeTab === 'video' }"
                   @click="switchTab('video')">
             <i class="fa fa-video-camera w-5 text-center text-gray-500"></i>
@@ -33,7 +32,6 @@
             <i class="fa fa-newspaper-o w-5 text-center text-gray-500"></i>
             <span>更新日志</span>
           </button>
-
           <!-- 联系支持 -->
           <button class="sidebar-item w-full text-left"
                   :class="{ 'bg-primary/10 text-primary': activeTab === 'contact' }"
@@ -80,9 +78,9 @@
                 <span class="font-medium text-gray-800">{{ faq.question }}</span>
                 <i class="fa text-gray-500 transition-transform" :class="activeFaq === index ? 'fa-angle-up' : 'fa-angle-down'"></i>
               </button>
-              <div v-if="activeFaq === index" class="p-4 border-t border-gray-200">
-                <div v-html="faq.answer"></div>
-              </div>
+                <div v-if="activeFaq === index" class="p-4 border-t border-gray-200">
+                  <div v-html="faq.answer"></div>
+                </div>
             </div>
           </div>
           <div class="mt-8 pt-6 border-t border-gray-200">
@@ -98,12 +96,14 @@
                     <i class="fa fa-envelope mr-1"></i> 发送邮件
                   </button>
                   <button class="btn btn-primary" @click="openAiChat">
-                    <i class="fa fa-phone mr-1"></i> 在线客服
+                    <span class="inline-flex items-center justify-center w-5 h-5 mr-1 bg-white text-primary rounded-full text-xs font-bold">AI</span>
+                    AI智能客服
                   </button>
+
 
                   <!-- AI 客服对话框 -->
                   <div v-if="showAiChat" class="ai-chat-dialog card fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[60rem] p-6 z-50 shadow-xl rounded-lg bg-white border border-primary">
-                    <h3 class="font-bold text-gray-800 mb-4">智能客服</h3>
+                    <h3 class="font-bold text-gray-800 mb-4">AI智能客服</h3>
                     <!-- 模型选择 -->
                     <div class="mb-4 flex items-center gap-4">
                       <label class="inline-flex items-center">
@@ -291,6 +291,15 @@ function getBvid(url) {
 const activeFaq = ref(null);
 const faqs = ref([
   {
+    question: '如何进行系统登录问题排查？',
+    answer: `<p class="text-gray-600 mb-3">要进行系统登录问题排查，请按照以下步骤操作：</p>
+               <ol class="list-decimal list-inside space-y-1 text-gray-600">
+                   <li>确认您的用户名和密码是否正确</li>
+                   <li>检查网络连接</li>
+                   <li>如果忘记密码，请点击“登录页面”的“忘记密码”进行重置</li>
+               </ol>`
+  },
+  {
     question: '如何添加新的监控设备？',
     answer: `<p class="text-gray-600 mb-3">要添加新的监控设备，请按照以下步骤操作：</p>
                <ol class="list-decimal list-inside space-y-1 text-gray-600">
@@ -302,10 +311,38 @@ const faqs = ref([
                </ol>
                <p class="text-gray-600 mt-3">添加后，设备将出现在设备列表中，系统将自动尝试连接设备。</p>`
   },
-  { question: '如何处理违法记录？', answer: '<p>在“违法记录”页面，找到需要处理的记录，点击右侧的“处理”按钮，即可进入处理流程。</p>'},
-  { question: '如何导出统计数据？', answer: '<p>在“统计分析”页面，设置好您需要的筛选条件后，点击右上角的“导出报告”按钮即可。</p>'},
-  { question: '系统登录问题排查', answer: '<p>请确认您的用户名和密码是否正确，并检查网络连接。如果忘记密码，请点击登录页面的“忘记密码”链接进行重置。</p>'},
-  { question: '如何申请权限变更？', answer: '<p>请联系您的上级主管或系统管理员，在“系统设置”的“用户管理”中进行权限调整。</p>'},
+  {
+    question: '如何处理违法记录？',
+    answer: `<p class="text-gray-600 mb-3">要处理违法记录，请按照以下步骤操作：</p>
+               <ol class="list-decimal list-inside space-y-1 text-gray-600">
+                   <li>进入"违法处理"页面</li>
+                   <li>找到需要处理的记录--通过搜索框搜索关键词可快速定位到相应的违法记录</li>
+                   <li>点击右侧的"处理"按钮</li>
+                   <li>点击左侧“详情”按钮即可查看违法详情</li>
+               </ol>`
+  },
+  {
+    question: '如何导出统计数据？',
+    answer: `<p class="text-gray-600 mb-3">要导出统计数据，请按照以下步骤操作：</p>
+               <ol class="list-decimal list-inside space-y-1 text-gray-600">
+                   <li>进入"违法记录"页面</li>
+                   <li>找到需要导出的记录--通过搜索框搜索关键词可快速定位到相应的违法记录</li>
+                   <li>勾选左侧的按钮</li>
+                   <li>点击右上角“导出数据”</li>
+               </ol>`
+  },
+  {
+    question: '如何申请权限变更？',
+    answer: `<p class="text-gray-600 mb-3">要申请权限变更，请按照以下步骤操作：</p>
+               <ol class="list-decimal list-inside space-y-1 text-gray-600">
+                   <li>请联系您的上级主管或系统管理员</li>
+                   <li>进入“系统设置”页面</li>
+                   <li>进入“用户管理”下级页面</li>
+                   <li>找到相应用户--可通过搜索框快速定位用户</li>
+                   <li>点击右侧“编辑”按钮进行权限调整</li>
+                   <li>也可通过“禁用”/“启用”按钮进行快捷操作</li>
+               </ol>`
+  },
 ]);
 
 const goToMail = () => {
@@ -478,6 +515,7 @@ const manualSections = ref([
         <li><span class="mr-2 font-medium">a.</span>进入【帮助中心】页面</li>
         <li><span class="mr-2 font-medium">b.</span>点击【常见问题】</li>
         <li><span class="mr-2 font-medium">c.</span>可在其中查找解决方案</li>
+        <li><span class="mr-2 font-medium">d.</span>未找到解决方案？点击下方“AI智能客服”进行问答</li>
       </ul>`
   }
 ]);
