@@ -98,12 +98,6 @@ CREATE TABLE `devices` (
                            `ip_address` VARCHAR(45),
     -- 将 status 的默认值改为 'UNBOUND' (未绑定)
                            `status` ENUM('UNBOUND', 'ONLINE', 'OFFLINE', 'WARNING', 'MAINTENANCE') NOT NULL DEFAULT 'UNBOUND',
-
-    -- [新增] 用于设备绑定的字段
-                           `binding_code` VARCHAR(100) UNIQUE,          -- 绑定码，给手机端输入
-                           `binding_code_expires_at` TIMESTAMP NULL,  -- 绑定码过期时间
-                           `bound_at` TIMESTAMP NULL,                   -- 成功绑定的时间
-
                            `installed_at` DATE,
                            `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                            `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

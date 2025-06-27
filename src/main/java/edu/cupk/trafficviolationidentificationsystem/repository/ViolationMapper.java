@@ -5,6 +5,7 @@ import edu.cupk.trafficviolationidentificationsystem.dto.ViolationQueryDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import java.util.List;
+import edu.cupk.trafficviolationidentificationsystem.model.Violation; // 确保导入
 
 @Mapper
 public interface ViolationMapper {
@@ -24,4 +25,8 @@ public interface ViolationMapper {
      * @return 总记录数
      */
     long countViolationsByCriteria(@Param("query") ViolationQueryDto query);
+
+    int insertTestViolation(Violation violation);
+
+    List<ViolationDetailDto> getLatestTestViolations(@Param("limit") int limit);
 }

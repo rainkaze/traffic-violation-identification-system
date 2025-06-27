@@ -63,4 +63,18 @@
         <include refid="dynamicWhere"/>
     </select>
 
+
+    <insert id="insertTestViolation" useGeneratedKeys="true" keyProperty="violationId"
+            parameterType="edu.cupk.trafficviolationidentificationsystem.model.Violation">
+        INSERT INTO violations
+        (plate_number, violation_time, device_id, rule_id, status, evidence_image_urls)
+        VALUES
+            (#{plateNumber}, #{violationTime}, #{deviceId}, #{ruleId}, '待处理', #{evidenceImageUrls, typeHandler=edu.cupk.trafficviolationidentificationsystem.handler.JsonTypeHandler})
+    </insert>
+
+    <select id="getLatestTestViolations" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
+        <include refid="selectJoins"/>
+        ORDER BY v.created_at DESC
+        LIMIT #{limit}
+    </select>
 </mapper>

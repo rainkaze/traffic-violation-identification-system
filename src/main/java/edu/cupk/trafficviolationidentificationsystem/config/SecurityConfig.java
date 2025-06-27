@@ -49,6 +49,8 @@ public class SecurityConfig {
                 .cors(withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/api/test/**").permitAll() // 在其他规则之前添加这一行
+
                         // 公开认证端点
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/devices/bind").permitAll()
@@ -60,7 +62,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/devices/**").hasRole("管理员")   // 只有管理员可以修改
                         .requestMatchers(HttpMethod.DELETE, "/api/devices/**").hasRole("管理员") // 只有管理员可以删除
 
-
+                        .requestMatchers("/uploads/**").permitAll() // 测试视频流
 
                         // 为数据接口添加明确的访问角色
                         .requestMatchers("/api/violations/**", "/api/statistics/**").hasAnyRole("管理员", "警员", "中队长", "大队长")

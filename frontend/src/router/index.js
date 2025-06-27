@@ -21,6 +21,8 @@ import WorkflowManagementView from '../views/admin/WorkflowManagementView.vue';
 import WorkflowForm from '../views/admin/WorkflowForm.vue';
 import DeviceFormView from '../views/DeviceFormView.vue'; // 新增导入
 import WebRTCTestView from '../views/WebRTCTestView.vue'; // 1. 导入新页面
+import LinkTestView from '../views/LinkTestView.vue'; // 1. 导入新页面
+
 
 const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
@@ -153,6 +155,12 @@ const router = createRouter({
       path: '/webrtc-test',
       name: 'webrtc-test',
       component: WebRTCTestView,
+      meta: { requiresAuth: true } // 假设也需要登录才能访问
+    },
+    {
+      path: '/test-link',
+      name: 'test-link',
+      component: LinkTestView,
       meta: { requiresAuth: true } // 假设也需要登录才能访问
     },
     { path: '/:pathMatch(.*)*', redirect: '/dashboard' }

@@ -3,29 +3,37 @@ package edu.cupk.trafficviolationidentificationsystem.service;
 import edu.cupk.trafficviolationidentificationsystem.dto.PageResultDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.ViolationQueryDto;
+import edu.cupk.trafficviolationidentificationsystem.dto.ViolationTestDto;
 import edu.cupk.trafficviolationidentificationsystem.model.User;
+import edu.cupk.trafficviolationidentificationsystem.model.Violation;
 import edu.cupk.trafficviolationidentificationsystem.repository.UserMapper;
 import edu.cupk.trafficviolationidentificationsystem.repository.ViolationMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
 
 public interface ViolationService {
     PageResultDto<ViolationDetailDto> listViolations(ViolationQueryDto queryDto);
+
+    Violation createTestViolation(ViolationTestDto violationDto, MultipartFile evidenceImage);
+    List<ViolationDetailDto> getLatestTestViolations(int limit);
 }
 
 @Service
 class ViolationServiceImpl implements ViolationService {
-
+    private final FileStorageService fileStorageService;
     private final ViolationMapper violationMapper;
     private final UserMapper userMapper; // 注入 UserMapper
 
-    public ViolationServiceImpl(ViolationMapper violationMapper, UserMapper userMapper) {
+    public ViolationServiceImpl(ViolationMapper violationMapper, UserMapper userMapper, FileStorageService fileStorageService) {
         this.violationMapper = violationMapper;
         this.userMapper = userMapper;
+        this.fileStorageService = fileStorageService; // 初始化
     }
 
     @Override
@@ -71,5 +79,31 @@ class ViolationServiceImpl implements ViolationService {
 
         // 6. 组装并返回分页结果
         return new PageResultDto<>(items, totalItems, (int) totalPages, queryDto.getPage());
+    }
+
+    @Override
+    @Transactional
+    public Violation createTestViolation(ViolationTestDto violationDto, MultipartFile evidenceImage) {
+        // 1. 存储图片文件
+        String imageUrl = fileStorageService.storeFile(evidenceImage);
+
+        // 2. 创建Violation实体
+        Violation violation = new Violation();
+        violation.setPlateNumber(violationDto.getPlateNumber());
+        violation.setViolationTime(violationDto.getViolationTime());
+        violation.setDeviceId(violationDto.getDeviceId());
+        violation.setRuleId(violationDto.getRuleId());
+
+        // 将图片URL列表存为JSON格式
+        violation.setEvidenceImageUrls(List.of(imageUrl));
+
+        // 3. 插入数据库
+        violationMapper.insertTestViolation(violation);
+        return violation;
+    }
+
+    @Override
+    public List<ViolationDetailDto> getLatestTestViolations(int limit) {
+        return violationMapper.getLatestTestViolations(limit);
     }
 }
