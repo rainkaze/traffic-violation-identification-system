@@ -1,21 +1,22 @@
 <template>
-  <div class="p-4">
+  <div class="p-4 sm:p-6 lg:p-8">
     <div class="mb-6">
       <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800">{{ pageTitle }}</h2>
       <p class="text-gray-600">{{ pageDescription }}</p>
     </div>
 
-    <div class="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2 card">
-        <form @submit.prevent="submitForm">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700">设备编码*</label>
-              <input v-model="form.deviceCode" type="text" class="input mt-1 w-full" :disabled="isEditMode" required>
-            </div>
+    <div class="max-w-6xl mx-auto p-6 md:p-8 card space-y-8">
+      <!-- 表单区域 -->
+      <form @submit.prevent="submitForm" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- 左侧表单 -->
+        <div class="lg:col-span-2 space-y-6">
+          <h3 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">
+            <i class="fa fa-info-circle mr-2 text-primary"></i>设备基础信息
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label class="block text-sm font-medium text-gray-700">设备名称*</label>
-              <input v-model="form.deviceName" type="text" class="input mt-1 w-full" required>
+              <input v-model="form.deviceName" type="text" class="input mt-1 w-full" required placeholder="例如：世纪大道与友谊路口摄像机">
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700">设备类型*</label>
@@ -26,121 +27,196 @@
                 <option>GPU推理服务器</option>
               </select>
             </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">所属辖区*</label>
+            <select v-model="form.districtId" class="input mt-1 w-full" required>
+              <option :value="null" disabled>请选择一个辖区</option>
+              <option v-for="district in districts" :key="district.districtId" :value="district.districtId">
+                {{ district.districtName }}
+              </option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">设备物理地址*</label>
+            <input v-model="form.address" type="text" class="input mt-1 w-full" required placeholder="详细到路口或门牌号">
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label class="block text-sm font-medium text-gray-700">所属辖区*</label>
-              <select v-model="form.districtId" class="input mt-1 w-full" required>
-                <option v-for="district in districts" :key="district.districtId" :value="district.districtId">
-                  {{ district.districtName }}
-                </option>
-              </select>
-            </div>
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-700">设备地址*</label>
-              <input v-model="form.address" type="text" class="input mt-1 w-full" required>
+              <label class="block text-sm font-medium text-gray-700">经度 (Longitude)</label>
+              <input v-model.number="form.longitude" type="number" step="any" class="input mt-1 w-full" placeholder="例如: 116.397128">
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700">IP地址</label>
-              <input v-model="form.ipAddress" type="text" class="input mt-1 w-full" placeholder="例如: 192.168.1.101">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700">设备型号</label>
-              <input v-model="form.modelName" type="text" class="input mt-1 w-full">
+              <label class="block text-sm font-medium text-gray-700">纬度 (Latitude)</label>
+              <input v-model.number="form.latitude" type="number" step="any" class="input mt-1 w-full" placeholder="例如: 39.916527">
             </div>
           </div>
-          <div v-if="error" class="text-red-600 text-sm mt-4">{{ error }}</div>
-          <div class="mt-6 flex justify-end gap-3">
-            <router-link to="/devices" class="btn btn-secondary">返回列表</router-link>
-            <button type="submit" :disabled="isLoading" class="btn btn-primary">
-              {{ isLoading ? '保存中...' : '确认保存' }}
-            </button>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">RTSP 视频流地址</label>
+            <input v-model="form.rtspUrl" type="text" class="input mt-1 w-full" placeholder="例如: rtsp://127.0.0.1:8554/live/cam1">
           </div>
-        </form>
-      </div>
-
-      <div class="card space-y-4">
-        <div>
-          <h3 class="font-bold text-gray-800 mb-2">设备绑定信息</h3>
-          <div v-if="!createdDevice.id" class="text-sm text-gray-500 p-4 bg-gray-100 rounded-lg text-center">
-            请先保存设备以生成绑定码
-          </div>
-          <div v-else class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p class="text-sm text-gray-600">请在Android设备上输入以下绑定码：</p>
-            <p class="text-2xl font-bold text-primary text-center my-2 tracking-widest bg-white py-1 rounded">{{ createdDevice.bindingCode }}</p>
-            <p class="text-xs text-gray-500">此绑定码在 {{ formatTime(createdDevice.bindingCodeExpiresAt) }} 前有效。</p>
+          <!-- *** 关键新增：设备状态下拉框 *** -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700">设备状态*</label>
+            <select v-model="form.status" class="input mt-1 w-full" required>
+              <option value="ONLINE">在线 (ONLINE)</option>
+              <option value="OFFLINE">离线 (OFFLINE)</option>
+              <option value="WARNING">警告 (WARNING)</option>
+              <option value="MAINTENANCE">维护中 (MAINTENANCE)</option>
+            </select>
           </div>
         </div>
 
-        <div>
-          <h3 class="font-bold text-gray-800 mb-2">连接与视频流测试</h3>
-          <div class="aspect-video bg-black rounded-lg flex items-center justify-center text-gray-500 mb-4">
-            <video ref="videoPlayer" class="w-full h-full" autoplay playsinline muted></video>
+        <!-- 右侧预览 -->
+        <div class="lg:col-span-1 space-y-4 lg:border-l lg:pl-8">
+          <h3 class="text-xl font-semibold text-gray-800 border-b border-gray-200 pb-3 mb-4">
+            <i class="fa fa-video-camera mr-2 text-primary"></i>连接与预览
+          </h3>
+          <div class="aspect-video bg-black rounded-lg flex items-center justify-center text-gray-500 overflow-hidden">
+            <video v-show="isStreamPlaying" ref="videoPlayer" class="w-full h-full object-cover" controls autoplay muted playsinline></video>
+            <div v-if="!isStreamPlaying" class="text-center p-4">
+              <i v-if="!isTesting" class="fa fa-power-off text-4xl text-gray-600 mb-2"></i>
+              <i v-else class="fa fa-spinner fa-spin text-4xl text-primary mb-2"></i>
+              <p>{{ testResult || '暂无预览' }}</p>
+            </div>
           </div>
-          <button @click="startViewer(createdDevice.id)" class="btn btn-success w-full" :disabled="!createdDevice.id || isConnecting || isConnected">
+          <button @click="testStream" type="button" class="btn btn-success w-full" :disabled="isTesting || !form.rtspUrl">
             <i class="fa fa-rss mr-2"></i>
-            {{ isConnecting ? '连接中...' : (isConnected ? '正在播放' : '开始测试连接') }}
+            {{ isTesting ? '测试中...' : '开始测试连接' }}
           </button>
-          <p class="text-sm text-center mt-2" :class="statusColor">
-            状态: {{ connectionStatus }}
-          </p>
+          <div class="text-center text-sm font-medium p-2 rounded-md" :class="connectionStatus.bg">
+            状态: <span class="font-bold" :class="connectionStatus.text">{{ connectionStatus.label }}</span>
+          </div>
         </div>
+      </form>
+
+      <!-- 底部按钮 -->
+      <div class="mt-8 pt-6 border-t border-gray-200 flex justify-end gap-3">
+        <router-link to="/devices" class="btn btn-secondary">取消</router-link>
+        <button @click="submitForm" :disabled="isLoading" class="btn btn-primary px-6">
+          <i class="fa fa-check mr-2"></i>
+          {{ isLoading ? '保存中...' : '确认并保存' }}
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, reactive } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import {ref, onMounted, onUnmounted, computed, reactive, watch} from 'vue';
+import {useRoute, useRouter} from 'vue-router';
 import apiClient from '@/services/api';
-import { useWebRTC } from '@/composables/useWebRTC';
+import Hls from 'hls.js';
 
-const props = defineProps({ id: String });
 const route = useRoute();
+const props = defineProps({id: String});
 const router = useRouter();
 
-const form = ref({});
-const createdDevice = reactive({
-  id: null,
-  bindingCode: null,
-  bindingCodeExpiresAt: null,
+const form = ref({
+  deviceName: '',
+  deviceType: '高清摄像头',
+  districtId: null,
+  address: '',
+  longitude: null,
+  latitude: null,
+  rtspUrl: '',
+  status: 'OFFLINE' // 默认值设为大写
 });
-const districts = ref([]);
-const error = ref('');
 const isLoading = ref(false);
+const error = ref('');
+const districts = ref([]);
 
-// 使用 WebRTC Composable
-const { videoPlayer, connectionStatus, statusColor, isConnected, isConnecting, startViewer } = useWebRTC();
+const videoPlayer = ref(null);
+let hls = null;
+const isTesting = ref(false);
+const isStreamPlaying = ref(false);
+const testResult = ref('');
+const connectionStatus = reactive({label: '未连接', text: 'text-gray-700', bg: 'bg-gray-200'});
 
 const isEditMode = computed(() => !!props.id);
-const pageTitle = computed(() => isEditMode.value ? '编辑设备' : '新建设备');
-const pageDescription = computed(() => isEditMode.value ? '修改设备信息并测试连接。' : '填写新设备的信息，获取绑定码并测试连接。');
+const pageTitle = computed(() => isEditMode.value ? '编辑设备信息' : '添加新设备');
+const pageDescription = computed(() => "在这里管理设备的详细信息并测试其视频流连接。");
 
 const fetchDistricts = async () => {
   try {
     const response = await apiClient.get('/districts');
     districts.value = response.data;
+    if (!isEditMode.value && districts.value.length > 0) {
+      form.value.districtId = districts.value[0].districtId;
+    }
   } catch (err) {
-    console.error("加载辖区失败:", err);
+    console.error("加载辖区列表失败:", err);
   }
 };
 
 const loadDeviceData = async () => {
-  if (!isEditMode.value) {
-    form.value = { deviceType: '高清摄像头' }; // 移除status默认值
-    return;
-  }
+  if (!isEditMode.value) return;
+  isLoading.value = true;
   try {
     const response = await apiClient.get(`/devices/${props.id}`);
     form.value = response.data;
-    // 如果是编辑模式，也填充createdDevice信息
-    Object.assign(createdDevice, {
-      id: response.data.deviceId,
-      bindingCode: response.data.bindingCode,
-      bindingCodeExpiresAt: response.data.bindingCodeExpiresAt,
-    });
   } catch (err) {
     alert('加载设备信息失败');
     router.push('/devices');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const stopHls = () => {
+  if (hls) {
+    hls.destroy();
+    hls = null;
+  }
+  isStreamPlaying.value = false;
+};
+
+const testStream = () => {
+  if (!form.value.rtspUrl) {
+    alert('请输入RTSP视频流地址！');
+    return;
+  }
+
+  try {
+    const url = new URL(form.value.rtspUrl);
+    const streamPath = url.pathname.startsWith('/') ? url.pathname.substring(1) : url.pathname;
+    const hlsUrl = `http://localhost:8888/${streamPath}/index.m3u8`;
+
+    stopHls();
+    isTesting.value = true;
+    testResult.value = '';
+    connectionStatus.label = '正在连接...';
+    connectionStatus.text = 'text-yellow-800';
+    connectionStatus.bg = 'bg-yellow-100';
+
+    hls = new Hls({lowLatencyMode: true, maxBufferLength: 2, liveSyncDurationCount: 1});
+    hls.loadSource(hlsUrl);
+    hls.attachMedia(videoPlayer.value);
+
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      videoPlayer.value.play().catch(e => console.error("播放失败:", e));
+      isTesting.value = false;
+      isStreamPlaying.value = true;
+      connectionStatus.label = '连接成功';
+      connectionStatus.text = 'text-green-800';
+      connectionStatus.bg = 'bg-green-100';
+      // **关键修正**: 测试成功后，自动更新下拉框的值
+      form.value.status = 'ONLINE';
+    });
+
+    hls.on(Hls.Events.ERROR, (event, data) => {
+      if (data.fatal) {
+        isTesting.value = false;
+        testResult.value = '无法播放视频流';
+        connectionStatus.label = `连接失败: ${data.details}`;
+        connectionStatus.text = 'text-red-800';
+        connectionStatus.bg = 'bg-red-100';
+        // **关键修正**: 测试失败后，自动更新下拉框的值
+        form.value.status = 'OFFLINE';
+      }
+    });
+  } catch (e) {
+    alert('RTSP地址格式不正确，请输入类似 rtsp://... 的地址');
   }
 };
 
@@ -148,35 +224,31 @@ const submitForm = async () => {
   isLoading.value = true;
   error.value = '';
   try {
+    // 直接发送表单数据，不再需要解构
     const payload = form.value;
+
     if (isEditMode.value) {
       await apiClient.put(`/devices/${props.id}`, payload);
-      alert('设备更新成功！');
-      router.push('/devices');
     } else {
-      const response = await apiClient.post('/devices', payload);
-      // [核心修改] 创建成功后，不跳转，而是更新UI
-      Object.assign(createdDevice, {
-        id: response.data.deviceId,
-        bindingCode: response.data.bindingCode,
-        bindingCodeExpiresAt: response.data.bindingCodeExpiresAt,
-      });
-      alert('设备创建成功！请使用绑定码在手机端激活。');
+      await apiClient.post('/devices', payload);
     }
+    alert('设备保存成功！');
+    router.push('/devices');
   } catch (err) {
-    error.value = err.response?.data?.message || '操作失败';
+    const message = err.response?.data?.message || '操作失败，请检查所有必填项。';
+    error.value = message;
+    alert(`保存失败: ${message}`);
   } finally {
     isLoading.value = false;
   }
-};
-
-const formatTime = (isoString) => {
-  if (!isoString) return 'N/A';
-  return new Date(isoString).toLocaleString('zh-CN', { hour12: false });
 };
 
 onMounted(() => {
   fetchDistricts();
   loadDeviceData();
 });
+
+watch(() => route.path, stopHls);
+onUnmounted(stopHls);
+
 </script>

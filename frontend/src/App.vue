@@ -1,10 +1,16 @@
+<!-- 文件: frontend/src/App.vue -->
 <template>
   <div v-if="isAuthenticated" class="flex h-screen overflow-hidden bg-gray-50 font-sans">
     <Sidebar :is-mobile-open="isSidebarOpen" :toggle-sidebar="toggleSidebar" />
     <div class="flex-1 flex flex-col overflow-hidden">
       <Header :toggle-sidebar="toggleSidebar" />
       <main class="flex-1 overflow-y-auto bg-gray-50 p-4">
-        <router-view />
+        <!-- 核心修改：使用KeepAlive包裹router-view -->
+        <router-view v-slot="{ Component }">
+          <keep-alive>
+            <component :is="Component" />
+          </keep-alive>
+        </router-view>
       </main>
     </div>
   </div>

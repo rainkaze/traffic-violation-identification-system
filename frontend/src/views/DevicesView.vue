@@ -66,7 +66,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onActivated } from 'vue';
 import Chart from 'chart.js/auto';
 import apiClient from '@/services/api';
 
@@ -185,6 +185,10 @@ const renderTypeChart = (data) => {
 };
 
 onMounted(() => {
+  fetchDevices();
+  fetchChartData();
+});
+onActivated(() => {
   fetchDevices();
   fetchChartData();
 });
