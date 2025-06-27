@@ -97,7 +97,15 @@ const startStreaming = () => {
     // 为 hls.js 添加低延迟优化配置
     const hlsConfig = {
       lowLatencyMode: true, // 开启低延迟模式
-      backBufferLength: 90, // 保留90秒的回看缓冲区
+
+      // 增加缓冲区的目标长度，让播放更平滑
+      maxBufferLength: 30,
+      maxMaxBufferLength: 600,
+
+      // 启用更智能的码率切换
+      abrEwmaDefaultEstimate: 500000, // 初始码率估计 (500Kbps)
+      abrMaxWithRealBitrate: true,
+      abrBandWidthFactor: 0.8,
     };
     hls = new Hls(hlsConfig);
     hls.loadSource(hlsUrl);
