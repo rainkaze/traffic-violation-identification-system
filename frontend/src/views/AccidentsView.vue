@@ -13,7 +13,7 @@
 
           <!-- 用户信息显示 -->
           <div class="text-sm text-gray-600 ml-auto">
-            当前用户: {{ currentUser?.full_name }} - {{ currentUser?.rank }}
+            当前用户: {{ currentUser?.fullName }} - {{ currentUser?.rank }}
           </div>
 
           <!-- 筛选框容器 -->
@@ -30,9 +30,10 @@
             <!-- 辖区 -->
             <select class="input w-full sm:w-40 flex-shrink-0" v-model="selectedDistrict">
               <option value="" disabled selected>辖区</option>
-              <option value="克拉玛依区">克拉玛依区</option>
-              <option value="独山子区">独山子区</option>
-              <option value="白碱滩区">白碱滩区</option>
+              <option value="1">克拉玛依区</option>
+              <option value="2">独山子区</option>
+              <option value="6">白碱滩区</option>
+              <option value="9">乌尔禾区</option>
             </select>
           </div>
         </div>
