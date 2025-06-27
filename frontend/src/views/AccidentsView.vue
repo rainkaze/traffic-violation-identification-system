@@ -11,8 +11,13 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
           <h3 class="font-bold text-gray-800 text-lg mb-3 sm:mb-0">克拉玛依市交通态势图</h3>
 
+          <!-- 用户信息显示 -->
+          <div class="text-sm text-gray-600 ml-auto">
+            当前用户: {{ currentUser?.full_name }} - {{ currentUser?.rank }}
+          </div>
+
           <!-- 筛选框容器 -->
-          <div class="flex flex-nowrap gap-3 overflow-x-auto">
+          <div class="flex flex-nowrap gap-3 overflow-x-auto mt-2 sm:mt-0">
             <!-- 设备状态 -->
             <select class="input w-full sm:w-40 flex-shrink-0" v-model="selectedStatus">
               <option value="" disabled selected>设备状态</option>
@@ -113,8 +118,11 @@
               </p>
 
               <p class="text-sm text-gray-600">事故地点: {{ selectedAccidentInfo.address }}</p>
-              <p class="text-xs text-gray-500">检测时间: {{ formatTime(selectedAccidentInfo.violationTime) }}</p>
-              <p class="text-xs text-gray-500">事故状态: {{ selectedAccidentInfo.violationStatus }}</p>
+              <p class="text-xs text-gray-500">检测时间:
+                {{ formatTime(selectedAccidentInfo.violationTime) }}</p>
+              <p class="text-xs text-gray-500">事故状态: {{
+                  selectedAccidentInfo.violationStatus
+                }}</p>
             </div>
 
             <!-- 默认提示 -->
@@ -137,8 +145,10 @@
               {{ isGenerating ? '生成中...' : '智能生成处置策略' }}
             </button>
             <div v-if="isGenerating" class="my-2 text-blue-600 font-medium flex items-center gap-2">
-              <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg"
+                   fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                        stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
               </svg>
               正在智能生成处置策略，请稍候...
@@ -161,30 +171,36 @@
             <!-- <pre>调试状态: {{ { isGenerating, selectedAccidentInfo, selectedAccidentLevel } }}</pre> -->
             <div class="flex gap-2">
               <button class="btn btn-primary w-full" @click="showConfirmDialog = true">
-                <i class="fa fa-map-signs mr-2"></i>推送策略至App</button>
+                <i class="fa fa-map-signs mr-2"></i>推送策略至App
+              </button>
 
               <!-- 确认对话框 -->
-              <div v-if="showConfirmDialog" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+              <div v-if="showConfirmDialog"
+                   class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
                 <div class="bg-white rounded-lg shadow-lg p-6 w-96">
                   <h3 class="text-lg font-bold mb-4">确认操作</h3>
                   <p class="mb-6">您确定要推送处置策略至App吗？</p>
                   <div class="flex justify-end gap-4">
-                    <button @click="showConfirmDialog = false" class="btn btn-secondary">取消</button>
+                    <button @click="showConfirmDialog = false" class="btn btn-secondary">取消
+                    </button>
                     <button @click="confirmPushStrategy" class="btn btn-primary">确定</button>
                   </div>
                 </div>
               </div>
 
               <button class="btn btn-warning w-full" @click="showTrafficLightDialog = true">
-                <i class="fa fa-lightbulb-o mr-2"></i>执行信号灯联动</button>
+                <i class="fa fa-lightbulb-o mr-2"></i>执行信号灯联动
+              </button>
 
               <!-- 信号灯联动对话框 -->
-              <div v-if="showTrafficLightDialog" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+              <div v-if="showTrafficLightDialog"
+                   class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
                 <div class="bg-white rounded-lg shadow-lg p-6 w-96">
                   <h3 class="text-lg font-bold mb-4">信号灯联动</h3>
                   <p class="mb-6">已经通知相关部门，对救援车辆优先放行</p>
                   <div class="flex justify-end">
-                    <button @click="showTrafficLightDialog = false" class="btn btn-primary">确定</button>
+                    <button @click="showTrafficLightDialog = false" class="btn btn-primary">确定
+                    </button>
                   </div>
                 </div>
               </div>
@@ -197,8 +213,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import {ref, onMounted, watch, computed} from 'vue';
 import apiClient from '@/services/api';
+import authStore from '@/store/auth'; // 引入权限状态
+
+// 从 authStore 中获取用户信息和角色
+const isAdmin = computed(() => authStore.isAdmin());
+const currentUser = computed(() => authStore.currentUser());
 
 // 响应式变量声明
 const selectedDeviceInfo = ref(null); // 存储当前选中的设备信息
@@ -281,7 +302,7 @@ onMounted(async () => {
       if (!device.longitude || !device.latitude) return;
 
       const devicePoint = new BMap.Point(device.longitude, device.latitude);
-      const marker = new BMap.Marker(devicePoint, { icon: createDefaultStyleMarkerIcon() });
+      const marker = new BMap.Marker(devicePoint, {icon: createDefaultStyleMarkerIcon()});
 
       map.addOverlay(marker);
 
@@ -336,7 +357,7 @@ watch([selectedStatus, selectedDistrict], async () => {
     if (selectedStatus.value) params.status = selectedStatus.value;
     if (selectedDistrict.value) params.districtName = selectedDistrict.value;
 
-    const response = await apiClient.get('/accidents/devices', { params });
+    const response = await apiClient.get('/accidents/devices', {params});
     const devices = response.data;
 
     map.clearOverlays();
@@ -345,7 +366,7 @@ watch([selectedStatus, selectedDistrict], async () => {
       if (!device.longitude || !device.latitude) return;
 
       const devicePoint = new BMap.Point(device.longitude, device.latitude);
-      const marker = new BMap.Marker(devicePoint, { icon: createDefaultStyleMarkerIcon() });
+      const marker = new BMap.Marker(devicePoint, {icon: createDefaultStyleMarkerIcon()});
       map.addOverlay(marker);
 
       function createInfoWindowContent(device) {
@@ -433,7 +454,7 @@ const generateStrategyWithAI = async () => {
       },
       body: JSON.stringify({
         model: "deepseek-chat",
-        messages: [{ role: "user", content: prompt }],
+        messages: [{role: "user", content: prompt}],
         max_tokens: 500,
         temperature: 0.7
       })
