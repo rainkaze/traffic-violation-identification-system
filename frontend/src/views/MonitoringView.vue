@@ -60,7 +60,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onActivated } from 'vue'; // 1. 导入 onActivated
 import apiClient from '@/services/api';
 
 const cameras = ref([]);
@@ -72,7 +72,6 @@ const selectedDevice = ref('');
 
 const filteredCameras = computed(() => {
   return cameras.value.filter(camera => {
-    // 检查地址是否包含所选区域的名称
     const matchDistrict = !selectedDistrict.value || camera.address.includes(selectedDistrict.value);
     const matchDevice = !selectedDevice.value || camera.deviceCode === selectedDevice.value;
     return matchDistrict && matchDevice;
@@ -100,8 +99,14 @@ const fetchDistricts = async () => {
   }
 };
 
-onMounted(() => {
+// 2. 创建一个统一的数据加载函数
+const loadData = () => {
   fetchCameras();
   fetchDistricts();
-});
+}
+
+// 3. 在 onMounted 和 onActivated 中都调用它
+onMounted(loadData);
+onActivated(loadData);
+
 </script>
