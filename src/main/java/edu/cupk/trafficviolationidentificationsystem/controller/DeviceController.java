@@ -1,8 +1,6 @@
-// 文件路径: src/main/java/edu/cupk/trafficviolationidentificationsystem/controller/DeviceController.java
-// 描述: 这是修正后的版本，在create和update方法中强制将status转为大写。
-
 package edu.cupk.trafficviolationidentificationsystem.controller;
 
+import edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.DeviceUpsertDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.MonitoringCameraDto;
@@ -66,5 +64,15 @@ public class DeviceController {
         return ResponseEntity.ok(deviceService.getActiveCameras());
     }
 
-    // 其他统计相关的端点可以保持不变...
+    // [新增]：设备状态统计接口
+    @GetMapping("/statistics/status")
+    public ResponseEntity<List<CountByLabelDto>> getDeviceStatusCounts() {
+        return ResponseEntity.ok(deviceService.getDeviceStatusCounts());
+    }
+
+    // [新增]：设备类型统计接口
+    @GetMapping("/statistics/type")
+    public ResponseEntity<List<CountByLabelDto>> getDeviceTypeCounts() {
+        return ResponseEntity.ok(deviceService.getDeviceTypeCounts());
+    }
 }

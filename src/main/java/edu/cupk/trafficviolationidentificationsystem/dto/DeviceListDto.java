@@ -15,10 +15,10 @@ public class DeviceListDto {
     private String districtName; // 注意：这里是辖区名称，而非ID
     private String address;
     private String status;
-    private String ipAddress;
     private String rtspUrl;
     private String modelName; // 在 DeviceFormView 加载时需要
 
-    private String bindingCode;
-    private LocalDateTime bindingCodeExpiresAt;
+    private String jurisdiction;
+    private Double longitude;
+    private Double latitude;
 }
