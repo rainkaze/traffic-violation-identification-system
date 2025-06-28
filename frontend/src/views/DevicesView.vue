@@ -33,23 +33,48 @@
 
       <div v-if="isLoading" class="text-center py-10">加载设备列表中...</div>
       <div v-else-if="filteredDevices.length === 0" class="text-center py-10">未找到匹配的设备</div>
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div v-for="device in filteredDevices" :key="device.deviceId" class="card border-l-4" :class="statusBorderColor(device.status)">
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="font-bold text-gray-800">{{ device.deviceCode }}</h3>
-              <p class="text-sm text-gray-600 truncate" :title="device.address">{{ device.address }}</p>
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div v-for="device in filteredDevices" :key="device.deviceId"
+             class="card flex flex-col justify-between border-l-4 transition-all hover:shadow-lg hover:-translate-y-1"
+             :class="statusBorderColor(device.status)">
+
+          <div>
+            <div class="flex justify-between items-start mb-3">
+              <h3 class="font-bold text-lg text-gray-800 pr-2">{{ device.deviceName }}</h3>
+              <span class="badge text-white text-xs flex-shrink-0" :class="statusBgColor(device.status)">{{ device.status }}</span>
             </div>
-            <span class="badge text-white" :class="statusBgColor(device.status)">{{ device.status }}</span>
+
+            <div class="text-sm text-gray-600 space-y-2">
+              <p class="flex items-center" title="设备编码">
+                <i class="fa fa-barcode w-5 text-center mr-2 text-gray-400"></i>
+                <span class="font-medium text-gray-800">{{ device.deviceCode }}</span>
+              </p>
+              <p class="flex items-center" title="设备类型">
+                <i class="fa fa-sitemap w-5 text-center mr-2 text-gray-400"></i>
+                <span class="font-medium text-gray-800">{{ device.deviceType }}</span>
+              </p>
+              <p class="flex items-start" title="安装地址">
+                <i class="fa fa-map-marker-alt w-5 text-center mr-2 mt-1 text-gray-400"></i>
+                <span class="font-medium text-gray-800">{{ device.address }}</span>
+              </p>
+              <p class="flex items-center" title="所属辖区">
+                <i class="fa fa-building w-5 text-center mr-2 text-gray-400"></i>
+                <span class="font-medium text-gray-800">{{ device.jurisdiction || 'N/A' }}</span>
+              </p>
+              <p class="flex items-start" title="RTSP 地址">
+                <i class="fa fa-video w-5 text-center mr-2 mt-1 text-gray-400"></i>
+                <span class="font-medium text-gray-800 break-all">{{ device.rtspUrl || 'N/A' }}</span>
+              </p>
+            </div>
           </div>
-          <div class="mt-4 pt-3 border-t text-sm text-gray-600 space-y-1">
-            <p>类型: <span class="font-medium text-gray-800">{{ device.deviceType }}</span></p>
-            <p>型号: <span class="font-medium text-gray-800">{{ device.modelName || 'N/A' }}</span></p>
-            <p>IP: <span class="font-medium text-gray-800">{{ device.ipAddress || 'N/A' }}</span></p>
-          </div>
+
           <div class="mt-4 pt-3 border-t flex justify-end gap-2">
-            <router-link :to="`/devices/${device.deviceId}`" class="btn btn-secondary text-xs">编辑</router-link>
-            <button @click="deleteDevice(device.deviceId)" class="btn btn-danger text-xs">删除</button>
+            <router-link :to="`/devices/${device.deviceId}`" class="btn btn-secondary text-xs">
+              <i class="fa fa-edit mr-1"></i>编辑
+            </router-link>
+            <button @click="deleteDevice(device.deviceId)" class="btn btn-danger text-xs">
+              <i class="fa fa-trash-alt mr-1"></i>删除
+            </button>
           </div>
         </div>
       </div>
@@ -66,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onActivated } from 'vue';
+import { ref, onMounted, computed, onActivated, nextTick } from 'vue'; // 引入 nextTick
 import Chart from 'chart.js/auto';
 import apiClient from '@/services/api';
 
@@ -88,7 +113,9 @@ const deviceTypes = computed(() => {
 const filteredDevices = computed(() => {
   return devices.value.filter(device => {
     const term = searchTerm.value.toLowerCase();
-    const matchTerm = device.deviceCode.toLowerCase().includes(term) || device.deviceName.toLowerCase().includes(term);
+    // 确保 deviceName 存在，避免null错误
+    const deviceName = device.deviceName || '';
+    const matchTerm = device.deviceCode.toLowerCase().includes(term) || deviceName.toLowerCase().includes(term);
     const matchType = !selectedType.value || device.deviceType === selectedType.value;
     const matchStatus = !selectedStatus.value || device.status === selectedStatus.value;
     return matchTerm && matchType && matchStatus;
@@ -97,12 +124,14 @@ const filteredDevices = computed(() => {
 
 const statusBorderColor = (status) => {
   const map = { online: 'border-success', offline: 'border-danger', warning: 'border-warning', maintenance: 'border-gray-400' };
-  return map[status] || 'border-gray-300';
+  return map[status.toLowerCase()] || 'border-gray-300';
 };
+
 const statusBgColor = (status) => {
   const map = { online: 'bg-success', offline: 'bg-danger', warning: 'bg-warning', maintenance: 'bg-gray-400' };
-  return map[status] || 'bg-gray-300';
+  return map[status.toLowerCase()] || 'bg-gray-300';
 };
+
 
 const fetchDevices = async () => {
   isLoading.value = true;
@@ -121,8 +150,8 @@ const deleteDevice = async (id) => {
     try {
       await apiClient.delete(`/devices/${id}`);
       alert('设备删除成功！');
-      await fetchDevices(); // 重新加载列表和图表
-      await fetchChartData();
+      // 重新加载列表和图表数据
+      await Promise.all([fetchDevices(), fetchChartData()]);
     } catch (error) {
       alert('删除失败：' + (error.response?.data?.message || '未知错误'));
     }
@@ -135,6 +164,8 @@ const fetchChartData = async () => {
       apiClient.get('/devices/statistics/status'),
       apiClient.get('/devices/statistics/type')
     ]);
+    // [优化] 使用 nextTick 确保DOM更新后再渲染图表
+    await nextTick();
     renderStatusChart(statusRes.data);
     renderTypeChart(typeRes.data);
   } catch (error) {
@@ -159,7 +190,7 @@ const renderStatusChart = (data) => {
       labels: data.map(d => d.label),
       datasets: [{
         data: data.map(d => d.value),
-        backgroundColor: data.map(d => statusColors[d.label] || '#cccccc')
+        backgroundColor: data.map(d => statusColors[d.label.toLowerCase()] || '#cccccc')
       }]
     },
     options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: '设备状态分布' } } }
@@ -184,12 +215,12 @@ const renderTypeChart = (data) => {
   });
 };
 
-onMounted(() => {
+// 合并 onMounted 和 onActivated 的逻辑
+const loadData = () => {
   fetchDevices();
   fetchChartData();
-});
-onActivated(() => {
-  fetchDevices();
-  fetchChartData();
-});
+}
+
+onMounted(loadData);
+onActivated(loadData);
 </script>

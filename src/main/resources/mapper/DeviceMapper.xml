@@ -4,7 +4,42 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.DeviceMapper">
 
- <!-- 关键修正：在INSERT语句中添加 device_code 字段和对应的参数 #{deviceCode} -->
+ <resultMap id="DeviceListDtoResultMap" type="edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto">
+  <id property="deviceId" column="device_id"/>
+  <result property="deviceCode" column="device_code"/>
+  <result property="deviceName" column="device_name"/>
+  <result property="deviceType" column="device_type"/>
+  <result property="status" column="status"/>
+  <result property="address" column="address"/>
+  <result property="jurisdiction" column="district_name"/>
+  <result property="longitude" column="longitude"/>
+  <result property="latitude" column="latitude"/>
+  <result property="rtspUrl" column="rtsp_url"/>
+  <result property="districtId" column="district_id"/>
+ </resultMap>
+
+ <select id="findAllDevices" resultMap="DeviceListDtoResultMap">
+  SELECT
+   d.device_id, d.device_code, d.device_name, d.device_type,
+   dist.district_name, d.address, d.status, d.rtsp_url,
+   d.latitude, d.longitude  -- 补全字段
+  FROM
+   devices d
+    LEFT JOIN districts dist ON d.district_id = dist.district_id
+  ORDER BY d.created_at DESC
+ </select>
+
+ <select id="findDtoById" resultMap="DeviceListDtoResultMap">
+  SELECT
+   d.device_id, d.device_code, d.device_name, d.device_type,
+   dist.district_name, d.address, d.status, d.rtsp_url,d.district_id,
+   d.latitude, d.longitude
+  FROM
+   devices d
+    LEFT JOIN districts dist ON d.district_id = dist.district_id
+  WHERE d.device_id = #{deviceId}
+ </select>
+
  <insert id="insertDevice" useGeneratedKeys="true" keyProperty="deviceId" parameterType="edu.cupk.trafficviolationidentificationsystem.model.Device">
   INSERT INTO devices (
    device_code, device_name, device_type, district_id, address,
@@ -31,37 +66,10 @@
   WHERE device_id = #{deviceId}
  </update>
 
- <!-- 其他查询语句保持不变 -->
- <select id="findAllDevices" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto">
-  SELECT
-   d.device_id, d.device_code, d.device_name, d.device_type,
-   dist.district_name, d.address, d.status, d.rtsp_url
-  FROM
-   devices d
-    LEFT JOIN districts dist ON d.district_id = dist.district_id
-  ORDER BY d.created_at DESC
- </select>
-
- <select id="findDtoById" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto">
-  SELECT
-   d.device_id, d.device_name, d.device_type, dist.district_name,
-   d.address, d.status, d.rtsp_url, d.latitude, d.longitude
-  FROM
-   devices d
-    LEFT JOIN districts dist ON d.district_id = dist.district_id
-  WHERE d.device_id = #{deviceId}
- </select>
-
  <select id="findActiveCameras" resultType="edu.cupk.trafficviolationidentificationsystem.dto.MonitoringCameraDto">
-  SELECT
-   device_id, device_name, address, status, rtsp_url
-  FROM
-   devices
-  WHERE
-   device_type = '高清摄像头'
+  SELECT device_id, device_name, address,device_code,district_id,status, rtsp_url FROM devices WHERE device_type = '高清摄像头'
  </select>
 
- <!-- 补全其他可能需要的方法，确保完整性 -->
  <select id="findById" resultType="edu.cupk.trafficviolationidentificationsystem.model.Device">
   SELECT * FROM devices WHERE device_id = #{deviceId}
  </select>

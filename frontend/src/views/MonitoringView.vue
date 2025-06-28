@@ -10,11 +10,15 @@
         <div class="flex flex-col sm:flex-row gap-3">
           <select v-model="selectedDistrict" class="input w-full sm:w-60">
             <option value="">全部区域</option>
-            <option v-for="district in districts" :key="district.districtId" :value="district.districtName">{{ district.districtName }}</option>
+            <option v-for="district in districts" :key="district.districtId" :value="district.districtId">
+              {{ district.districtName }}
+            </option>
           </select>
           <select v-model="selectedDevice" class="input w-full sm:w-60">
             <option value="">全部摄像头</option>
-            <option v-for="camera in cameras" :key="camera.deviceId" :value="camera.deviceCode">{{ camera.deviceName }} ({{ camera.deviceCode }})</option>
+            <option v-for="camera in cameras" :key="camera.deviceId" :value="camera.deviceCode">
+              {{ camera.deviceName }} ({{ camera.deviceCode }})
+            </option>
           </select>
         </div>
         <div class="flex gap-2">
@@ -27,7 +31,6 @@
       <div v-if="isLoading" class="text-center py-10">加载中...</div>
       <div v-else-if="filteredCameras.length === 0" class="text-center py-10">无匹配的监控设备</div>
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
         <router-link
           v-for="camera in filteredCameras"
           :key="camera.deviceId"
@@ -36,9 +39,9 @@
         >
           <div class="relative">
             <img :src="camera.imageUrl" :alt="camera.deviceName" class="w-full h-48 object-cover">
-            <div class="absolute top-2 left-2 text-white text-xs px-2 py-1 rounded" :class="camera.status === 'online' ? 'bg-danger/80' : 'bg-gray-500/80'">
-              <i class="fa mr-1" :class="camera.status === 'online' ? 'fa-circle animate-pulse' : 'fa-power-off'"></i>
-              {{ camera.status === 'online' ? '直播中' : '离线' }}
+            <div :class="['absolute top-2 left-2 text-white text-xs px-2 py-1 rounded', camera.status.toLowerCase() === 'online' ? 'bg-danger/80' : 'bg-gray-500/80']">
+              <i class="fa mr-1" :class="camera.status.toLowerCase() === 'online' ? 'fa-circle animate-pulse' : 'fa-power-off'"></i>
+              {{ camera.status.toLowerCase() === 'online' ? '直播中' : '离线' }}
             </div>
             <div class="absolute top-2 right-2 bg-dark/80 text-white text-xs px-2 py-1 rounded">
               {{ camera.deviceCode }}
@@ -54,13 +57,13 @@
             <h4 class="font-medium text-white">{{ camera.deviceName }}</h4>
           </div>
         </router-link>
-        </div>
       </div>
     </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onActivated } from 'vue';
 import apiClient from '@/services/api';
 
 const cameras = ref([]);
@@ -70,10 +73,11 @@ const isLoading = ref(true);
 const selectedDistrict = ref('');
 const selectedDevice = ref('');
 
+// 修改点 2: 更新筛选逻辑
 const filteredCameras = computed(() => {
   return cameras.value.filter(camera => {
-    // 检查地址是否包含所选区域的名称
-    const matchDistrict = !selectedDistrict.value || camera.address.includes(selectedDistrict.value);
+    // 使用精确的 ID 匹配，而不是模糊的地址匹配
+    const matchDistrict = !selectedDistrict.value || camera.districtId === selectedDistrict.value;
     const matchDevice = !selectedDevice.value || camera.deviceCode === selectedDevice.value;
     return matchDistrict && matchDevice;
   });
@@ -100,8 +104,11 @@ const fetchDistricts = async () => {
   }
 };
 
-onMounted(() => {
+const loadData = () => {
   fetchCameras();
   fetchDistricts();
-});
+}
+
+onMounted(loadData);
+onActivated(loadData);
 </script>

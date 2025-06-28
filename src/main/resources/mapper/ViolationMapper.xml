@@ -63,7 +63,6 @@
         <include refid="dynamicWhere"/>
     </select>
 
-
     <insert id="insertTestViolation" useGeneratedKeys="true" keyProperty="violationId"
             parameterType="edu.cupk.trafficviolationidentificationsystem.model.Violation">
         INSERT INTO violations
@@ -98,4 +97,18 @@
         <include refid="dynamicWhere"/>
         ORDER BY v.violation_time DESC
     </select>
+
+    <select id="findRecentViolationsByDeviceId" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
+        <include refid="selectJoins"/>
+        WHERE v.device_id = #{deviceId}
+        ORDER BY v.violation_time DESC
+        LIMIT 5
+    </select>
+
+    <select id="countByDeviceId" resultType="long">
+        SELECT COUNT(violation_id)
+        FROM violations
+        WHERE device_id = #{deviceId}
+    </select>
+
 </mapper>

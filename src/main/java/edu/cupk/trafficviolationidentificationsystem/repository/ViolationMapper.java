@@ -78,4 +78,18 @@ public interface ViolationMapper {
      * @return 完整的违法记录详情列表
      */
     List<ViolationDetailDto> findAllViolationsByCriteria(@Param("query") ViolationQueryDto query);
+
+    /**
+     * [新增] 根据设备ID查询最近的违法记录
+     * @param deviceId 设备ID
+     * @return 违法记录详情列表
+     */
+    List<ViolationDetailDto> findRecentViolationsByDeviceId(@Param("deviceId") Integer deviceId);
+
+    /**
+     * [新增] 根据设备ID统计违法记录总数
+     * @param deviceId 设备ID
+     * @return 总记录数
+     */
+    long countByDeviceId(@Param("deviceId") Integer deviceId);
 }
