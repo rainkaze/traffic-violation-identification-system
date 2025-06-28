@@ -27,13 +27,16 @@
               <option value="maintenance">maintenance</option>
             </select>
 
-            <!-- 辖区 -->
-            <select v-model="filters.districtId" @change="onFilterChange" class="input w-full sm:w-40">
-              <option value="">全部辖区</option>
-              <option v-for="district in availableDistricts" :key="district.districtId" :value="district.districtId">
-                {{ district.districtName }}
-              </option>
-            </select>
+            <!-- 仅当加载完成后再显示 select -->
+            <div v-if="!loading">
+              <select v-model="selectedDistrict" @change="onFilterChange" class="input w-full sm:w-40">
+                <option value="">全部辖区</option>
+                <option v-for="district in availableDistricts" :key="district.districtId" :value="district.districtId">
+                  {{ district.districtName }}
+                </option>
+              </select>
+            </div>
+
 
           </div>
         </div>
@@ -228,6 +231,8 @@ const showTrafficLightDialog = ref(false); // 控制信号灯联动对话框显�
 const allDistricts = ref([]); // 存储所有辖区列表
 let map; // 在顶层定义 map 变量
 
+const loading = ref(true);
+
 // 根据用户角色，计算出下拉框中可用的辖区
 const availableDistricts = computed(() => {
   if (isAdmin.value) {
@@ -239,11 +244,13 @@ const availableDistricts = computed(() => {
     return allDistricts.value.filter(d => currentUser.value.districts.includes(String(d.districtId)));
 
   }
-
   console.log("当前用户", currentUser.value);
 
   return [];
 });
+
+
+
 
 const fetchAllDistricts = async () => {
   try {
@@ -318,7 +325,7 @@ const createDefaultStyleMarkerIcon = () => {
 
 
 onMounted(async () => {
-  await fetchAllDistricts();
+
   try {
     await loadBaiduMap();
 
@@ -384,25 +391,69 @@ onMounted(async () => {
 
 
 
-  // try {
-  //   const response = await apiClient.get('violations', {
-  //     params: filters
-  //   });
-  //   console.log('违法记录数据:', response.data); // ✅ 控制台打印结果
-  // } catch (error) {
-  //   console.error('加载违法记录失败:', error);
-  // }
+  await fetchAllDistricts();
+  console.log('所有辖区列表:', allDistricts.value);
+
+  loading.value = false;
+
+  console.log('当前用户权限下的辖区列表:', availableDistricts.value);
+  console.log('load', loading.value);
+
+
+  try {
+    const username = authStore.currentUser().username;
+    if (!username) {
+      console.warn('未获取到用户名，无法加载用户信息');
+      return;
+    }
+    // 调用后端接口，获取用户信息（含辖区）
+    const response = await apiClient.get(`/users/${username}`);
+    // currentUser.value = response.data;
+  //   Vue 的 computed 是依赖追踪的，但是如果你直接 .value = 新对象，内部属性的响应式连接可能断掉了。
+  //  正确做法：使用 Object.assign 或先创建响应式对象再赋值
+    Object.assign(currentUser.value, response.data);
+    console.log('用户完整信息:', currentUser.value);
+  } catch (error) {
+    console.error('获取用户信息失败:', error);
+  }
+
 
 
 });
 
 watch([selectedStatus, selectedDistrict], async () => {
   try {
+
+
+    // const params = {};
+    // if (selectedStatus.value) params.status = selectedStatus.value;
+    // if (selectedDistrict.value) params.districtName = selectedDistrict.value;
+    // console.log('请求参数状态:', params.status);
+    // console.log('请求参数辖区:', params.districtName);
+    // const response = await apiClient.get('/accidents/devices', { params });
+
     const params = {};
-    if (selectedStatus.value) params.status = selectedStatus.value;
-    if (selectedDistrict.value) params.districtName = selectedDistrict.value;
+
+// 状态直接传
+    if (selectedStatus.value) {
+      params.status = selectedStatus.value;
+    }
+
+// 将 districtId 转换为 districtName
+    if (selectedDistrict.value) {
+      const selected = availableDistricts.value.find(
+        d => String(d.districtId) === String(selectedDistrict.value)
+      );
+      if (selected) {
+        params.districtName = selected.districtName; // ✅ 这才是你要传给后端的中文名字
+      }
+    }
+
+    console.log("最终请求参数:", params);
 
     const response = await apiClient.get('/accidents/devices', { params });
+
+
     const devices = response.data;
 
     map.clearOverlays();

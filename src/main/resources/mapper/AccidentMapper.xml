@@ -11,6 +11,7 @@
         d.device_code AS deviceCode,
         d.device_name AS deviceName,
         d.device_type AS deviceType,
+        d.district_id AS districtId,
         d.address,
         d.latitude,
         d.longitude,

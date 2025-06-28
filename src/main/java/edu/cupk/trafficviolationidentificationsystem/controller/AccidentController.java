@@ -22,6 +22,9 @@ public class AccidentController {
     public List<AccidentDto> getDeviceLocations(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String districtName) {
+
+        System.out.println("status: " + status);
+        System.out.println("districtName: " + districtName);
         return accidentService.getDevicesWithLocation(status, districtName);
     }
 }
