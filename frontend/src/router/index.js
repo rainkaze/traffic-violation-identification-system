@@ -5,7 +5,6 @@ import authStore from '@/store/auth';
 import DashboardView from '../views/DashboardView.vue';
 import ViolationsView from '../views/ViolationsView.vue';
 import MonitoringView from '../views/MonitoringView.vue';
-import EnforcementView from '../views/EnforcementView.vue';
 import AccidentsView from '../views/AccidentsView.vue';
 import StatisticsView from '../views/StatisticsView.vue';
 import DevicesView from '../views/DevicesView.vue';
@@ -65,12 +64,6 @@ const router = createRouter({
       name: 'monitoring-detail',
       component: () => import('../views/MonitoringDetailView.vue'), // 懒加载方式导入
       props: true, // 允许将路由参数:id作为props传入组件
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/enforcement',
-      name: 'enforcement',
-      component: EnforcementView,
       meta: { requiresAuth: true }
     },
     {
