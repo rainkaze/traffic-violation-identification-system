@@ -81,5 +81,13 @@
  <delete id="deleteDeviceById">
   DELETE FROM devices WHERE device_id = #{deviceId}
  </delete>
-
+ <select id="findActiveStreams" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DeviceStreamDto">
+  SELECT
+   device_id as deviceId,
+   rtsp_url as rtspUrl
+  FROM
+   devices
+  WHERE
+   status = 'ONLINE' AND rtsp_url IS NOT NULL AND rtsp_url != ''
+ </select>
 </mapper>

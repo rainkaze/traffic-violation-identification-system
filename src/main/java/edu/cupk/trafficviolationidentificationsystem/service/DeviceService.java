@@ -1,9 +1,6 @@
 package edu.cupk.trafficviolationidentificationsystem.service;
 
-import edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.DeviceUpsertDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.MonitoringCameraDto;
+import edu.cupk.trafficviolationidentificationsystem.dto.*;
 import edu.cupk.trafficviolationidentificationsystem.model.Device;
 
 import java.util.List;
@@ -18,5 +15,6 @@ public interface DeviceService {
     List<CountByLabelDto> getDeviceStatusCounts();
     List<CountByLabelDto> getDeviceTypeCounts();
     void updateDeviceStatus(Integer deviceId, String status);
+    List<DeviceStreamDto> getActiveStreams();
 }
 

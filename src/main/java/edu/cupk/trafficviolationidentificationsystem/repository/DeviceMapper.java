@@ -2,6 +2,7 @@ package edu.cupk.trafficviolationidentificationsystem.repository;
 
 import edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto;
+import edu.cupk.trafficviolationidentificationsystem.dto.DeviceStreamDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.MonitoringCameraDto;
 import edu.cupk.trafficviolationidentificationsystem.model.Device;
 import org.apache.ibatis.annotations.Mapper;
@@ -34,5 +35,8 @@ public interface DeviceMapper {
 
     // [新增] 更新设备状态
     int updateDeviceStatus(@Param("deviceId") Integer deviceId, @Param("status") String status);
+
+    // [新增] 查询所有可用的视频流
+    List<DeviceStreamDto> findActiveStreams();
 
 }

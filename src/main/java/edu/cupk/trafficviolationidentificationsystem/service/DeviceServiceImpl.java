@@ -1,10 +1,7 @@
 
 package edu.cupk.trafficviolationidentificationsystem.service;
 
-import edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.DeviceUpsertDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.MonitoringCameraDto;
+import edu.cupk.trafficviolationidentificationsystem.dto.*;
 import edu.cupk.trafficviolationidentificationsystem.model.Device;
 import edu.cupk.trafficviolationidentificationsystem.repository.DeviceMapper;
 import org.springframework.stereotype.Service;
@@ -109,5 +106,10 @@ public class DeviceServiceImpl implements DeviceService {
     @Override
     public List<CountByLabelDto> getDeviceTypeCounts() {
         return deviceMapper.countByType();
+    }
+
+    @Override
+    public List<DeviceStreamDto> getActiveStreams() {
+        return deviceMapper.findActiveStreams();
     }
 }

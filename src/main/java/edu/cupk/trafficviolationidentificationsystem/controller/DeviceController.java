@@ -4,6 +4,7 @@
 package edu.cupk.trafficviolationidentificationsystem.controller;
 
 import edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto;
+import edu.cupk.trafficviolationidentificationsystem.dto.DeviceStreamDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.DeviceUpsertDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.MonitoringCameraDto;
 import edu.cupk.trafficviolationidentificationsystem.model.Device;
@@ -66,5 +67,11 @@ public class DeviceController {
         return ResponseEntity.ok(deviceService.getActiveCameras());
     }
 
-    // 其他统计相关的端点可以保持不变...
-}
+    /**
+     * [新增] 为AI模型提供动态的、可用的RTSP流列表
+     * @return 一个包含设备ID和RTSP地址的列表
+     */
+    @GetMapping("/streams")
+    public ResponseEntity<List<DeviceStreamDto>> getActiveStreamsForModel() {
+        return ResponseEntity.ok(deviceService.getActiveStreams());
+    }}

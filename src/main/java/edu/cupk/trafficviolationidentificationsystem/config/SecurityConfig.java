@@ -56,7 +56,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/devices/bind").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/devices/*/status").permitAll()   // 允许设备匿名更新心跳状态
                         .requestMatchers("/api/signal/**").permitAll()
-                        // [核心修正] 对设备管理接口进行更精细的授权
+                        .requestMatchers("/api/devices/streams").permitAll()
+
+
                         .requestMatchers(HttpMethod.GET, "/api/devices/**").authenticated() // 任何登录用户都可以查看设备
                         .requestMatchers(HttpMethod.POST, "/api/devices").hasRole("管理员") // 只有管理员可以新建
                         .requestMatchers(HttpMethod.PUT, "/api/devices/**").hasRole("管理员")   // 只有管理员可以修改
