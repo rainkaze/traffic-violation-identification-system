@@ -91,32 +91,24 @@ import apiClient from './services/api';
 
 // --- 状态定义 ---
 const isSidebarOpen = ref(false);
-const show1 = ref(false); // 控制"发送任务"弹窗
+const show1 = ref(false);
 const userid = ref(null);
 let websocket = null;
-
-// 通知表单相关
 const searchKeyword = ref('');
 const userList = ref([]);
 const selectedUsers = ref([]);
 const subject = ref('');
 const message = ref('');
 
-// Pinia Stores
+// Pinia Stores & Vue Router
 const notificationStore = useNotificationStore();
 const configStore = useSystemConfigStore();
-
-// Vue Router
 const route = useRoute();
 const router = useRouter();
 
 
 // --- 计算属性 ---
-
-// 用户是否已登录
 const isAuthenticated = computed(() => authStore.isAuthenticated());
-
-// 是否已全选当前用户列表
 const allSelected = computed(() =>
   userList.value.length > 0 &&
   userList.value.every(user => selectedUsers.value.includes(user.userId))
@@ -125,44 +117,42 @@ const allSelected = computed(() =>
 
 // --- 方法 ---
 
-// 切换侧边栏
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value;
 };
 
-// 恢复认证信息和用户数据
-const checkAuth = async () => {
+/**
+ * [ 核心修改 ]
+ * 此方法现在只负责在页面加载时恢复用户信息，并启动后续流程
+ */
+const restoreUserSession = async () => {
   const token = authStore.state.token;
   if (token && !authStore.currentUser()) {
     try {
-      const decoded = jwtDecode(token);
-      const response = await apiClient.get(`/users/${decoded.sub}`);
-      authStore.setUser(response.data);
+      // 通过 /me 接口一步到位获取当前用户信息
+      const response = await apiClient.get('/users/me');
+      const user = response.data;
+      authStore.setUser(user); // 保存完整用户信息到store
+      userid.value = user.userId; // 设置当前用户ID
+
+      // 成功获取用户信息后，再加载通知和开启WebSocket
+      await fetchNotifications(userid.value);
+      initWebSocket(userid.value);
     } catch (error) {
-      console.error("Session restore failed", error);
+      console.error("Session restore failed:", error);
       authStore.logout();
       router.push('/login');
     }
-  }
-};
-
-// 获取当前登录用户的ID
-const fetchUserIdFromBackend = async () => {
-  if (!isAuthenticated.value) return;
-  try {
-    const response = await apiClient.get('/users/getUserId');
-    userid.value = response.data;
-    // 获取到ID后，加载通知并开启WebSocket
+  } else if (authStore.currentUser()) {
+    // 如果用户信息已存在，也确保加载通知和WebSocket
+    userid.value = authStore.currentUser().userId;
     await fetchNotifications(userid.value);
     initWebSocket(userid.value);
-  } catch (err) {
-    console.error("获取 userId 失败", err);
   }
 };
 
-// 获取所有用户列表（用于初次展示）
 const fetchAllUsers = async () => {
-  if (userList.value.length > 0 && !searchKeyword.value) return; // 避免重复加载
+  if (userList.value.length > 0 && !searchKeyword.value) return;
   try {
     const res = await apiClient.get('/users/search');
     userList.value = res.data;
@@ -171,7 +161,6 @@ const fetchAllUsers = async () => {
   }
 };
 
-// 根据关键词搜索用户
 const fetchUsersByKeyword = async (keyword) => {
   try {
     const res = await apiClient.get('/users/search', { params: { keyword } });
@@ -181,10 +170,8 @@ const fetchUsersByKeyword = async (keyword) => {
   }
 };
 
-// 防抖版的搜索函数
 const debouncedFetchUsers = debounce(fetchUsersByKeyword, 300);
 
-// 全选/取消全选
 const toggleSelectAll = () => {
   if (allSelected.value) {
     const currentUserIds = userList.value.map(user => user.userId);
@@ -195,24 +182,20 @@ const toggleSelectAll = () => {
   }
 };
 
-// 发送通知
 const sendNotification = async () => {
   if (!subject.value.trim() || !message.value.trim() || selectedUsers.value.length === 0) {
     ElMessage.warning('请填写主题、内容并选择至少一个收件人');
     return;
   }
-
   const payload = {
     subject: subject.value.trim(),
     message: message.value.trim(),
     recipientIds: selectedUsers.value,
   };
-
   try {
     await apiClient.post('/notifications/send', payload);
     ElMessage.success('任务发布成功！');
     show1.value = false;
-    // 清理表单
     subject.value = '';
     message.value = '';
     selectedUsers.value = [];
@@ -222,7 +205,6 @@ const sendNotification = async () => {
   }
 };
 
-// 获取通知列表
 const fetchNotifications = async (userId) => {
   if (!userId) return;
   try {
@@ -234,19 +216,16 @@ const fetchNotifications = async (userId) => {
   }
 };
 
-// 初始化WebSocket
 const initWebSocket = (userId) => {
-  if (!userId || websocket) return; // 防止重复连接
+  if (!userId || websocket) return;
   if ('WebSocket' in window) {
     websocket = new WebSocket(`ws://localhost:8080/ws/${userId}`);
-
     websocket.onopen = () => console.log("WebSocket连接成功");
     websocket.onerror = () => console.error("WebSocket连接错误");
     websocket.onclose = () => {
       console.log("WebSocket连接关闭");
-      websocket = null; // 清理实例
+      websocket = null;
     };
-
     websocket.onmessage = (event) => {
       const rawData = event.data;
       const notification = {
@@ -269,47 +248,25 @@ const closeWebSocket = () => {
   websocket?.close();
 };
 
-
 // --- Watchers ---
-
-// 监听路由变化，关闭移动端侧边栏
 watch(route, () => {
   if (isSidebarOpen.value) {
     isSidebarOpen.value = false;
   }
 });
 
-// 监听搜索关键词变化
 watch(searchKeyword, (val) => {
   debouncedFetchUsers(val);
 });
 
-// 监听认证状态变化
-watch(isAuthenticated, async (isAuth) => {
-  if (isAuth) {
-    await fetchUserIdFromBackend();
-  } else {
-    userid.value = null;
-    notificationStore.$reset(); // 重置通知状态
-    closeWebSocket();
-  }
-}, { immediate: true }); // 立即执行一次，处理页面刷新后的情况
-
-
 // --- Lifecycle Hooks ---
-
-// 组件挂载
 onMounted(async () => {
-  await checkAuth(); // 优先恢复认证状态
-  configStore.fetchConfig(); // 获取系统配置
+  await restoreUserSession();
+  configStore.fetchConfig();
 });
 
-// 窗口关闭前，断开WebSocket连接
-window.onbeforeunload = () => {
-  closeWebSocket();
-};
+window.onbeforeunload = closeWebSocket;
 </script>
-
 <style>
 /* 全局样式现在由 main.css 控制 */
 </style>
