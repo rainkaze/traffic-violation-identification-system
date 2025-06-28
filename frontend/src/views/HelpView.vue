@@ -270,9 +270,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-// import testVideo1 from '@/assets/测试视频1.mp4'; // 引入本地视频1
-// import testVideo2 from '@/assets/测试视频2.mp4'; // 引入本地视频2
+import { ref } from 'vue'; 
 
 const activeTab = ref('faq');
 const switchTab = (tabName) => {
@@ -519,11 +517,6 @@ const manualSections = ref([
       </ul>`
   }
 ]);
-
-import testVideo from '@/assets/测试视频1.mp4'; // 引入本地视频
-
-
-
 
 const toggleManualSection = (index) => {
   activeManualSection.value === index
