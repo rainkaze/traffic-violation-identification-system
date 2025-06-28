@@ -49,28 +49,31 @@ public class SecurityConfig {
                 .cors(withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/test/**").permitAll() // 在其他规则之前添加这一行
-
-                        // 公开认证端点
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // 1. 合并所有需要公开访问的端点
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/api/test/**",
+                                "/api/signal/**",
+                                "/api/devices/streams",
+                                "/uploads/**",
+                                "/ws/**" // 开放WebSocket连接
+                        ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/devices/bind").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/devices/*/status").permitAll()   // 允许设备匿名更新心跳状态
-                        .requestMatchers("/api/signal/**").permitAll()
-                        .requestMatchers("/api/devices/streams").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/devices/*/status").permitAll()
 
+                        // 2. 合并设备管理相关权限
+                        .requestMatchers(HttpMethod.GET, "/api/devices/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/devices").hasRole("管理员")
+                        .requestMatchers(HttpMethod.PUT, "/api/devices/**").hasRole("管理员")
+                        .requestMatchers(HttpMethod.DELETE, "/api/devices/**").hasRole("管理员")
 
-                        .requestMatchers(HttpMethod.GET, "/api/devices/**").authenticated() // 任何登录用户都可以查看设备
-                        .requestMatchers(HttpMethod.POST, "/api/devices").hasRole("管理员") // 只有管理员可以新建
-                        .requestMatchers(HttpMethod.PUT, "/api/devices/**").hasRole("管理员")   // 只有管理员可以修改
-                        .requestMatchers(HttpMethod.DELETE, "/api/devices/**").hasRole("管理员") // 只有管理员可以删除
+                        // 3. 合并数据和统计接口权限，并使用最全的角色列表
+                        .requestMatchers("/api/violations/**", "/api/statistics/**").hasAnyRole("管理员", "警员", "小队长", "中队长", "大队长")
 
-                        .requestMatchers("/uploads/**").permitAll() // 测试视频流
-
-                        // 为数据接口添加明确的访问角色
-                        .requestMatchers("/api/violations/**", "/api/statistics/**").hasAnyRole("管理员", "警员", "中队长", "大队长")
-                        // 只有 '管理员' 可以访问 admin 接口
+                        // 4. 保留管理员专属接口权限
                         .requestMatchers("/api/admin/**").hasRole("管理员")
-                        // 其他所有请求都需要认证
+
+                        // 5. 其他所有请求都需要认证
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -80,33 +83,17 @@ public class SecurityConfig {
         return http.build();
     }
 
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration configuration = new CorsConfiguration();
-//        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-//        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-//        configuration.setAllowedHeaders(List.of("*"));
-//        configuration.setAllowCredentials(true);
-//
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", configuration);
-//        return source;
-//    }
-@Bean
-public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration configuration = new CorsConfiguration();
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        // 允许您的Vue前端访问
+        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
 
-    // ===== 开始修改：临时允许所有来源 =====
-    // 注意：为了调试，我们暂时允许所有来源。联调成功后，可以改回 List.of("http://localhost:5173")
-    configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-    // ===== 结束修改 =====
-
-    configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-    configuration.setAllowedHeaders(List.of("*"));
-    configuration.setAllowCredentials(true);
-
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
-    return source;
-}
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 }

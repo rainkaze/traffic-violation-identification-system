@@ -13,4 +13,15 @@ public interface TrafficRuleMapper {
      */
     List<String> findAllViolationTypes();
     List<TrafficRuleDto> findAllRules();
+
+    List<TrafficRuleDto> findRulesByOffsetAndSize(int offset, int size,String searchRuleKeyword);
+
+    // 新增：获取总数
+    int countAllRules();
+
+    void insertRule(TrafficRuleDto rule);
+
+    void updateRule(TrafficRuleDto rule);
+
+    void deleteRule(Long ruleId);
 }

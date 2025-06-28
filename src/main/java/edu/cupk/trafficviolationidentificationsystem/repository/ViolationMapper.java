@@ -2,10 +2,13 @@ package edu.cupk.trafficviolationidentificationsystem.repository;
 
 import edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.ViolationQueryDto;
+import edu.cupk.trafficviolationidentificationsystem.model.Violation;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDateTime;
 import java.util.List;
-import edu.cupk.trafficviolationidentificationsystem.model.Violation; // 确保导入
 
 @Mapper
 public interface ViolationMapper {
@@ -26,13 +29,53 @@ public interface ViolationMapper {
      */
     long countViolationsByCriteria(@Param("query") ViolationQueryDto query);
 
+    /**
+     * 插入一条测试用的违法记录
+     * @param violation 违法记录实体
+     * @return 影响的行数
+     */
     int insertTestViolation(Violation violation);
 
+    /**
+     * 获取最新的N条测试违法记录
+     * @param limit 记录数量
+     * @return 违法记录详情列表
+     */
     List<ViolationDetailDto> getLatestTestViolations(@Param("limit") int limit);
 
+    /**
+     * 根据ID查找单个违法记录实体
+     * @param violationId 违法记录ID
+     * @return Violation 实体
+     */
     Violation findById(@Param("violationId") Long violationId);
+
+    /**
+     * 更新违法记录的状态
+     * @param violationId 违法记录ID
+     * @param status 新的状态
+     */
     void updateStatus(@Param("violationId") Long violationId, @Param("status") String status);
 
-    // 在 ViolationMapper.java 中新增
+    /**
+     * 根据ID查找单个违法记录的详细信息 DTO
+     * @param id 违法记录ID
+     * @return ViolationDetailDto
+     */
     ViolationDetailDto findViolationDetailById(@Param("id") Long id);
+
+    /**
+     * 删除指定时间点之前的所有记录
+     * @param threshold 时间阈值
+     * @return 删除的行数
+     */
+    @Delete("DELETE FROM violations WHERE created_at < #{threshold}")
+    int deleteBefore(@Param("threshold") LocalDateTime threshold);
+
+    /**
+     * (新增) 根据查询条件查询所有匹配的违法记录 (不分页，用于导出)
+     * @param query 查询 DTO
+     * @return 完整的违法记录详情列表
+     */
+    List<ViolationDetailDto> findAllViolationsByCriteria(@Param("query") ViolationQueryDto query);
 }
