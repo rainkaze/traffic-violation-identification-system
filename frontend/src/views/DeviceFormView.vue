@@ -103,8 +103,8 @@
 </template>
 
 <script setup>
-import {ref, onMounted, onUnmounted, computed, reactive, watch} from 'vue';
-import {useRoute, useRouter} from 'vue-router';
+import { ref, onMounted, onUnmounted, computed, reactive, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import apiClient from '@/services/api';
 import Hls from 'hls.js';
 
@@ -112,7 +112,8 @@ const route = useRoute();
 const props = defineProps({id: String});
 const router = useRouter();
 
-const form = ref({
+// --- 状态定义 ---
+const createDefaultFormState = () => ({
   deviceName: '',
   deviceType: '高清摄像头',
   districtId: null,
@@ -120,12 +121,13 @@ const form = ref({
   longitude: null,
   latitude: null,
   rtspUrl: '',
-  status: 'OFFLINE' // 默认值设为大写
+  status: 'OFFLINE'
 });
+
+const form = ref(createDefaultFormState());
 const isLoading = ref(false);
 const error = ref('');
 const districts = ref([]);
-
 const videoPlayer = ref(null);
 let hls = null;
 const isTesting = ref(false);
@@ -133,34 +135,14 @@ const isStreamPlaying = ref(false);
 const testResult = ref('');
 const connectionStatus = reactive({label: '未连接', text: 'text-gray-700', bg: 'bg-gray-200'});
 
+// --- 计算属性 ---
 const isEditMode = computed(() => !!props.id);
 const pageTitle = computed(() => isEditMode.value ? '编辑设备信息' : '添加新设备');
 const pageDescription = computed(() => "在这里管理设备的详细信息并测试其视频流连接。");
 
-const fetchDistricts = async () => {
-  try {
-    const response = await apiClient.get('/districts');
-    districts.value = response.data;
-    if (!isEditMode.value && districts.value.length > 0) {
-      form.value.districtId = districts.value[0].districtId;
-    }
-  } catch (err) {
-    console.error("加载辖区列表失败:", err);
-  }
-};
-
-const loadDeviceData = async () => {
-  if (!isEditMode.value) return;
-  isLoading.value = true;
-  try {
-    const response = await apiClient.get(`/devices/${props.id}`);
-    form.value = response.data;
-  } catch (err) {
-    alert('加载设备信息失败');
-    router.push('/devices');
-  } finally {
-    isLoading.value = false;
-  }
+// --- 方法 ---
+const resetForm = () => {
+  form.value = createDefaultFormState();
 };
 
 const stopHls = () => {
@@ -169,14 +151,82 @@ const stopHls = () => {
     hls = null;
   }
   isStreamPlaying.value = false;
+  if (videoPlayer.value) {
+    videoPlayer.value.src = '';
+  }
+  connectionStatus.label = '未连接';
+  connectionStatus.text = 'text-gray-700';
+  connectionStatus.bg = 'bg-gray-200';
 };
 
+// =================================================================
+// ==================== 终极解决方案：规范化数据类型 =================
+// =================================================================
+const initializeComponent = async (deviceId) => {
+  isLoading.value = true;
+  stopHls();
+  resetForm();
+
+  try {
+    // 1. 并发获取所有必需的数据
+    const districtsPromise = apiClient.get('/districts');
+    const devicePromise = deviceId ? apiClient.get(`/devices/${deviceId}`) : Promise.resolve(null);
+
+    const [districtsResponse, deviceResponse] = await Promise.all([districtsPromise, devicePromise]);
+
+    // 2. **核心修复点 1**: 规范化辖区列表
+    // 无论接口返回的是字符串还是数字，全部强制转为数字，确保下拉框选项的value是数字
+    const processedDistricts = districtsResponse.data.map(d => ({
+      ...d,
+      districtId: parseInt(d.districtId, 10)
+    }));
+    districts.value = processedDistricts;
+
+    // 3. 处理设备数据
+    if (deviceId && deviceResponse) { // 编辑模式
+      const deviceData = deviceResponse.data;
+
+      // **核心修复点 2**: 同样规范化从设备信息里获取的ID
+      if (deviceData.districtId) {
+        deviceData.districtId = parseInt(deviceData.districtId, 10);
+      }
+
+      // 现在 form.value.districtId (数字) 和 option的value (数字) 可以完美匹配
+      form.value = { ...createDefaultFormState(), ...deviceData };
+
+    } else { // 新建模式
+      // 为新建的设备设置一个默认的、数字类型的辖区ID
+      if (districts.value.length > 0) {
+        form.value.districtId = districts.value[0].districtId;
+      }
+    }
+  } catch (err) {
+    console.error("页面加载失败:", err);
+    alert('加载页面数据失败，请重试。');
+    router.push('/devices');
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+// --- 监听器 ---
+watch(
+  () => props.id,
+  (newId) => {
+    initializeComponent(newId);
+  },
+  { immediate: true }
+);
+
+// --- 生命周期钩子 ---
+onUnmounted(stopHls);
+
+// --- 其他表单方法 (保持不变) ---
 const testStream = () => {
   if (!form.value.rtspUrl) {
     alert('请输入RTSP视频流地址！');
     return;
   }
-
   try {
     const url = new URL(form.value.rtspUrl);
     const streamPath = url.pathname.startsWith('/') ? url.pathname.substring(1) : url.pathname;
@@ -200,7 +250,6 @@ const testStream = () => {
       connectionStatus.label = '连接成功';
       connectionStatus.text = 'text-green-800';
       connectionStatus.bg = 'bg-green-100';
-      // **关键修正**: 测试成功后，自动更新下拉框的值
       form.value.status = 'ONLINE';
     });
 
@@ -211,7 +260,6 @@ const testStream = () => {
         connectionStatus.label = `连接失败: ${data.details}`;
         connectionStatus.text = 'text-red-800';
         connectionStatus.bg = 'bg-red-100';
-        // **关键修正**: 测试失败后，自动更新下拉框的值
         form.value.status = 'OFFLINE';
       }
     });
@@ -224,9 +272,7 @@ const submitForm = async () => {
   isLoading.value = true;
   error.value = '';
   try {
-    // 直接发送表单数据，不再需要解构
     const payload = form.value;
-
     if (isEditMode.value) {
       await apiClient.put(`/devices/${props.id}`, payload);
     } else {
@@ -242,13 +288,4 @@ const submitForm = async () => {
     isLoading.value = false;
   }
 };
-
-onMounted(() => {
-  fetchDistricts();
-  loadDeviceData();
-});
-
-watch(() => route.path, stopHls);
-onUnmounted(stopHls);
-
 </script>
