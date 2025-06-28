@@ -77,4 +77,19 @@
         ORDER BY v.created_at DESC
         LIMIT #{limit}
     </select>
+
+    <select id="findById" resultType="edu.cupk.trafficviolationidentificationsystem.model.Violation">
+        SELECT * FROM violations WHERE violation_id = #{violationId}
+    </select>
+
+    <update id="updateStatus">
+        UPDATE violations SET status = #{status} WHERE violation_id = #{violationId}
+    </update>
+
+    <select id="findViolationDetailById" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
+        <include refid="selectJoins"/>
+        <where>
+            v.violation_id = #{id}
+        </where>
+    </select>
 </mapper>

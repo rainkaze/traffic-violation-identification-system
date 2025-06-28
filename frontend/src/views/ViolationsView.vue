@@ -70,8 +70,8 @@
               <span :class="{'bg-yellow-100 text-yellow-800': item.status === '待处理', 'bg-green-100 text-green-800': item.status === '已处理', 'bg-blue-100 text-blue-800': item.status === '处理中', 'bg-gray-100 text-gray-800': item.status === '已归档'}" class="badge">{{ item.status }}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button class="text-primary hover:text-primary/80 mr-3">详情</button>
-              <button class="text-success hover:text-success/80">处理</button>
+              <button @click="handleProcessClick(item.id)" class="text-primary hover:text-primary/80 mr-3">详情</button>
+              <button @click="handleProcessClick(item.id)" class="text-success hover:text-success/80">处理</button>
             </td>
           </tr>
           </tbody>
@@ -99,7 +99,9 @@ import { ref, onMounted, reactive, computed } from 'vue';
 import apiClient from '@/services/api';
 import authStore from '@/store/auth'; // 引入权限状态
 import { debounce } from 'lodash';
+import { useRouter } from 'vue-router'; // 引入 useRouter
 
+const router = useRouter(); // 获取 router 实例
 const violations = ref([]);
 const error = ref(null);
 const loading = ref(true);
@@ -116,7 +118,19 @@ const pageDescription = computed(() => {
     ? '查询、筛选和管理克拉玛依市所有交通违法记录'
     : '查询、筛选您所管辖区的交通违法记录';
 });
+const handleProcessClick = async (violationId) => {
+  try {
+    // 先调用后端接口，判断是否匹配工作流
+    const response = await apiClient.post(`/processing/initiate/${violationId}`);
+    const { isWorkflowCase } = response.data;
 
+    // 根据后端返回结果，导航到处理页面
+    router.push({ name: 'process-violation', params: { id: violationId } });
+
+  } catch (error) {
+    alert('启动处理流程失败: ' + (error.response?.data?.message || '未知错误'));
+  }
+};
 // 根据用户角色，计算出下拉框中可用的辖区
 const availableDistricts = computed(() => {
   if (isAdmin.value) {

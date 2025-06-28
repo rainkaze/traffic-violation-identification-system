@@ -96,8 +96,8 @@ CREATE TABLE `devices` (
                            `longitude` DECIMAL(11, 8),
                            `model_name` VARCHAR(100),
                            `ip_address` VARCHAR(45),
-    -- 将 status 的默认值改为 'UNBOUND' (未绑定)
-                           `status` ENUM('UNBOUND', 'ONLINE', 'OFFLINE', 'WARNING', 'MAINTENANCE') NOT NULL DEFAULT 'UNBOUND',
+                           `rtsp_url` VARCHAR(512),
+                           `status` ENUM('ONLINE', 'OFFLINE', 'WARNING', 'MAINTENANCE') NOT NULL DEFAULT 'OFFLINE',
                            `installed_at` DATE,
                            `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                            `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

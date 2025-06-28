@@ -29,4 +29,10 @@ public interface ViolationMapper {
     int insertTestViolation(Violation violation);
 
     List<ViolationDetailDto> getLatestTestViolations(@Param("limit") int limit);
+
+    Violation findById(@Param("violationId") Long violationId);
+    void updateStatus(@Param("violationId") Long violationId, @Param("status") String status);
+
+    // 在 ViolationMapper.java 中新增
+    ViolationDetailDto findViolationDetailById(@Param("id") Long id);
 }

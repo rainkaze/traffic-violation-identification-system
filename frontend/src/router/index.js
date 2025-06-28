@@ -20,6 +20,7 @@ import UserManagementView from '../views/admin/UserManagementView.vue';
 import WorkflowManagementView from '../views/admin/WorkflowManagementView.vue';
 import WorkflowForm from '../views/admin/WorkflowForm.vue';
 import DeviceFormView from '../views/DeviceFormView.vue'; // 新增导入
+import ViolationProcessingView from '../views/ViolationProcessingView.vue'; // 新增导入
 
 
 const router = createRouter({
@@ -148,7 +149,15 @@ const router = createRouter({
       component: WorkflowForm,
       props: true, // 允许将路由参数作为props传入组件
       meta: { requiresAuth: true, requiresAdmin: true }
-    }, // 2. 添加新路由
+    },
+    {
+      path: '/process-violation/:id', // 新增路由
+      name: 'process-violation',
+      component: ViolationProcessingView,
+      props: true,
+      meta: { requiresAuth: true }
+    },
+    // 2. 添加新路由
     { path: '/:pathMatch(.*)*', redirect: '/dashboard' }
   ],
 });

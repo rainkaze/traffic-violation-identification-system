@@ -19,4 +19,13 @@
   DELETE FROM workflow_triggers WHERE workflow_id = #{workflowId}
  </delete>
 
+ <select id="findMatchingTriggers" resultType="edu.cupk.trafficviolationidentificationsystem.model.WorkflowTrigger">
+  SELECT * FROM workflow_triggers
+  WHERE is_active = TRUE
+    AND (district_id IS NULL OR district_id = #{districtId})
+    AND (rule_id IS NULL OR rule_id = #{ruleId})
+    AND (min_demerit_points IS NULL OR #{demeritPoints} >= min_demerit_points)
+    AND (max_demerit_points IS NULL OR #{demeritPoints} &lt;= max_demerit_points)
+  ORDER BY priority DESC
+ </select>
 </mapper>
