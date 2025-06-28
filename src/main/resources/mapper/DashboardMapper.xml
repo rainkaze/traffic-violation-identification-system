@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.DashboardMapper">
+
+ <select id="countTotalToday" resultType="long">
+  SELECT COUNT(*) FROM violations WHERE DATE(violation_time) = CURDATE()
+ </select>
+
+ <select id="countProcessedToday" resultType="long">
+  SELECT COUNT(*) FROM violations WHERE DATE(violation_time) = CURDATE() AND status = '已处理'
+ </select>
+
+ <select id="countPendingToday" resultType="long">
+  SELECT COUNT(*) FROM violations WHERE DATE(violation_time) = CURDATE() AND status = '待处理'
+ </select>
+
+ <select id="countSeriousToday" resultType="long">
+  SELECT COUNT(v.violation_id)
+  FROM violations v
+        JOIN traffic_rules tr ON v.rule_id = tr.rule_id
+  WHERE DATE(v.violation_time) = CURDATE() AND tr.base_demerit_points > 6
+ </select>
+
+ <select id="getViolationTypeDistribution" resultType="edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto">
+  SELECT tr.violation_type AS label, COUNT(v.violation_id) AS value
+  FROM violations v
+  JOIN traffic_rules tr ON v.rule_id = tr.rule_id
+  <where>
+   <if test="timeRange == 'today'">
+    DATE(v.violation_time) = CURDATE()
+   </if>
+   <if test="timeRange == 'week'">
+    YEARWEEK(v.violation_time, 1) = YEARWEEK(CURDATE(), 1)
+   </if>
+   <if test="timeRange == 'month'">
+    DATE_FORMAT(v.violation_time, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')
+   </if>
+  </where>
+  GROUP BY tr.violation_type
+  ORDER BY value DESC
+ </select>
+
+ <select id="getRealtimeWarnings" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DashboardDataDto$RealtimeWarning">
+  SELECT
+   v.plate_number AS plateNumber,
+   tr.violation_type AS violationType,
+   d.address AS location,
+   v.violation_time AS time, -- 将在Service层计算timeAgo
+            tr.base_demerit_points AS demeritPoints, -- 获取扣分
+            CASE
+                WHEN tr.base_demerit_points >= 6 THEN 1
+                ELSE 2
+  END AS warningLevel
+        FROM
+            violations v
+            JOIN traffic_rules tr ON v.rule_id = tr.rule_id
+            LEFT JOIN devices d ON v.device_id = d.device_id
+        ORDER BY
+            v.violation_time DESC
+        LIMIT 5
+ </select>
+
+ <select id="getRecentViolations" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DashboardDataDto$RecentViolation">
+  SELECT
+   v.violation_time AS time,
+            v.plate_number AS plateNumber,
+            tr.violation_type AS violationType,
+            d.address AS location,
+            v.status AS status
+  FROM
+   violations v
+   LEFT JOIN traffic_rules tr ON v.rule_id = tr.rule_id
+   LEFT JOIN devices d ON v.device_id = d.device_id
+  ORDER BY
+   v.violation_time DESC
+   LIMIT 5
+ </select>
+    <select id="countTotalYesterday" resultType="long">
+        SELECT COUNT(*) FROM violations WHERE DATE(violation_time) = CURDATE() - INTERVAL 1 DAY
+    </select>
+
+    <select id="countProcessedYesterday" resultType="long">
+        SELECT COUNT(*) FROM violations WHERE DATE(violation_time) = CURDATE() - INTERVAL 1 DAY AND status = '已处理'
+    </select>
+
+    <select id="countPendingYesterday" resultType="long">
+        SELECT COUNT(*) FROM violations WHERE DATE(violation_time) = CURDATE() - INTERVAL 1 DAY AND status = '待处理'
+    </select>
+
+    <select id="countSeriousYesterday" resultType="long">
+        SELECT COUNT(v.violation_id)
+        FROM violations v
+                 JOIN traffic_rules tr ON v.rule_id = tr.rule_id
+        WHERE DATE(v.violation_time) = CURDATE() - INTERVAL 1 DAY AND tr.base_demerit_points > 6
+    </select>
+</mapper>
