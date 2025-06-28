@@ -11,8 +11,13 @@
         <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
           <h3 class="font-bold text-gray-800 text-lg mb-3 sm:mb-0">克拉玛依市交通态势图</h3>
 
+          <!-- 用户信息显示 -->
+          <div class="text-sm text-gray-600 ml-auto">
+            当前用户: {{ currentUser?.fullName }} - {{ currentUser?.rank }}
+          </div>
+
           <!-- 筛选框容器 -->
-          <div class="flex flex-nowrap gap-3 overflow-x-auto">
+          <div class="flex flex-nowrap gap-3 overflow-x-auto mt-2 sm:mt-0">
             <!-- 设备状态 -->
             <select class="input w-full sm:w-40 flex-shrink-0" v-model="selectedStatus">
               <option value="" disabled selected>设备状态</option>
@@ -23,12 +28,13 @@
             </select>
 
             <!-- 辖区 -->
-            <select class="input w-full sm:w-40 flex-shrink-0" v-model="selectedDistrict">
-              <option value="" disabled selected>辖区</option>
-              <option value="克拉玛依区">克拉玛依区</option>
-              <option value="独山子区">独山子区</option>
-              <option value="白碱滩区">白碱滩区</option>
+            <select v-model="filters.districtId" @change="onFilterChange" class="input w-full sm:w-40">
+              <option value="">全部辖区</option>
+              <option v-for="district in availableDistricts" :key="district.districtId" :value="district.districtId">
+                {{ district.districtName }}
+              </option>
             </select>
+
           </div>
         </div>
 
@@ -197,8 +203,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import {ref, onMounted, watch, computed, reactive} from 'vue';
 import apiClient from '@/services/api';
+import authStore from '@/store/auth'; // 引入权限状态
+
+// 从 authStore 中获取用户信息和角色
+const isAdmin = computed(() => authStore.isAdmin());
+const currentUser = computed(() => authStore.currentUser());
 
 // 响应式变量声明
 const selectedDeviceInfo = ref(null); // 存储当前选中的设备信息
@@ -214,8 +225,49 @@ const selectedDistrict = ref('');
 const selectedAccidentLevel = ref(''); // 事故等级选择器
 const showConfirmDialog = ref(false); // 控制确认对话框显示
 const showTrafficLightDialog = ref(false); // 控制信号灯联动对话框显示
-
+const allDistricts = ref([]); // 存储所有辖区列表
 let map; // 在顶层定义 map 变量
+
+// 根据用户角色，计算出下拉框中可用的辖区
+const availableDistricts = computed(() => {
+  if (isAdmin.value) {
+    return allDistricts.value;
+  }
+  if (currentUser.value && currentUser.value.districts) {
+    console.log("当前用户权限下的辖区列表:", currentUser.value.districts);
+    // return allDistricts.value.filter(d => currentUser.value.districts.includes(d.districtName));
+    return allDistricts.value.filter(d => currentUser.value.districts.includes(String(d.districtId)));
+
+  }
+
+  console.log("当前用户", currentUser.value);
+
+  return [];
+});
+
+const fetchAllDistricts = async () => {
+  try {
+    const response = await apiClient.get('/districts');
+    allDistricts.value = response.data;
+  } catch (error) {
+    console.error("加载所有辖区失败:", error);
+  }
+};
+
+const filters = reactive({
+  plateNumber: '',
+  violationType: '',
+  status: '',
+  yearMonth: '',
+  districtId: '', // 确保 districtId 被初始化
+});
+
+// 新增 onFilterChange 方法定义
+const onFilterChange = () => {
+  // 在这里添加当 districtId 变化时需要执行的逻辑
+  console.log('District ID changed to:', filters.districtId);
+  // 例如，可以在这里调用 API 更新数据
+};
 
 const formatTime = (time) => {
   if (!time) return '';
@@ -266,6 +318,7 @@ const createDefaultStyleMarkerIcon = () => {
 
 
 onMounted(async () => {
+  await fetchAllDistricts();
   try {
     await loadBaiduMap();
 
@@ -328,6 +381,19 @@ onMounted(async () => {
   } catch (error) {
     console.error('百度地图或设备数据加载失败:', error.response || error.message || error);
   }
+
+
+
+  // try {
+  //   const response = await apiClient.get('violations', {
+  //     params: filters
+  //   });
+  //   console.log('违法记录数据:', response.data); // ✅ 控制台打印结果
+  // } catch (error) {
+  //   console.error('加载违法记录失败:', error);
+  // }
+
+
 });
 
 watch([selectedStatus, selectedDistrict], async () => {

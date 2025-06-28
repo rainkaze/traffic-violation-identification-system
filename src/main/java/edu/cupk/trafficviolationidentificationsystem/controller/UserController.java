@@ -9,14 +9,13 @@ import edu.cupk.trafficviolationidentificationsystem.repository.UserMapper;
 import edu.cupk.trafficviolationidentificationsystem.service.EmailService;
 import edu.cupk.trafficviolationidentificationsystem.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,32 +24,48 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+
+    // --- 合并后的依赖 ---
     private final UserMapper userMapper;
     private final UserService userService;
+    private final NotificationSettingMapper notificationSettingMapper;
+    private final EmailService emailService;
 
-    @Autowired
-    private NotificationSettingMapper notificationSettingMapper;
-
-    @Autowired
-    private EmailService emailService;
-
-
-    public UserController(UserMapper userMapper, UserService userService) {
+    // 使用构造函数注入所有依赖，这是推荐的最佳实践
+    public UserController(UserMapper userMapper, UserService userService, NotificationSettingMapper notificationSettingMapper, EmailService emailService) {
         this.userMapper = userMapper;
         this.userService = userService;
+        this.notificationSettingMapper = notificationSettingMapper;
+        this.emailService = emailService;
     }
 
+    /**
+     * 根据用户名获取用户信息，并附带其管理的辖区信息。
+     * (采纳自版本二，功能更完整)
+     */
     @GetMapping("/{username}")
     public ResponseEntity<UserDto> getUserByUsername(@PathVariable String username) {
-        Optional<User> optionalUser = userMapper.findByUsername(username);
-        if (optionalUser.isPresent()) {
-            return ResponseEntity.ok(new UserDto(optionalUser.get()));
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        User user = userMapper.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
 
+        // 查询该用户的辖区ID列表
+        List<Integer> districtIds = userMapper.findDistrictIdsByUserId(user.getUserId());
+        // 将辖区ID转换为字符串列表
+        List<String> districtStrings = districtIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.toList());
+
+        UserDto dto = new UserDto();
+        BeanUtils.copyProperties(user, dto); // 复制基础属性
+        dto.setDistricts(districtStrings); // 设置辖区信息
+
+        return ResponseEntity.ok(dto);
     }
 
+    /**
+     * 更新当前登录用户的个人资料。
+     * (两个版本相同，保留其一)
+     */
     @PutMapping("/profile")
     public ResponseEntity<UserDto> updateProfile(@Valid @RequestBody ProfileUpdateDto profileUpdateDto) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -58,24 +73,27 @@ public class UserController {
         return ResponseEntity.ok(updatedUser);
     }
 
-
+    /**
+     * 修改当前登录用户的密码，并在成功后根据用户设置发送邮件通知。
+     * (采纳自版本一，包含邮件通知逻辑)
+     */
     @PostMapping("/profile/change-password")
     public ResponseEntity<?> changePassword(@Valid @RequestBody PasswordChangeDto passwordChangeDto) {
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             userService.changePassword(username, passwordChangeDto);
 
-
-//           对设置了密码修改发通知的人   成功后发送邮件给用户
-            Optional<User> byUsername = userMapper.findByUsername(username);
-            Integer userId = byUsername.get().getUserId();
-            List<Integer> userIds =notificationSettingMapper.getUserIdsByTypeKey("password_change_alert");
-
-            if (userIds.contains(userId)) {
-                String email =userMapper.findEmailByUserId(userId);
-                emailService.sendSimpleMessage(email, "密码修改成功", "密码修改成功。");
+            // 成功后，检查是否需要发送邮件通知
+            Optional<User> optionalUser = userMapper.findByUsername(username);
+            if (optionalUser.isPresent()) {
+                Integer userId = optionalUser.get().getUserId();
+                // 检查用户是否开启了“密码修改”的通知
+                List<Integer> userIdsWithSettingEnabled = notificationSettingMapper.getUserIdsByTypeKey("password_change_alert");
+                if (userIdsWithSettingEnabled.contains(userId)) {
+                    String email = optionalUser.get().getEmail();
+                    emailService.sendSimpleMessage(email, "密码修改成功提醒", "您的账户密码已于 " + java.time.LocalDateTime.now() + " 成功修改。如果不是您本人操作，请立即联系管理员。");
+                }
             }
-
 
             return ResponseEntity.ok(Map.of("message", "密码修改成功。"));
         } catch (RuntimeException e) {
@@ -83,40 +101,35 @@ public class UserController {
         }
     }
 
-
-
-//    获取用户id的方法 因为token里没存id 我后续都是调用这个来获取对应用户id的
+    /**
+     * 获取当前登录用户的ID。
+     * (采纳自版本一，为前端提供必要的用户ID)
+     */
     @GetMapping("/getUserId")
-    public Integer getUserId() {
-//        System.out.println("hhhhhhhhh");
+    public ResponseEntity<Integer> getUserId() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username="";
         if (principal instanceof UserDetails userDetails) {
-//            System.out.println( userDetails.getUsername());
-            username= userDetails.getUsername();
-        } else {
-            System.out.println(principal.toString());
+            String username = userDetails.getUsername();
+            return userMapper.findByUsername(username)
+                    .map(User::getUserId)
+                    .map(ResponseEntity::ok)
+                    .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).build());
         }
-
-        Optional<User> byUsername = userMapper.findByUsername(username);
-        Integer userId=byUsername.get().getUserId();
-//        System.out.println(userId);
-        return userId;
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
-
-
-
-//    这个是发布任务功能的搜索框函数 查找用户的
+    /**
+     * 根据关键字搜索用户，用于“发布任务”等功能。
+     * (采纳自版本一，支持前端的搜索功能)
+     */
     @GetMapping("/search")
-    public List<User> searchUsers(@RequestParam(required = false) String keyword) {
-        System.out.println("搜索关键字：" + keyword);
+    public ResponseEntity<List<User>> searchUsers(@RequestParam(required = false) String keyword) {
+        List<User> users;
         if (keyword == null || keyword.trim().isEmpty()) {
-            return userMapper.getAllUsers(); // 你需要写这个方法
+            users = userMapper.getAllUsers(); // 假设 userMapper 中有此方法
+        } else {
+            users = userMapper.searchUsersByKeyword(keyword); // 假设 userMapper 中有此方法
         }
-        List<User> a=userMapper.searchUsersByKeyword(keyword);
-        System.out.println(a);
-        return a;
+        return ResponseEntity.ok(users);
     }
-
 }
