@@ -63,18 +63,6 @@
           </router-link>
         </li>
         <li>
-          <router-link to="/webrtc-test" class="sidebar-item">
-            <i class="fa fa-flask w-5 text-center"></i>
-            <span>WebRTC 测试</span>
-          </router-link>
-        </li>
-        <li>
-          <router-link to="/test-link" class="sidebar-item">
-            <i class="fa fa-link w-5 text-center"></i>
-            <span>连接测试</span>
-          </router-link>
-        </li>
-        <li>
           <router-link to="/settings" class="sidebar-item">
             <i class="fa fa-cog w-5 text-center"></i>
             <span>系统设置</span>
