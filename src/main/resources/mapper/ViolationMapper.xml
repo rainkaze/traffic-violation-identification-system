@@ -92,4 +92,10 @@
             v.violation_id = #{id}
         </where>
     </select>
+
+    <select id="findAllViolationsByCriteria" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
+        <include refid="selectJoins"/>
+        <include refid="dynamicWhere"/>
+        ORDER BY v.violation_time DESC
+    </select>
 </mapper>

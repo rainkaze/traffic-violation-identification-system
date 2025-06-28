@@ -34,8 +34,14 @@
           </select>
         </div>
         <div class="flex gap-2">
-          <button class="btn btn-secondary"><i class="fa fa-upload mr-1"></i> 批量导入</button>
-          <button class="btn btn-primary"><i class="fa fa-download mr-1"></i> 导出数据</button>
+          <div class="relative">
+            <button @click="showExportOptions = !showExportOptions" class="btn btn-primary"><i class="fa fa-download mr-1"></i> 导出数据</button>
+            <div v-if="showExportOptions" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+              <a href="#" @click.prevent="handleExport('pdf')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">导出为 PDF</a>
+              <a href="#" @click.prevent="handleExport('xlsx')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">导出为 Excel (XLSX)</a>
+              <a href="#" @click.prevent="handleExport('csv')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">导出为 CSV</a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -107,6 +113,7 @@ const error = ref(null);
 const loading = ref(true);
 const violationTypes = ref([]);
 const allDistricts = ref([]); // 存储所有辖区列表
+const showExportOptions = ref(false);
 
 // 从 authStore 中获取用户信息和角色
 const isAdmin = computed(() => authStore.isAdmin());
@@ -220,7 +227,27 @@ const formatTime = (isoString) => {
   if (!isoString) return 'N/A';
   return new Date(isoString).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
 };
+const handleExport = async (format) => {
+  showExportOptions.value = false; // Hide dropdown
+  try {
+    const params = { ...filters, format };
+    const response = await apiClient.get('/violations/export', {
+      params,
+      responseType: 'blob', // Important
+    });
 
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `violations.${format}`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (err) {
+    console.error("导出失败:", err);
+    alert('导出失败，请查看控制台获取更多信息。');
+  }
+};
 onMounted(async () => {
   // 先获取辖区数据，以便筛选框能正常显示
   await fetchAllDistricts();

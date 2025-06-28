@@ -17,11 +17,30 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.Collections;
 import java.util.List;
 
+
+import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import net.sf.jasperreports.engine.export.JRCsvExporter;
+import net.sf.jasperreports.engine.export.ooxml.JRXlsxExporter;
+import net.sf.jasperreports.export.SimpleExporterInput;
+import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
+import net.sf.jasperreports.export.SimpleWriterExporterOutput;
+import org.springframework.util.ResourceUtils;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import net.sf.jasperreports.engine.DefaultJasperReportsContext; // 引入
+import net.sf.jasperreports.engine.fonts.FontFamily; // 引入
 public interface ViolationService {
     PageResultDto<ViolationDetailDto> listViolations(ViolationQueryDto queryDto);
 
     Violation createTestViolation(ViolationTestDto violationDto, MultipartFile evidenceImage);
     List<ViolationDetailDto> getLatestTestViolations(int limit);
+
+    byte[] exportViolations(ViolationQueryDto queryDto, String format) throws Exception;
+
 }
 
 @Service
@@ -105,5 +124,60 @@ class ViolationServiceImpl implements ViolationService {
     @Override
     public List<ViolationDetailDto> getLatestTestViolations(int limit) {
         return violationMapper.getLatestTestViolations(limit);
+    }
+
+    @Override
+    public byte[] exportViolations(ViolationQueryDto queryDto, String format) throws Exception {
+
+        // ======================= 诊断代码 =======================
+//        System.out.println("\n--- JasperReports 运行时可用字体 ---");
+//        DefaultJasperReportsContext context = (DefaultJasperReportsContext) DefaultJasperReportsContext.getInstance();
+
+//        List<FontFamily> fontFamilies = context.getExtensions(FontFamily.class);
+
+//        if (fontFamilies != null && !fontFamilies.isEmpty()) {
+//            for (FontFamily family : fontFamilies) {
+//                System.out.println("找到字体家族: " + family.getName());
+//            }
+//        } else {
+//            System.out.println("警告：没有找到任何通过扩展加载的字体！请检查 jasperreports_extension.properties 和 fonts.xml 文件是否存在于 resources 目录下。");
+//        }
+//        System.out.println("------------------------------------------\n");
+        // ======================= 诊断代码结束 =========================
+
+        // 1. 获取所有符合条件的数据（不分页）
+        List<ViolationDetailDto> allViolations = violationMapper.findAllViolationsByCriteria(queryDto);
+
+        // 2. 加载报表模板
+        File file = ResourceUtils.getFile("classpath:reports/report.jrxml");
+        JasperReport jasperReport = JasperCompileManager.compileReport(file.getAbsolutePath());
+
+        // 3. 创建数据源
+        JRBeanCollectionDataSource dataSource = new JRBeanCollectionDataSource(allViolations);
+
+        // 4. 填充报表
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("createdBy", "Admin");
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, dataSource);
+
+        // 5. 根据格式导出报表
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        if ("pdf".equalsIgnoreCase(format)) {
+            JasperExportManager.exportReportToPdfStream(jasperPrint, outputStream);
+        } else if ("xlsx".equalsIgnoreCase(format)) {
+            JRXlsxExporter exporter = new JRXlsxExporter();
+            exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+            exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(outputStream));
+            exporter.exportReport();
+        } else if ("csv".equalsIgnoreCase(format)) {
+            JRCsvExporter exporter = new JRCsvExporter();
+            exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+            exporter.setExporterOutput(new SimpleWriterExporterOutput(outputStream));
+            exporter.exportReport();
+        } else {
+            throw new IllegalArgumentException("Unsupported format: " + format);
+        }
+
+        return outputStream.toByteArray();
     }
 }

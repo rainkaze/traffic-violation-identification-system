@@ -18,6 +18,11 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Comparator;
 import java.util.List;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @RestController
 @RequestMapping("/api/violations")
@@ -45,7 +50,7 @@ public class ViolationController {
     public ResponseEntity<PageResultDto<ViolationDetailDto>> getViolations(ViolationQueryDto queryDto) {
         PageResultDto<ViolationDetailDto> result = violationService.listViolations(queryDto);
 
-        System.out.println("要插入了");
+//        System.out.println("要插入了");
 
 //        //测试是否能够正确插入数据库
 //        evaluateAndInsertWarning(101L, "闯红灯111", 0.85); // 应触发一级
@@ -88,7 +93,28 @@ public class ViolationController {
             default -> 99;
         };
     }
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportViolations(ViolationQueryDto queryDto, @RequestParam String format) {
+        try {
+            byte[] data = violationService.exportViolations(queryDto, format);
+            HttpHeaders headers = new HttpHeaders();
+            String filename = "violations." + format;
+            headers.setContentDispositionFormData("attachment", filename);
 
+            if ("pdf".equalsIgnoreCase(format)) {
+                headers.setContentType(MediaType.APPLICATION_PDF);
+            } else if ("xlsx".equalsIgnoreCase(format)) {
+                headers.setContentType(MediaType.valueOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+            } else if ("csv".equalsIgnoreCase(format)) {
+                headers.setContentType(MediaType.TEXT_PLAIN);
+            }
+
+            return ResponseEntity.ok().headers(headers).body(data);
+        } catch (Exception e) {
+            // 在实际应用中，这里应该有更完善的错误处理
+            return ResponseEntity.status(500).build();
+        }
+    }
 
 
 
