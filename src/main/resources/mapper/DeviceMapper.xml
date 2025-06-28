@@ -67,7 +67,7 @@
  </update>
 
  <select id="findActiveCameras" resultType="edu.cupk.trafficviolationidentificationsystem.dto.MonitoringCameraDto">
-  SELECT device_id, device_name, address, status, rtsp_url FROM devices WHERE device_type = '高清摄像头'
+  SELECT device_id, device_name, address,device_code,district_id,status, rtsp_url FROM devices WHERE device_type = '高清摄像头'
  </select>
 
  <select id="findById" resultType="edu.cupk.trafficviolationidentificationsystem.model.Device">

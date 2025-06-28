@@ -10,11 +10,15 @@
         <div class="flex flex-col sm:flex-row gap-3">
           <select v-model="selectedDistrict" class="input w-full sm:w-60">
             <option value="">全部区域</option>
-            <option v-for="district in districts" :key="district.districtId" :value="district.districtName">{{ district.districtName }}</option>
+            <option v-for="district in districts" :key="district.districtId" :value="district.districtId">
+              {{ district.districtName }}
+            </option>
           </select>
           <select v-model="selectedDevice" class="input w-full sm:w-60">
             <option value="">全部摄像头</option>
-            <option v-for="camera in cameras" :key="camera.deviceId" :value="camera.deviceCode">{{ camera.deviceName }} ({{ camera.deviceCode }})</option>
+            <option v-for="camera in cameras" :key="camera.deviceId" :value="camera.deviceCode">
+              {{ camera.deviceName }} ({{ camera.deviceCode }})
+            </option>
           </select>
         </div>
         <div class="flex gap-2">
@@ -27,7 +31,6 @@
       <div v-if="isLoading" class="text-center py-10">加载中...</div>
       <div v-else-if="filteredCameras.length === 0" class="text-center py-10">无匹配的监控设备</div>
       <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
         <router-link
           v-for="camera in filteredCameras"
           :key="camera.deviceId"
@@ -54,13 +57,13 @@
             <h4 class="font-medium text-white">{{ camera.deviceName }}</h4>
           </div>
         </router-link>
-        </div>
       </div>
     </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onActivated } from 'vue'; // 1. 导入 onActivated
+import { ref, onMounted, computed, onActivated } from 'vue';
 import apiClient from '@/services/api';
 
 const cameras = ref([]);
@@ -70,9 +73,11 @@ const isLoading = ref(true);
 const selectedDistrict = ref('');
 const selectedDevice = ref('');
 
+// 修改点 2: 更新筛选逻辑
 const filteredCameras = computed(() => {
   return cameras.value.filter(camera => {
-    const matchDistrict = !selectedDistrict.value || camera.address.includes(selectedDistrict.value);
+    // 使用精确的 ID 匹配，而不是模糊的地址匹配
+    const matchDistrict = !selectedDistrict.value || camera.districtId === selectedDistrict.value;
     const matchDevice = !selectedDevice.value || camera.deviceCode === selectedDevice.value;
     return matchDistrict && matchDevice;
   });
@@ -99,14 +104,11 @@ const fetchDistricts = async () => {
   }
 };
 
-// 2. 创建一个统一的数据加载函数
 const loadData = () => {
   fetchCameras();
   fetchDistricts();
 }
 
-// 3. 在 onMounted 和 onActivated 中都调用它
 onMounted(loadData);
 onActivated(loadData);
-
 </script>

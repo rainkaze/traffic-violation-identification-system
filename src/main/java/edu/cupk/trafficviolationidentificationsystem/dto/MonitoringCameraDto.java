@@ -11,4 +11,5 @@ public class MonitoringCameraDto {
     private String status;
     private String imageUrl; // 用于前端展示的图片URL
     private int violationCount; // 关联的违法数量（模拟）
+    private Integer districtId; // 新增：辖区ID字段
 }
