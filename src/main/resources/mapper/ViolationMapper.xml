@@ -62,5 +62,10 @@
         LEFT JOIN traffic_rules tr ON v.rule_id = tr.rule_id
         <include refid="dynamicWhere"/>
     </select>
-
+    <select id="findRecentViolationsByDeviceId" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
+        <include refid="selectJoins"/>
+        WHERE v.device_id = #{deviceId}
+        ORDER BY v.violation_time DESC
+        LIMIT 5
+    </select>
 </mapper>

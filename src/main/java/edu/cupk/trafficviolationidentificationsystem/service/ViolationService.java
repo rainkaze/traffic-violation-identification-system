@@ -15,6 +15,8 @@ import java.util.List;
 
 public interface ViolationService {
     PageResultDto<ViolationDetailDto> listViolations(ViolationQueryDto queryDto);
+    // 新增方法声明
+    List<ViolationDetailDto> getRecentViolationsByDeviceId(Integer deviceId);
 }
 
 @Service
@@ -71,5 +73,9 @@ class ViolationServiceImpl implements ViolationService {
 
         // 6. 组装并返回分页结果
         return new PageResultDto<>(items, totalItems, (int) totalPages, queryDto.getPage());
+    }
+    @Override
+    public List<ViolationDetailDto> getRecentViolationsByDeviceId(Integer deviceId) {
+        return violationMapper.findRecentViolationsByDeviceId(deviceId);
     }
 }

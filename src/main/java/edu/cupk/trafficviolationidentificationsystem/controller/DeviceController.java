@@ -1,11 +1,9 @@
 package edu.cupk.trafficviolationidentificationsystem.controller;
 
-import edu.cupk.trafficviolationidentificationsystem.dto.CountByLabelDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.DeviceListDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.DeviceUpsertDto;
-import edu.cupk.trafficviolationidentificationsystem.dto.MonitoringCameraDto;
+import edu.cupk.trafficviolationidentificationsystem.dto.*;
 import edu.cupk.trafficviolationidentificationsystem.model.Device;
 import edu.cupk.trafficviolationidentificationsystem.service.DeviceService;
+import edu.cupk.trafficviolationidentificationsystem.service.ViolationService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +16,11 @@ import java.util.List;
 public class DeviceController {
 
     private final DeviceService deviceService;
+    private final ViolationService violationService;
 
-    public DeviceController(DeviceService deviceService) {
+    public DeviceController(DeviceService deviceService, ViolationService violationService) {
         this.deviceService = deviceService;
+        this.violationService = violationService;
     }
 
     @GetMapping
@@ -74,5 +74,10 @@ public class DeviceController {
     @GetMapping("/statistics/type")
     public ResponseEntity<List<CountByLabelDto>> getDeviceTypeCounts() {
         return ResponseEntity.ok(deviceService.getDeviceTypeCounts());
+    }
+    @GetMapping("/{id}/violations")
+    public ResponseEntity<List<ViolationDetailDto>> getRecentViolationsForDevice(@PathVariable("id") Integer deviceId) {
+        List<ViolationDetailDto> violations = violationService.getRecentViolationsByDeviceId(deviceId);
+        return ResponseEntity.ok(violations);
     }
 }
