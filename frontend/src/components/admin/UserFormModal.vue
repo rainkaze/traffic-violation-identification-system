@@ -21,7 +21,6 @@
             <label for="rank" class="block text-sm font-medium text-gray-700">等级</label>
             <select v-model="form.rank" id="rank" class="input mt-1 w-full" required>
               <option>警员</option>
-              <option>小队长</option>
               <option>中队长</option>
               <option>大队长</option>
               <option>管理员</option>

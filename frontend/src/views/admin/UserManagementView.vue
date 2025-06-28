@@ -21,6 +21,33 @@
       </div>
 
       <div v-if="activeTab === 'pending'">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left">用户</th>
+              <th class="px-6 py-3 text-left">邮箱</th>
+              <th class="px-6 py-3 text-left">申请时间</th>
+              <th class="px-6 py-3 text-right">操作</th>
+            </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-if="isLoading"><td colspan="4" class="text-center py-4">加载中...</td></tr>
+            <tr v-if="!isLoading && pendingUsers.length === 0">
+              <td colspan="4" class="text-center py-4 text-gray-500">当前没有待审批的申请。</td>
+            </tr>
+            <tr v-for="user in pendingUsers" :key="user.userId">
+              <td class="px-6 py-4 font-medium">{{ user.fullName }}</td>
+              <td class="px-6 py-4 text-gray-500">{{ user.email }}</td>
+              <td class="px-6 py-4 text-gray-500">{{ new Date(user.createdAt).toLocaleString() }}</td>
+              <td class="px-6 py-4 text-right whitespace-nowrap">
+                <button @click="approveUser(user.userId)" class="btn btn-sm btn-success mr-2">批准</button>
+                <button @click="rejectUser(user.userId)" class="btn btn-sm btn-danger">拒绝</button>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div v-if="activeTab === 'all'">

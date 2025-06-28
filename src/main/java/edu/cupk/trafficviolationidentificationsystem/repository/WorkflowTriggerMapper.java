@@ -4,6 +4,8 @@ import edu.cupk.trafficviolationidentificationsystem.model.WorkflowTrigger;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 @Mapper
 public interface WorkflowTriggerMapper {
     /**
@@ -23,4 +25,7 @@ public interface WorkflowTriggerMapper {
      * @param workflowId 工作流ID
      */
     void deleteByWorkflowId(@Param("workflowId") Integer workflowId);
+
+    List<WorkflowTrigger> findMatchingTriggers(@Param("districtId") Integer districtId, @Param("ruleId") Integer ruleId, @Param("demeritPoints") Integer demeritPoints);
+
 }

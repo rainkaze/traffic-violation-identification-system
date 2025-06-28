@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.NotificationSettingMapper">
+
+
+<!--    从数组插入-->
+    <insert id="insertNotificationSetting">
+        INSERT INTO notification_setting (user_id, type_key, enabled)
+        VALUES
+        <foreach item="item" index="index" collection="settings" separator=",">
+            (#{item.userId}, #{item.typeKey}, #{item.enabled})
+        </foreach>
+    </insert>
+
+
+    <update id="putNotificationSetting">
+        UPDATE notification_setting
+        SET enabled = CASE
+        <foreach item="item" index="index" collection="settings">
+            WHEN type_key = #{item.typeKey} THEN #{item.enabled}
+        </foreach>
+        END
+        WHERE user_id = #{settings[0].userId}
+    </update>
+    <select id="getUserIdsByTypeKey" resultType="java.lang.Integer">
+        SELECT DISTINCT user_id FROM notification_setting WHERE type_key = #{typeKey} and enabled = true
+    </select>
+
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -10,10 +10,12 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm font-medium opacity-90">今日违法总数</p>
-            <h3 class="text-3xl font-bold mt-1">158</h3>
+            <h3 class="text-3xl font-bold mt-1">{{ stats.totalToday }}</h3>
             <p class="text-xs mt-2 flex items-center">
-              <i class="fa fa-arrow-up text-green-300 mr-1"></i>
-              <span>7% 较昨日</span>
+              <i class="fa mr-1" :class="stats.totalChange >= 0 ? 'fa-arrow-up text-green-300' : 'fa-arrow-down text-red-300'"></i>
+              <span :class="stats.totalChange >= 0 ? 'text-green-300' : 'text-red-300'">
+                {{ stats.totalChange.toFixed(0) }}% 较昨日
+              </span>
             </p>
           </div>
           <div class="bg-white/20 p-3 rounded-lg">
@@ -25,10 +27,12 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm font-medium opacity-90">已处理违法</p>
-            <h3 class="text-3xl font-bold mt-1">121</h3>
+            <h3 class="text-3xl font-bold mt-1">{{ stats.processedToday }}</h3>
             <p class="text-xs mt-2 flex items-center">
-              <i class="fa fa-arrow-up text-green-300 mr-1"></i>
-              <span>5% 较昨日</span>
+              <i class="fa mr-1" :class="stats.processedChange >= 0 ? 'fa-arrow-up text-green-300' : 'fa-arrow-down text-red-300'"></i>
+              <span :class="stats.processedChange >= 0 ? 'text-green-300' : 'text-red-300'">
+                {{ stats.processedChange.toFixed(0) }}% 较昨日
+              </span>
             </p>
           </div>
           <div class="bg-white/20 p-3 rounded-lg">
@@ -40,10 +44,12 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm font-medium opacity-90">待处理违法</p>
-            <h3 class="text-3xl font-bold mt-1">37</h3>
+            <h3 class="text-3xl font-bold mt-1">{{ stats.pendingToday }}</h3>
             <p class="text-xs mt-2 flex items-center">
-              <i class="fa fa-arrow-up text-red-300 mr-1"></i>
-              <span>11% 较昨日</span>
+              <i class="fa mr-1" :class="stats.pendingChange >= 0 ? 'fa-arrow-up text-red-400' : 'fa-arrow-down text-green-400'"></i>
+              <span :class="stats.pendingChange >= 0 ? 'text-red-400' : 'text-green-400'">
+                {{ stats.pendingChange.toFixed(0) }}% 较昨日
+              </span>
             </p>
           </div>
           <div class="bg-white/20 p-3 rounded-lg">
@@ -55,10 +61,12 @@
         <div class="flex items-center justify-between">
           <div>
             <p class="text-sm font-medium opacity-90">严重违法行为</p>
-            <h3 class="text-3xl font-bold mt-1">18</h3>
+            <h3 class="text-3xl font-bold mt-1">{{ stats.seriousToday }}</h3>
             <p class="text-xs mt-2 flex items-center">
-              <i class="fa fa-arrow-down text-green-300 mr-1"></i>
-              <span>-3% 较昨日</span>
+              <i class="fa mr-1" :class="stats.seriousChange >= 0 ? 'fa-arrow-up text-red-400' : 'fa-arrow-down text-green-300'"></i>
+              <span :class="stats.seriousChange >= 0 ? 'text-red-300' : 'text-green-300'">
+                {{ stats.seriousChange.toFixed(0) }}% 较昨日
+              </span>
             </p>
           </div>
           <div class="bg-white/20 p-3 rounded-lg">
@@ -71,11 +79,11 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="card lg:col-span-2">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="font-bold text-gray-800">违法类型分布 (本月)</h3>
+          <h3 class="font-bold text-gray-800">违法类型分布</h3>
           <div class="flex space-x-2">
-            <button class="btn btn-secondary text-sm">今日</button>
-            <button class="btn btn-secondary text-sm">本周</button>
-            <button class="btn btn-primary text-sm">本月</button>
+            <button @click="fetchChartData('today')" :class="['btn text-sm', timeRange === 'today' ? 'btn-primary' : 'btn-secondary']">今日</button>
+            <button @click="fetchChartData('week')" :class="['btn text-sm', timeRange === 'week' ? 'btn-primary' : 'btn-secondary']">本周</button>
+            <button @click="fetchChartData('month')" :class="['btn text-sm', timeRange === 'month' ? 'btn-primary' : 'btn-secondary']">本月</button>
           </div>
         </div>
         <div class="h-80"><canvas ref="violationTypeChart"></canvas></div>
@@ -84,48 +92,19 @@
       <div class="card">
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-bold text-gray-800">实时预警</h3>
-          <button class="text-primary hover:text-primary/80 text-sm">查看全部</button>
+          <router-link to="/violations" class="text-primary hover:text-primary/80 text-sm">查看全部</router-link>
         </div>
         <div class="h-80 overflow-y-auto space-y-3">
-          <div class="flex items-center gap-3 p-2 rounded-lg bg-red-50 border-l-4 border-danger">
-            <i class="fa fa-car text-danger text-lg"></i>
+          <div v-for="(warning, index) in realtimeWarnings" :key="index" class="flex items-center gap-3 p-2 rounded-lg"
+               :class="warning.warningLevel === 1 ? 'bg-red-50 border-l-4 border-danger' : 'bg-yellow-50 border-l-4 border-warning'">
+            <i class="fa fa-car text-lg" :class="warning.warningLevel === 1 ? 'text-danger' : 'text-warning'"></i>
             <div>
-              <p class="font-medium text-sm">新K·A12345 闯红灯</p>
-              <p class="text-xs text-gray-500">1分钟前 @ 世纪大道</p>
+              <p class="font-medium text-sm">{{ warning.plateNumber }} {{ warning.violationType }}</p>
+              <p class="text-xs text-gray-500">{{ warning.timeAgo }} @ {{ warning.location }}</p>
             </div>
-            <span class="ml-auto text-xs font-bold text-danger">一级预警</span>
-          </div>
-          <div class="flex items-center gap-3 p-2 rounded-lg bg-red-50 border-l-4 border-danger">
-            <i class="fa fa-car text-danger text-lg"></i>
-            <div>
-              <p class="font-medium text-sm">新K·B67890 逆行</p>
-              <p class="text-xs text-gray-500">3分钟前 @ 友谊路</p>
-            </div>
-            <span class="ml-auto text-xs font-bold text-danger">一级预警</span>
-          </div>
-          <div class="flex items-center gap-3 p-2 rounded-lg bg-yellow-50 border-l-4 border-warning">
-            <i class="fa fa-tachometer text-warning text-lg"></i>
-            <div>
-              <p class="font-medium text-sm">新K·C24681 超速</p>
-              <p class="text-xs text-gray-500">5分钟前 @ 迎宾路快速道</p>
-            </div>
-            <span class="ml-auto text-xs font-bold text-warning">二级预警</span>
-          </div>
-          <div class="flex items-center gap-3 p-2 rounded-lg bg-yellow-50 border-l-4 border-warning">
-            <i class="fa fa-tachometer text-warning text-lg"></i>
-            <div>
-              <p class="font-medium text-sm">新K·D35792 超速</p>
-              <p class="text-xs text-gray-500">8分钟前 @ 克南高架</p>
-            </div>
-            <span class="ml-auto text-xs font-bold text-warning">二级预警</span>
-          </div>
-          <div class="flex items-center gap-3 p-2 rounded-lg bg-red-50 border-l-4 border-danger">
-            <i class="fa fa-exchange text-danger text-lg"></i>
-            <div>
-              <p class="font-medium text-sm">新K·E46803 违法变道</p>
-              <p class="text-xs text-gray-500">12分钟前 @ 和平路</p>
-            </div>
-            <span class="ml-auto text-xs font-bold text-danger">一级预警</span>
+            <span class="ml-auto text-xs font-bold" :class="warning.warningLevel === 1 ? 'text-danger' : 'text-warning'">
+              {{ warning.warningLevel === 1 ? '一级预警' : '二级预警' }}
+            </span>
           </div>
         </div>
       </div>
@@ -134,60 +113,28 @@
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-bold text-gray-800">最近违法记录</h3>
           <router-link to="/violations" class="text-primary hover:text-primary/80 flex items-center">
-            <span>查看全部</span>
-            <i class="fa fa-angle-right ml-1"></i>
+            <span>查看全部</span><i class="fa fa-angle-right ml-1"></i>
           </router-link>
         </div>
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
             <tr>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">车牌号码</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">违法类型</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">地点</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
-              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+              <th class="table-header">时间</th>
+              <th class="table-header">车牌号码</th>
+              <th class="table-header">违法类型</th>
+              <th class="table-header">地点</th>
+              <th class="table-header">状态</th>
             </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-06-09 10:23:45</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">新K·A12345</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">闯红灯</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">克拉玛依区世纪大道与友谊路交叉口</td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="badge bg-warning text-white">待处理</span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button class="text-primary hover:text-primary/80 mr-3">详情</button>
-                <button class="text-success hover:text-success/80">处理</button>
-              </td>
-            </tr>
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-06-09 09:47:12</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">新K·B67890</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">超速行驶</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">独山子区G30高速K3550+200</td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="badge bg-success text-white">已处理</span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button class="text-primary hover:text-primary/80 mr-3">详情</button>
-                <button class="text-success hover:text-success/80">处理</button>
-              </td>
-            </tr>
-            <tr class="hover:bg-gray-50 transition-colors">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2025-06-09 08:15:30</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">新K·C24681</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">逆行</td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">白碱滩区和平路</td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="badge bg-warning text-white">待处理</span>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button class="text-primary hover:text-primary/80 mr-3">详情</button>
-                <button class="text-success hover:text-success/80">处理</button>
+            <tr v-for="(item, index) in recentViolations" :key="index" class="hover:bg-gray-50">
+              <td class="table-cell">{{ formatTime(item.time) }}</td>
+              <td class="table-cell font-medium text-gray-900">{{ item.plateNumber }}</td>
+              <td class="table-cell">{{ item.violationType }}</td>
+              <td class="table-cell">{{ item.location }}</td>
+              <td class="table-cell">
+                <span class="badge" :class="statusClass(item.status)">{{ item.status }}</span>
               </td>
             </tr>
             </tbody>
@@ -199,47 +146,125 @@
 </template>
 
 <script setup>
-import { onMounted, ref, nextTick } from 'vue';
+import { onMounted, ref, reactive, nextTick } from 'vue';
 import Chart from 'chart.js/auto';
+import apiClient from '@/services/api';
 
+const stats = reactive({
+  totalToday: 0,
+  processedToday: 0,
+  pendingToday: 0,
+  seriousToday: 0,
+  totalChange: 0,
+  processedChange: 0,
+  pendingChange: 0,
+  seriousChange: 0,
+});
+const realtimeWarnings = ref([]);
+const recentViolations = ref([]);
+const timeRange = ref('month');
 const violationTypeChart = ref(null);
-const isMounted = ref(false);
+let chartInstance = null;
+
+const violationColors = {
+  '压实线': { bg: 'rgba(255, 159, 64, 0.8)', border: 'rgba(255, 159, 64, 1)' },
+  '逆行': { bg: 'rgba(255, 99, 132, 0.8)', border: 'rgba(255, 99, 132, 1)' },
+  '超速': { bg: 'rgba(239, 68, 68, 0.8)', border: 'rgba(239, 68, 68, 1)' },
+  '违规停车': { bg: 'rgba(251, 191, 36, 0.8)', border: 'rgba(251, 191, 36, 1)' },
+  '闯红灯': { bg: 'rgba(220, 38, 38, 0.8)', border: 'rgba(220, 38, 38, 1)' },
+  'default': { bg: 'rgba(54, 162, 235, 0.8)', border: 'rgba(54, 162, 235, 1)' }
+};
+
+const fetchDashboardData = async (range = 'month') => {
+  try {
+    const response = await apiClient.get('/dashboard/data', { params: { timeRange: range } });
+    const data = response.data;
+
+    Object.assign(stats, data.stats);
+
+    if (realtimeWarnings.value.length === 0) {
+      realtimeWarnings.value = data.realtimeWarnings;
+    }
+    if (recentViolations.value.length === 0) {
+      recentViolations.value = data.recentViolations;
+    }
+
+    await nextTick();
+    updateChart(data.violationTypeDistribution);
+  } catch (error) {
+    console.error("加载仪表盘数据失败:", error);
+  }
+};
+
+const fetchChartData = (newRange) => {
+  timeRange.value = newRange;
+  apiClient.get('/dashboard/data', { params: { timeRange: newRange } }).then(response => {
+    updateChart(response.data.violationTypeDistribution);
+  }).catch(error => {
+    console.error("加载图表数据失败:", error);
+  });
+}
+
+const updateChart = (chartData) => {
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+  if (violationTypeChart.value && chartData) {
+    const backgroundColors = chartData.labels.map(label => violationColors[label]?.bg || violationColors.default.bg);
+    const borderColors = chartData.labels.map(label => violationColors[label]?.border || violationColors.default.border);
+
+    const ctx = violationTypeChart.value.getContext('2d');
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: chartData.labels,
+        datasets: [{
+          label: '违法数量',
+          data: chartData.data,
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+};
 
 onMounted(() => {
-  isMounted.value = true;
-  nextTick(() => {
-    // 初始化违法类型分布图表
-    if (violationTypeChart.value) {
-      const typeCtx = violationTypeChart.value.getContext('2d');
-      new Chart(typeCtx, {
-        type: 'bar',
-        data: {
-          labels: ['闯红灯', '超速行驶', '逆行', '不按导向车道行驶', '违法变道', '压线行驶'],
-          datasets: [{
-            label: '违法数量',
-            data: [55, 42, 24, 38, 18, 20],
-            backgroundColor: [
-              'rgba(30, 64, 175, 0.8)',
-              'rgba(14, 165, 233, 0.8)',
-              'rgba(16, 185, 129, 0.8)',
-              'rgba(245, 158, 11, 0.8)',
-              'rgba(239, 68, 68, 0.8)',
-              'rgba(139, 92, 246, 0.8)'
-            ],
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
-        }
-      });
-    }
-  });
+  fetchDashboardData(timeRange.value);
 });
+
+const formatTime = (isoString) => {
+  if (!isoString) return 'N/A';
+  return new Date(isoString).toLocaleString('zh-CN', { hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(/\//g, '-');
+};
+
+const statusClass = (status) => {
+  const map = {
+    '待处理': 'bg-yellow-100 text-yellow-800',
+    '已处理': 'bg-green-100 text-green-800',
+    '处理中': 'bg-blue-100 text-blue-800',
+    '已归档': 'bg-gray-100 text-gray-800'
+  };
+  return map[status] || 'bg-gray-200';
+};
 </script>
+
+<style scoped>
+.table-header {
+  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+}
+.table-cell {
+  @apply px-6 py-4 whitespace-nowrap text-sm text-gray-500;
+}
+</style>

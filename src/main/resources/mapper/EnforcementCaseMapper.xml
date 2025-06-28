@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.EnforcementCaseMapper">
+
+ <insert id="insert" useGeneratedKeys="true" keyProperty="caseId">
+  INSERT INTO enforcement_cases
+  (violation_id, final_decision, final_fine, final_demerit_points, decision_reason, processed_by_user_id, processed_at)
+  VALUES
+   (#{violationId}, #{finalDecision}, #{finalFine}, #{finalDemeritPoints}, #{decisionReason}, #{processedByUserId}, NOW())
+ </insert>
+
+</mapper>
