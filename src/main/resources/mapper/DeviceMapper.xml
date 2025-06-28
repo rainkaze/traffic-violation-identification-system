@@ -15,6 +15,7 @@
   <result property="longitude" column="longitude"/>
   <result property="latitude" column="latitude"/>
   <result property="rtspUrl" column="rtsp_url"/>
+  <result property="districtId" column="district_id"/>
  </resultMap>
 
  <select id="findAllDevices" resultMap="DeviceListDtoResultMap">
@@ -31,7 +32,7 @@
  <select id="findDtoById" resultMap="DeviceListDtoResultMap">
   SELECT
    d.device_id, d.device_code, d.device_name, d.device_type,
-   dist.district_name, d.address, d.status, d.rtsp_url,
+   dist.district_name, d.address, d.status, d.rtsp_url,d.district_id,
    d.latitude, d.longitude
   FROM
    devices d

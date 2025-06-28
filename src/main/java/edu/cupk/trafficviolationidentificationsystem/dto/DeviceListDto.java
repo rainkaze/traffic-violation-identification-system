@@ -17,7 +17,7 @@ public class DeviceListDto {
     private String status;
     private String rtspUrl;
     private String modelName; // 在 DeviceFormView 加载时需要
-
+    private Integer districtId;
     private String jurisdiction;
     private Double longitude;
     private Double latitude;

@@ -164,11 +164,11 @@ const stopHls = () => {
 // =================================================================
 const initializeComponent = async (deviceId) => {
   isLoading.value = true;
-  stopHls();
-  resetForm();
+  stopHls(); // 停止可能存在的视频流
+  resetForm(); // 重置表单
 
   try {
-    // 1. 并发获取所有必需的数据
+    // 1. 并行获取所有必需的数据
     const districtsPromise = apiClient.get('/districts');
     const devicePromise = deviceId ? apiClient.get(`/devices/${deviceId}`) : Promise.resolve(null);
 
@@ -195,7 +195,7 @@ const initializeComponent = async (deviceId) => {
       form.value = { ...createDefaultFormState(), ...deviceData };
 
     } else { // 新建模式
-      // 为新建的设备设置一个默认的、数字类型的辖区ID
+      // 如果有辖区列表，可以为新建的设备设置一个默认的辖区ID
       if (districts.value.length > 0) {
         form.value.districtId = districts.value[0].districtId;
       }
