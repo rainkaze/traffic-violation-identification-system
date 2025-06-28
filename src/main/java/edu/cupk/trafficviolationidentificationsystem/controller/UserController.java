@@ -7,10 +7,14 @@ import edu.cupk.trafficviolationidentificationsystem.model.User;
 import edu.cupk.trafficviolationidentificationsystem.repository.UserMapper;
 import edu.cupk.trafficviolationidentificationsystem.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -28,7 +32,19 @@ public class UserController {
     public ResponseEntity<UserDto> getUserByUsername(@PathVariable String username) {
         User user = userMapper.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return ResponseEntity.ok(new UserDto(user));
+        // 查询该用户的辖区列表
+        List<Integer> districts = userMapper.findDistrictIdsByUserId(user.getUserId());
+        // 辖区转为 String
+        List<String> districtStrings = new ArrayList<>();
+        for (Integer districtId : districts) {
+            districtStrings.add(String.valueOf(districtId));
+        }
+        UserDto dto = new UserDto();
+        BeanUtils.copyProperties(user, dto);
+        dto.setDistricts(districtStrings);
+        System.out.println("districts: " + districtStrings);
+        // 返回刚才设置了辖区的 dto 对象，而不是新建的 UserDto
+        return ResponseEntity.ok(dto);
     }
 
     @PutMapping("/profile")

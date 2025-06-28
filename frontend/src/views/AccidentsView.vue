@@ -234,8 +234,14 @@ const availableDistricts = computed(() => {
     return allDistricts.value;
   }
   if (currentUser.value && currentUser.value.districts) {
-    return allDistricts.value.filter(d => currentUser.value.districts.includes(d.districtName));
+    console.log("当前用户权限下的辖区列表:", currentUser.value.districts);
+    // return allDistricts.value.filter(d => currentUser.value.districts.includes(d.districtName));
+    return allDistricts.value.filter(d => currentUser.value.districts.includes(String(d.districtId)));
+
   }
+
+  console.log("当前用户", currentUser.value);
+
   return [];
 });
 
@@ -247,6 +253,7 @@ const fetchAllDistricts = async () => {
     console.error("加载所有辖区失败:", error);
   }
 };
+
 const filters = reactive({
   plateNumber: '',
   violationType: '',
@@ -374,6 +381,19 @@ onMounted(async () => {
   } catch (error) {
     console.error('百度地图或设备数据加载失败:', error.response || error.message || error);
   }
+
+
+
+  // try {
+  //   const response = await apiClient.get('violations', {
+  //     params: filters
+  //   });
+  //   console.log('违法记录数据:', response.data); // ✅ 控制台打印结果
+  // } catch (error) {
+  //   console.error('加载违法记录失败:', error);
+  // }
+
+
 });
 
 watch([selectedStatus, selectedDistrict], async () => {
