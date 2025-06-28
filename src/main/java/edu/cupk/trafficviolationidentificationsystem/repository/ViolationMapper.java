@@ -30,4 +30,6 @@ public interface ViolationMapper {
      * @return 违法记录详情列表
      */
     List<ViolationDetailDto> findRecentViolationsByDeviceId(@Param("deviceId") Integer deviceId);
+
+    long countByDeviceId(@Param("deviceId") Integer deviceId);
 }

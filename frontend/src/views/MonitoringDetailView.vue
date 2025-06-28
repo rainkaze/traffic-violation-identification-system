@@ -39,7 +39,7 @@
           <dl class="text-sm space-y-2">
             <div class="flex justify-between"><dt class="text-gray-500">设备状态</dt><dd><span class="badge text-white" :class="statusBgColor(device.status)">{{ device.status }}</span></dd></div>
             <div class="flex justify-between"><dt class="text-gray-500">设备类型</dt><dd class="font-medium text-gray-800">{{ device.deviceType }}</dd></div>
-            <div class="flex justify-between"><dt class="text-gray-500">所属辖区</dt><dd class="font-medium text-gray-800">{{ device.districtName }}</dd></div>
+            <div class="flex justify-between"><dt class="text-gray-500">所属辖区</dt><dd class="font-medium text-gray-800">{{ device.jurisdiction }}</dd></div>
             <div class="flex justify-between"><dt class="text-gray-500">RTSP 地址</dt><dd class="font-medium text-gray-800 truncate" :title="device.rtspUrl">{{ device.rtspUrl || '未配置' }}</dd></div>
           </dl>
         </div>
@@ -77,7 +77,7 @@
 </template>
 
 <script setup>
-import {ref, onMounted, onUnmounted} from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import {useRoute} from 'vue-router';
 import apiClient from '@/services/api';
 import Hls from 'hls.js';
@@ -99,7 +99,35 @@ const recentViolations = ref([]);
 const violationsLoading = ref(true);
 
 // --- 核心方法 ---
+const loadData = async (deviceId) => {
+  isLoading.value = true;
+  error.value = null;
+  // 重置状态
+  recentViolations.value = [];
+  stopStreaming(); // 停止上一个视频流
 
+  try {
+    const deviceResponse = await apiClient.get(`/devices/${deviceId}`);
+    device.value = deviceResponse.data;
+
+    const violationsResponse = await apiClient.get(`/devices/${deviceId}/violations`);
+    recentViolations.value = violationsResponse.data;
+  } catch (err) {
+    error.value = "无法加载设备信息，请检查设备ID是否正确或联系管理员。";
+    console.error("加载详情页数据失败:", err);
+  } finally {
+    isLoading.value = false;
+  }
+};
+watch(
+  () => props.id,
+  (newId) => {
+    if (newId) {
+      loadData(newId);
+    }
+  },
+  { immediate: true } // 4. immediate: true 确保组件初次加载时也会执行
+);
 // 获取设备详情
 const fetchDeviceDetails = async () => {
   try {

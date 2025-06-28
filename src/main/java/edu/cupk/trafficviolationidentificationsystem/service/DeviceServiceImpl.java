@@ -7,6 +7,7 @@ import edu.cupk.trafficviolationidentificationsystem.dto.DeviceUpsertDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.MonitoringCameraDto;
 import edu.cupk.trafficviolationidentificationsystem.model.Device;
 import edu.cupk.trafficviolationidentificationsystem.repository.DeviceMapper;
+import edu.cupk.trafficviolationidentificationsystem.repository.ViolationMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,10 +19,13 @@ import java.util.Random;
 public class DeviceServiceImpl implements DeviceService {
 
     private final DeviceMapper deviceMapper;
+    private final ViolationMapper violationMapper; // 2. 注入 ViolationMapper
 
-    public DeviceServiceImpl(DeviceMapper deviceMapper) {
+    public DeviceServiceImpl(DeviceMapper deviceMapper, ViolationMapper violationMapper) { // 3. 修改构造函数
         this.deviceMapper = deviceMapper;
+        this.violationMapper = violationMapper; // 4. 初始化
     }
+
 
     private void mapDtoToEntity(DeviceUpsertDto dto, Device entity) {
         entity.setDeviceName(dto.getDeviceName());
@@ -93,10 +97,12 @@ public class DeviceServiceImpl implements DeviceService {
     @Override
     public List<MonitoringCameraDto> getActiveCameras() {
         List<MonitoringCameraDto> cameras = deviceMapper.findActiveCameras();
-        Random random = new Random();
         cameras.forEach(camera -> {
-            camera.setViolationCount(random.nextInt(5));
-            camera.setImageUrl("[https://picsum.photos/seed/](https://picsum.photos/seed/)" + camera.getDeviceId() + "/800/450");
+            // 5. 调用新方法查询并设置真实的违法数量
+            long violationCount = violationMapper.countByDeviceId(camera.getDeviceId());
+            camera.setViolationCount((int) violationCount);
+            // 保持图片URL逻辑不变
+            camera.setImageUrl("https://picsum.photos/seed/" + camera.getDeviceId() + "/800/450");
         });
         return cameras;
     }

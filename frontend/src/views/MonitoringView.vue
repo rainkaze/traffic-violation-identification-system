@@ -36,9 +36,9 @@
         >
           <div class="relative">
             <img :src="camera.imageUrl" :alt="camera.deviceName" class="w-full h-48 object-cover">
-            <div class="absolute top-2 left-2 text-white text-xs px-2 py-1 rounded" :class="camera.status === 'online' ? 'bg-danger/80' : 'bg-gray-500/80'">
-              <i class="fa mr-1" :class="camera.status === 'online' ? 'fa-circle animate-pulse' : 'fa-power-off'"></i>
-              {{ camera.status === 'online' ? '直播中' : '离线' }}
+            <div :class="['absolute top-2 left-2 text-white text-xs px-2 py-1 rounded', camera.status.toLowerCase() === 'online' ? 'bg-danger/80' : 'bg-gray-500/80']">
+              <i class="fa mr-1" :class="camera.status.toLowerCase() === 'online' ? 'fa-circle animate-pulse' : 'fa-power-off'"></i>
+              {{ camera.status.toLowerCase() === 'online' ? '直播中' : '离线' }}
             </div>
             <div class="absolute top-2 right-2 bg-dark/80 text-white text-xs px-2 py-1 rounded">
               {{ camera.deviceCode }}

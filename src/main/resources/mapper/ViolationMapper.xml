@@ -68,4 +68,9 @@
         ORDER BY v.violation_time DESC
         LIMIT 5
     </select>
+    <select id="countByDeviceId" resultType="long">
+        SELECT COUNT(violation_id)
+        FROM violations
+        WHERE device_id = #{deviceId}
+    </select>
 </mapper>
