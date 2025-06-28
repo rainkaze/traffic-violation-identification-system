@@ -28,13 +28,13 @@
             </select>
 
             <!-- 辖区 -->
-            <select class="input w-full sm:w-40 flex-shrink-0" v-model="selectedDistrict">
-              <option value="" disabled selected>辖区</option>
-              <option value="1">克拉玛依区</option>
-              <option value="2">独山子区</option>
-              <option value="6">白碱滩区</option>
-              <option value="9">乌尔禾区</option>
+            <select v-model="filters.districtId" @change="onFilterChange" class="input w-full sm:w-40">
+              <option value="">全部辖区</option>
+              <option v-for="district in availableDistricts" :key="district.districtId" :value="district.districtId">
+                {{ district.districtName }}
+              </option>
             </select>
+
           </div>
         </div>
 
@@ -203,7 +203,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
+import {ref, onMounted, watch, computed, reactive} from 'vue';
 import apiClient from '@/services/api';
 import authStore from '@/store/auth'; // 引入权限状态
 
@@ -225,8 +225,42 @@ const selectedDistrict = ref('');
 const selectedAccidentLevel = ref(''); // 事故等级选择器
 const showConfirmDialog = ref(false); // 控制确认对话框显示
 const showTrafficLightDialog = ref(false); // 控制信号灯联动对话框显示
-
+const allDistricts = ref([]); // 存储所有辖区列表
 let map; // 在顶层定义 map 变量
+
+// 根据用户角色，计算出下拉框中可用的辖区
+const availableDistricts = computed(() => {
+  if (isAdmin.value) {
+    return allDistricts.value;
+  }
+  if (currentUser.value && currentUser.value.districts) {
+    return allDistricts.value.filter(d => currentUser.value.districts.includes(d.districtName));
+  }
+  return [];
+});
+
+const fetchAllDistricts = async () => {
+  try {
+    const response = await apiClient.get('/districts');
+    allDistricts.value = response.data;
+  } catch (error) {
+    console.error("加载所有辖区失败:", error);
+  }
+};
+const filters = reactive({
+  plateNumber: '',
+  violationType: '',
+  status: '',
+  yearMonth: '',
+  districtId: '', // 确保 districtId 被初始化
+});
+
+// 新增 onFilterChange 方法定义
+const onFilterChange = () => {
+  // 在这里添加当 districtId 变化时需要执行的逻辑
+  console.log('District ID changed to:', filters.districtId);
+  // 例如，可以在这里调用 API 更新数据
+};
 
 const formatTime = (time) => {
   if (!time) return '';
@@ -277,6 +311,7 @@ const createDefaultStyleMarkerIcon = () => {
 
 
 onMounted(async () => {
+  await fetchAllDistricts();
   try {
     await loadBaiduMap();
 
