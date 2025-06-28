@@ -148,9 +148,37 @@ const startStreaming = () => {
   }
   try {
     streamStatus.value = '正在连接...';
+// --- 开始替换/修改 ---
+
+// 1. 定义一个函数，用于根据RTSP端口推算HLS端口
+    const getHlsPortFromRtspPort = (rtspPort) => {
+      // 当地址是 rtsp://localhost/live 时, URL解析出的端口是空字符串 ''
+      // RTSP的默认端口是 554
+      const port = rtspPort || '554';
+
+      switch (port) {
+        case '554': // 第一个摄像头, 对应 mediamtx 1
+          return '8888';
+        case '555': // 第二个摄像头, 对应 mediamtx 2
+          return '9888';
+        // case '556': return '10888'; // 如果未来有第三个摄像头
+        default:
+          // 默认情况, 返回第一个的端口
+          return '8888';
+      }
+    };
+
+// 2. 解析输入的RTSP URL
     const url = new URL(device.value.rtspUrl);
     const streamPath = url.pathname.startsWith('/') ? url.pathname.substring(1) : url.pathname;
-    const hlsUrl = `http://localhost:8888/${streamPath}/index.m3u8`;
+
+// 3. 动态获取HLS端口
+    const hlsPort = getHlsPortFromRtspPort(url.port);
+   // const hlsPort = 9888;
+// 4. 构建最终的、完全动态的HLS URL
+    const hlsUrl = `http://localhost:${hlsPort}/${streamPath}/index.m3u8`;
+    //const hlsUrl = `http://localhost:9888/${streamPath}/index.m3u8?_t=${new Date().getTime()}`;
+// --- 替换/修改结束 ---
 
     if (Hls.isSupported()) {
       if (hls) hls.destroy();
