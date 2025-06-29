@@ -1,5 +1,5 @@
 import { reactive, readonly } from 'vue';
-import { useRouter } from 'vue-router';
+import apiClient from '@/services/api';
 
 const state = reactive({
   user: null,
@@ -14,26 +14,40 @@ const mutations = {
     state.token = token;
     if (token) {
       localStorage.setItem('token', token);
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
       localStorage.removeItem('token');
+      delete apiClient.defaults.headers.common['Authorization'];
     }
   },
-  logout() {
+  clearLocalState() {
     state.user = null;
     state.token = null;
     localStorage.removeItem('token');
+    delete apiClient.defaults.headers.common['Authorization'];
   }
 };
 
 const actions = {
   async login(credentials) {
-    // NOTE: The actual API call will be in the component.
-    // This is a placeholder for where login logic could go in a more complex app.
-    // For now, we'll just set the token and user from the component.
+    // ...
   },
-  logoutUser() {
-    mutations.logout();
-    // No router access here, handle redirect in component or router guard.
+
+  // ======== 主要修改点：在 finally 块中添加页面跳转 ========
+  async logoutUser() {
+    try {
+      await apiClient.post('/auth/logout');
+      console.log("Backend logout API was called successfully.");
+    } catch (error) {
+      console.error("Error calling backend logout, proceeding with local cleanup:", error);
+    } finally {
+      // 清理前端的状态
+      mutations.clearLocalState();
+
+      // **新增代码：强制页面跳转到登录页**
+      // 使用 window.location.href 可以确保在任何地方调用登出都能正确跳转
+      window.location.href = '/login';
+    }
   }
 };
 
@@ -43,7 +57,6 @@ const getters = {
   isAdmin: () => state.user && state.user.rank === '管理员',
 };
 
-// Export a simplified store object
 export default {
   state: readonly(state),
   setUser: mutations.setUser,
