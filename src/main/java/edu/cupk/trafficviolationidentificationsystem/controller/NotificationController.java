@@ -81,8 +81,6 @@ public class NotificationController {
         notificationMapper.insertNotification(notification);
         return "success";
     }
-    //设置通知
-    //就是通知设置那块的选项
 
     /**
      * 为用户初次设置通知偏好。
@@ -110,37 +108,6 @@ public class NotificationController {
         return "success";
     }
 
-
-    @GetMapping("/get/{userId}")
-    public List<NotificationSetting> getNotificationSettings(@PathVariable Long userId) {
-//        System.out.println("获取用户 " + userId + " 的通知设置");
-        List<NotificationSetting> notificationSettings = notificationSettingMapper.selectByUserId(userId);
-        System.out.println("获取用户 " + userId + " 的通知设置：" + notificationSettings);
-        return notificationSettingMapper.selectByUserId(userId);
-    }
-
-
-    //保存用户的通知设置
-    @PostMapping("/save")
-    public String saveOrUpdateNotification(@RequestBody List<NotificationSetting> settings) {
-        if (settings == null || settings.isEmpty()) {
-            return "no data";
-        }
-
-        Long userId = Long.valueOf(settings.get(0).getUserId());
-
-        // 先删除该用户所有通知设置
-        notificationSettingMapper.deleteByUserId(userId);
-
-        // 再批量插入新的通知设置
-        notificationSettingMapper.insertNotificationSetting(settings);
-
-        return "success";
-    }
-
-
-
-//    发送通知  发布任务的那个功能调用的
     /**
      * 发送通知给一个或多个指定用户。
      * 此操作会通过WebSocket实时推送，将通知存入数据库，并通过Redis发布消息。
