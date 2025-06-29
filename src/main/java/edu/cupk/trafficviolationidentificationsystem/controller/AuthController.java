@@ -4,6 +4,8 @@ import edu.cupk.trafficviolationidentificationsystem.dto.JwtAuthResponseDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.LoginDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.RegisterDto;
 import edu.cupk.trafficviolationidentificationsystem.service.AuthService;
+import edu.cupk.trafficviolationidentificationsystem.service.CounterService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -20,9 +22,10 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
-
-    public AuthController(AuthService authService) {
+    private final CounterService counterService; // 2. 注入 CounterService
+    public AuthController(AuthService authService, CounterService counterService) {
         this.authService = authService;
+        this.counterService = counterService;
     }
 
     @PostMapping("/send-verification-code")
@@ -44,6 +47,7 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody LoginDto loginDto) {
         try {
             JwtAuthResponseDto jwtAuthResponse = authService.login(loginDto);
+            counterService.increment("logins:total");
             return ResponseEntity.ok(jwtAuthResponse);
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "用户名或密码错误。"));
@@ -62,5 +66,11 @@ public class AuthController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
         }
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        authService.logout(bearerToken);
+        return ResponseEntity.ok(Map.of("message", "您已成功退出登录。"));
     }
 }

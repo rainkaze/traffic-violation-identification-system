@@ -142,6 +142,18 @@
         </div>
       </div>
     </div>
+    <div class="card lg:col-span-1">
+      <h3 class="font-bold text-gray-800">警员处理排行榜</h3>
+      <div class="h-80 overflow-y-auto space-y-3 mt-4">
+        <div v-for="(user, index) in leaderboard" :key="index" class="flex items-center gap-3 p-2 rounded-lg bg-gray-50 border-l-4 border-primary">
+          <span class="font-bold text-primary w-5 text-center">{{ index + 1 }}</span>
+          <div class="flex-grow">
+            <p class="font-medium text-sm">{{ user.value }}</p>
+          </div>
+          <span class="ml-auto text-sm font-bold text-gray-700">{{ user.score }} 次</span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -165,6 +177,7 @@ const recentViolations = ref([]);
 const timeRange = ref('month');
 const violationTypeChart = ref(null);
 let chartInstance = null;
+const leaderboard = ref([]);
 
 const violationColors = {
   '压实线': { bg: 'rgba(255, 159, 64, 0.8)', border: 'rgba(255, 159, 64, 1)' },
@@ -195,7 +208,14 @@ const fetchDashboardData = async (range = 'month') => {
     console.error("加载仪表盘数据失败:", error);
   }
 };
-
+const fetchLeaderboard = async () => {
+  try {
+    const response = await apiClient.get('/statistics/leaderboard');
+    leaderboard.value = response.data;
+  } catch (error) {
+    console.error("加载排行榜数据失败:", error);
+  }
+};
 const fetchChartData = (newRange) => {
   timeRange.value = newRange;
   apiClient.get('/dashboard/data', { params: { timeRange: newRange } }).then(response => {
@@ -242,6 +262,7 @@ const updateChart = (chartData) => {
 
 onMounted(() => {
   fetchDashboardData(timeRange.value);
+  fetchLeaderboard();
 });
 
 const formatTime = (isoString) => {

@@ -5,6 +5,7 @@ import edu.cupk.trafficviolationidentificationsystem.dto.ViolationProcessingDeta
 import edu.cupk.trafficviolationidentificationsystem.model.User;
 import edu.cupk.trafficviolationidentificationsystem.model.Workflow;
 import edu.cupk.trafficviolationidentificationsystem.repository.UserMapper;
+import edu.cupk.trafficviolationidentificationsystem.service.LeaderboardService; // 确保已导入
 import edu.cupk.trafficviolationidentificationsystem.service.ViolationProcessingService;
 import edu.cupk.trafficviolationidentificationsystem.service.WorkflowEngineService;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +21,17 @@ public class ViolationProcessingController {
     private final WorkflowEngineService workflowEngineService;
     private final ViolationProcessingService violationProcessingService;
     private final UserMapper userMapper;
+    private final LeaderboardService leaderboardService; // 确保 LeaderboardService 已注入
 
-    public ViolationProcessingController(WorkflowEngineService workflowEngineService, ViolationProcessingService violationProcessingService, UserMapper userMapper) {
+    // 构造函数保持不变
+    public ViolationProcessingController(WorkflowEngineService workflowEngineService, ViolationProcessingService violationProcessingService, UserMapper userMapper, LeaderboardService leaderboardService) {
         this.workflowEngineService = workflowEngineService;
         this.violationProcessingService = violationProcessingService;
         this.userMapper = userMapper;
+        this.leaderboardService = leaderboardService;
     }
 
+    // initiateProcessing 和 getProcessingDetails 方法保持不变
     @PostMapping("/initiate/{id}")
     public ResponseEntity<?> initiateProcessing(@PathVariable("id") Long violationId) {
         Workflow startedWorkflow = workflowEngineService.startWorkflowForViolation(violationId);
@@ -40,6 +45,7 @@ public class ViolationProcessingController {
         return ResponseEntity.ok(details);
     }
 
+    // ======== 主要修改点在此处 ========
     @PostMapping("/submit/{id}")
     public ResponseEntity<?> submitDecision(@PathVariable("id") Long violationId, @RequestBody ProcessRequestDto processRequest) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -52,6 +58,10 @@ public class ViolationProcessingController {
             } else {
                 workflowEngineService.processDirectly(violationId, currentUser.getUserId(), processRequest.getRemarks());
             }
+
+            // **新增代码**: 在处理成功后，为当前警员增加排行榜分数
+            leaderboardService.incrementScore(currentUser.getFullName(), 1);
+
             return ResponseEntity.ok(Map.of("message", "处理成功！"));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));

@@ -1,5 +1,7 @@
 package edu.cupk.trafficviolationidentificationsystem.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import edu.cupk.trafficviolationidentificationsystem.config.RedisPubSubConfig;
 import edu.cupk.trafficviolationidentificationsystem.entity.Notification;
 import edu.cupk.trafficviolationidentificationsystem.entity.NotificationSetting;
 import edu.cupk.trafficviolationidentificationsystem.repository.NotificationMapper;
@@ -10,12 +12,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -29,6 +33,9 @@ public class NotificationController {
     @Autowired
     private WebSocketServer webSocketServer;
 
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     @GetMapping
     public List<Notification> getNotificationsByUserId(@RequestParam Long userId) {
 
@@ -112,6 +119,16 @@ public class NotificationController {
             notificationMapper.insertNotification(notification);
             System.out.println("插入通知：" + notification);
 
+        }
+        try {
+            // 将消息发布到 Redis Topic
+            Map<String, Object> messageMap = Map.of(
+                    "recipientIds", request.getRecipientIds(),
+                    "message", "主题" + request.getSubject() + "  内容  " + request.getMessage()
+            );
+            redisTemplate.convertAndSend(RedisPubSubConfig.NOTIFICATION_TOPIC, objectMapper.writeValueAsString(messageMap));
+        } catch (Exception e) {
+            // log error
         }
         // 这里只返回一个简单的响应
         return ResponseEntity.ok("通知接收成功");

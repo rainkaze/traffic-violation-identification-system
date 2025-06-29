@@ -8,6 +8,7 @@ import edu.cupk.trafficviolationidentificationsystem.model.User;
 import edu.cupk.trafficviolationidentificationsystem.repository.UserMapper;
 import edu.cupk.trafficviolationidentificationsystem.security.JwtTokenProvider;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-
+import org.springframework.data.redis.core.RedisTemplate;
 @Service
 public class AuthServiceImpl implements AuthService {
 
@@ -31,13 +32,14 @@ public class AuthServiceImpl implements AuthService {
     private final ConcurrentHashMap<String, String> verificationCodes = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> codeTimestamps = new ConcurrentHashMap<>();
     private static final long CODE_EXPIRATION_MINUTES = 10;
-
-    public AuthServiceImpl(AuthenticationManager authenticationManager, UserMapper userMapper, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, EmailService emailService) {
+    private final RedisTemplate<String, Object> redisTemplate;
+    public AuthServiceImpl(AuthenticationManager authenticationManager, UserMapper userMapper, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, EmailService emailService, RedisTemplate<String, Object> redisTemplate) {
         this.authenticationManager = authenticationManager;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.emailService = emailService; // 初始化EmailService
+        this.redisTemplate = redisTemplate; // 注入 RedisTemplate
     }
 
     @Override
@@ -110,5 +112,22 @@ public class AuthServiceImpl implements AuthService {
 
 
         return "申请已成功提交！请等待管理员审核。";
+    }
+    // 新增 logout 方法
+    @Override
+    public void logout(String token) {
+        if (token != null && token.startsWith("Bearer ")) {
+            String jwt = token.substring(7);
+            if (jwtTokenProvider.validateToken(jwt)) {
+                String username = jwtTokenProvider.getUsername(jwt);
+                long expirationTime = jwtTokenProvider.getExpirationDateFromToken(jwt).getTime();
+                long currentTime = System.currentTimeMillis();
+                long ttl = expirationTime - currentTime;
+                if (ttl > 0) {
+                    // 将 token 存入 Redis 黑名单，并设置过期时间
+                    redisTemplate.opsForValue().set("blacklist:" + jwt, username, ttl, TimeUnit.MILLISECONDS);
+                }
+            }
+        }
     }
 }
