@@ -216,7 +216,7 @@
 
 
 
-        <div v-if="activeTab === 'notifications'">
+        <div v-if="activeTab === 'notifications' && settingsLoaded">
           <div>
             <h3 class="font-bold text-gray-800 mb-6">通知设置</h3>
             <div class="space-y-6">
@@ -1365,8 +1365,10 @@ const userid=ref()
   // 从后端获取 userId 并保存
 const fetchUserIdFromBackend = async () => {
   try {
-    const response = await apiClient.get('/users/getUserId');
-    userid.value = response.data; // 通常是 Long 类型
+    // const response = await apiClient.get('/users/getUserId');
+    const response = await apiClient.get('/users/me');
+    console.log(response.data)
+    userid.value = response.data.userId; // 通常是 Long 类型
   } catch (err) {
     console.error("获取 userId 失败", err);
   }
@@ -1381,8 +1383,8 @@ const fetchUserIdFromBackend = async () => {
 
 const systemNotifications = ref([
   { typeKey: 'alert_level_one', label: '出现一级预警时', enabled: true },
-  { typeKey: 'new_task_assigned', label: '收到新任务指派时', enabled: true },
-  { typeKey: 'important_announcement', label: '系统发布重要公告时', enabled: false },
+  // { typeKey: 'new_task_assigned', label: '收到新任务指派时', enabled: true },
+  // { typeKey: 'important_announcement', label: '系统发布重要公告时', enabled: false },
 ])
 
 const emailNotifications = ref([
@@ -1391,23 +1393,24 @@ const emailNotifications = ref([
   { typeKey: 'password_change_alert', label: '密码或安全设置被更改时', enabled: true },
 ])
 
+
+const hasExistingSettings = ref(false); // 标志是否已有设置
+
+
 const saveSettings = async () => {
   const settings = [...systemNotifications.value, ...emailNotifications.value].map(item => ({
-    userId: userid.value,                   // 添加 userId 字段
+    userId: userid.value,
     typeKey: item.typeKey,
     enabled: item.enabled
-  }))
-
-  console.log('设置已保存:', settings)
-
+  }));
 
   try {
-    await apiClient.post('notifications/put',settings)
-    alert('设置已保存')
+    await apiClient.post('notifications/save', settings);
+    // alert('设置已保存');
   } catch (err) {
-    alert('保存失败')
+    alert('保存失败');
   }
-}
+};
 
 
 
@@ -1501,13 +1504,45 @@ const saveConfig = async () => {
 }
 
 
-
+const settingsLoaded = ref(false)
 // 挂载时调用请求函数
 onMounted(async () => {
   await fetchUserIdFromBackend()         //必须先让这个函数执行完才行！！！ 不然后面打印会获取不到值！！！
   console.log('userId:', userid.value)
   fetchUserData()
   fetchrulesData()
+
+  try {
+    const res = await apiClient.get(`notifications/get/${userid.value}`)
+    const settings = res.data || res // 兼容 Axios 响应结构
+
+    if (settings && settings.length > 0) {
+      hasExistingSettings.value = true
+
+      // 替换 systemNotifications 数组
+      systemNotifications.value = systemNotifications.value.map(item => {
+        const match = settings.find(s => s.typeKey === item.typeKey)
+        return match ? { ...item, enabled: match.enabled } : item
+      })
+
+      // 替换 emailNotifications 数组
+      emailNotifications.value = emailNotifications.value.map(item => {
+        const match = settings.find(s => s.typeKey === item.typeKey)
+        return match ? { ...item, enabled: match.enabled } : item
+      })
+
+      console.log('✅ 通知设置已加载:', [...systemNotifications.value, ...emailNotifications.value])
+    } else {
+      hasExistingSettings.value = false
+      console.log('无设置记录，正在保存默认设置...')
+      await saveSettings()
+    }
+  } catch (e) {
+    console.error('加载通知设置失败', e)
+  }finally {
+    settingsLoaded.value = true  // 不管成功失败，加载状态都设置为完成
+  }
+
 })
 
 watch(() => activeTab.value, (newVal) => {
