@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -92,4 +93,11 @@ public interface ViolationMapper {
      * @return 总记录数
      */
     long countByDeviceId(@Param("deviceId") Integer deviceId);
+
+    /**
+     * 根据指定的日期，统计当天的违法记录总数
+     * @param date 要统计的日期
+     * @return 当天的违法总数
+     */
+    Integer countViolationsByDate(LocalDate date);
 }
