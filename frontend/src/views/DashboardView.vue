@@ -142,14 +142,27 @@
         </div>
       </div>
     </div>
+    <div class="card lg:col-span-1">
+      <h3 class="font-bold text-gray-800">警员处理排行榜</h3>
+      <div class="h-80 overflow-y-auto space-y-3 mt-4">
+        <div v-for="(user, index) in leaderboard" :key="index" class="flex items-center gap-3 p-2 rounded-lg bg-gray-50 border-l-4 border-primary">
+          <span class="font-bold text-primary w-5 text-center">{{ index + 1 }}</span>
+          <div class="flex-grow">
+            <p class="font-medium text-sm">{{ user.value }}</p>
+          </div>
+          <span class="ml-auto text-sm font-bold text-gray-700">{{ user.score }} 次</span>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref, reactive, nextTick } from 'vue';
+import { onMounted, onUnmounted, ref, reactive, nextTick } from 'vue'; // 引入 onUnmounted
 import Chart from 'chart.js/auto';
 import apiClient from '@/services/api';
 
+// 响应式状态定义
 const stats = reactive({
   totalToday: 0,
   processedToday: 0,
@@ -165,7 +178,10 @@ const recentViolations = ref([]);
 const timeRange = ref('month');
 const violationTypeChart = ref(null);
 let chartInstance = null;
+const leaderboard = ref([]);
+let pollingInterval = null; // 用于存储定时器ID
 
+// 违法行为类型对应的图表颜色
 const violationColors = {
   '压实线': { bg: 'rgba(255, 159, 64, 0.8)', border: 'rgba(255, 159, 64, 1)' },
   '逆行': { bg: 'rgba(255, 99, 132, 0.8)', border: 'rgba(255, 99, 132, 1)' },
@@ -175,36 +191,83 @@ const violationColors = {
   'default': { bg: 'rgba(54, 162, 235, 0.8)', border: 'rgba(54, 162, 235, 1)' }
 };
 
-const fetchDashboardData = async (range = 'month') => {
+// --- 生命周期钩子 ---
+onMounted(() => {
+  fetchAllData(); // 组件加载时首次获取所有数据
+  // 设置定时器，每10秒刷新一次数据
+  pollingInterval = setInterval(fetchAllData, 10000);
+});
+
+onUnmounted(() => {
+  // 组件卸载时清除定时器，防止内存泄漏
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+  }
+});
+
+
+// --- 数据获取方法 ---
+
+// 统一获取所有需要轮询的数据
+const fetchAllData = () => {
+  fetchDashboardStats();
+  fetchLeaderboard();
+  fetchRecentViolations();
+  fetchRealtimeWarnings();
+};
+
+// 获取核心统计数据
+const fetchDashboardStats = async () => {
   try {
-    const response = await apiClient.get('/dashboard/data', { params: { timeRange: range } });
+    const response = await apiClient.get('/dashboard/data', { params: { timeRange: timeRange.value } });
     const data = response.data;
-
-    Object.assign(stats, data.stats);
-
-    if (realtimeWarnings.value.length === 0) {
-      realtimeWarnings.value = data.realtimeWarnings;
-    }
-    if (recentViolations.value.length === 0) {
-      recentViolations.value = data.recentViolations;
-    }
-
+    Object.assign(stats, data.stats); // 更新统计信息
     await nextTick();
-    updateChart(data.violationTypeDistribution);
+    updateChart(data.violationTypeDistribution); // 更新图表
   } catch (error) {
-    console.error("加载仪表盘数据失败:", error);
+    console.error("加载仪表盘统计数据失败:", error);
   }
 };
 
-const fetchChartData = (newRange) => {
-  timeRange.value = newRange;
-  apiClient.get('/dashboard/data', { params: { timeRange: newRange } }).then(response => {
-    updateChart(response.data.violationTypeDistribution);
-  }).catch(error => {
-    console.error("加载图表数据失败:", error);
-  });
+// 获取排行榜数据
+const fetchLeaderboard = async () => {
+  try {
+    const response = await apiClient.get('/statistics/leaderboard');
+    leaderboard.value = response.data;
+  } catch (error) {
+    console.error("加载排行榜数据失败:", error);
+  }
+};
+// 获取最近违法记录
+const fetchRecentViolations = async () => {
+  try {
+    const response = await apiClient.get('/dashboard/data', { params: { timeRange: timeRange.value } });
+    recentViolations.value = response.data.recentViolations;
+  } catch (error) {
+    console.error("加载最近违法记录失败:", error);
+  }
+}
+// 获取实时预警
+const fetchRealtimeWarnings = async () => {
+  try {
+    const response = await apiClient.get('/dashboard/data', { params: { timeRange: timeRange.value } });
+    realtimeWarnings.value = response.data.realtimeWarnings;
+  } catch (error) {
+    console.error("加载实时预警失败:", error);
+  }
 }
 
+
+// --- 图表相关方法 ---
+
+// 切换图表时间范围
+const fetchChartData = (newRange) => {
+  timeRange.value = newRange;
+  // 仅更新图表和相关的统计数据
+  fetchDashboardStats();
+};
+
+// 更新图表实例
 const updateChart = (chartData) => {
   if (chartInstance) {
     chartInstance.destroy();
@@ -229,20 +292,15 @@ const updateChart = (chartData) => {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          }
-        },
+        plugins: { legend: { display: false } },
         scales: { y: { beginAtZero: true } }
       }
     });
   }
 };
 
-onMounted(() => {
-  fetchDashboardData(timeRange.value);
-});
+
+// --- 格式化工具方法 ---
 
 const formatTime = (isoString) => {
   if (!isoString) return 'N/A';

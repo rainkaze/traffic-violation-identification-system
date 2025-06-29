@@ -237,3 +237,65 @@ CREATE TABLE `violation_processing_log` (
                                             FOREIGN KEY (`node_id`) REFERENCES `workflow_nodes`(`node_id`),
                                             FOREIGN KEY (`assigned_user_id`) REFERENCES `users`(`user_id`) ON DELETE SET NULL
 );
+
+-- --------------------------------------------------------
+
+--
+-- 表 15 `notifications`
+--
+CREATE TABLE `notifications` (
+                                 `id` bigint(20) NOT NULL,
+                                 `user_id` bigint(20) NOT NULL,
+                                 `message` varchar(255) NOT NULL,
+                                 `timestamp` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                 `is_read` tinyint(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- 表 16 `notification_setting`
+--
+CREATE TABLE `notification_setting` (
+                                        `id` int(11) NOT NULL COMMENT '主键ID',
+                                        `user_id` int(11) NOT NULL COMMENT '用户ID',
+                                        `type_key` varchar(50) NOT NULL COMMENT '通知类型键',
+                                        `enabled` tinyint(1) NOT NULL DEFAULT '1' COMMENT '是否启用'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户通知设置表';
+
+-- --------------------------------------------------------
+
+--
+-- 表 17 `system_config`
+--
+CREATE TABLE `system_config` (
+                                 `id` bigint(20) NOT NULL,
+                                 `system_name` varchar(255) NOT NULL COMMENT '系统名称',
+                                 `session_timeout` int(11) NOT NULL COMMENT '会话超时时间（分钟）',
+                                 `data_retention_days` int(11) NOT NULL COMMENT '数据保留策略（天）'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- 表 18 `violation_warnings`
+--
+CREATE TABLE `violation_warnings` (
+                                      `id` bigint(20) NOT NULL,
+                                      `violation_id` bigint(20) NOT NULL,
+                                      `warning_level` varchar(20) NOT NULL COMMENT '预警等级，如 一级预警',
+                                      `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- 表 19 `warning_rules`
+--
+CREATE TABLE `warning_rules` (
+                                 `id` int(11) NOT NULL,
+                                 `level` varchar(20) NOT NULL COMMENT '预警等级，例如 一级预警、二级预警',
+                                 `violation_type` varchar(50) NOT NULL COMMENT '违法类型，例如 闯红灯',
+                                 `min_confidence` decimal(5,4) DEFAULT '0.0000' COMMENT '最低置信度',
+                                 `description` text COMMENT '描述，用于前端展示'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

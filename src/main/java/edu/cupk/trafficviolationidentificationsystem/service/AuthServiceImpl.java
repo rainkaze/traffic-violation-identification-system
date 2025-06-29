@@ -1,4 +1,3 @@
-// rainkaze/traffic-violation-identification-system/traffic-violation-identification-system-feature-login/src/main/java/edu/cupk/trafficviolationidentificationsystem/service/AuthServiceImpl.java
 package edu.cupk.trafficviolationidentificationsystem.service;
 
 import edu.cupk.trafficviolationidentificationsystem.dto.JwtAuthResponseDto;
@@ -8,6 +7,9 @@ import edu.cupk.trafficviolationidentificationsystem.model.User;
 import edu.cupk.trafficviolationidentificationsystem.repository.UserMapper;
 import edu.cupk.trafficviolationidentificationsystem.security.JwtTokenProvider;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger; // 1. 导入 Logger
+import org.slf4j.LoggerFactory; // 2. 导入 LoggerFactory
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,38 +23,39 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class AuthServiceImpl implements AuthService {
 
+    // 3. 添加 Logger 实例，用于打印诊断日志
+    private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
+
     private final AuthenticationManager authenticationManager;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
-    private final EmailService emailService; // 注入EmailService
-
-    // 用于存储验证码的内存缓存
+    private final EmailService emailService;
     private final ConcurrentHashMap<String, String> verificationCodes = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> codeTimestamps = new ConcurrentHashMap<>();
     private static final long CODE_EXPIRATION_MINUTES = 10;
+    private final RedisTemplate<String, Object> redisTemplate;
 
-    public AuthServiceImpl(AuthenticationManager authenticationManager, UserMapper userMapper, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, EmailService emailService) {
+    // 构造函数保持不变
+    public AuthServiceImpl(AuthenticationManager authenticationManager, UserMapper userMapper, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider, EmailService emailService, RedisTemplate<String, Object> redisTemplate) {
         this.authenticationManager = authenticationManager;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
-        this.emailService = emailService; // 初始化EmailService
+        this.emailService = emailService;
+        this.redisTemplate = redisTemplate;
     }
 
+    // login, sendVerificationCode, register 方法保持不变
     @Override
     public JwtAuthResponseDto login(LoginDto loginDto) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 loginDto.getUsername(), loginDto.getPassword()));
-
         SecurityContextHolder.getContext().setAuthentication(authentication);
-
         String token = jwtTokenProvider.generateToken(authentication);
         User user = userMapper.findByUsername(loginDto.getUsername()).orElseThrow();
-
         return new JwtAuthResponseDto(token, user);
     }
-
     @Override
     public void sendVerificationCode(String email) {
         if (userMapper.existsByEmail(email)) {
@@ -110,5 +113,42 @@ public class AuthServiceImpl implements AuthService {
 
 
         return "申请已成功提交！请等待管理员审核。";
+    }
+
+    // ======== 主要修改点：为 logout 方法添加详细日志 ========
+    @Override
+    public void logout(String token) {
+        log.info("Logout process started."); // 日志: 开始登出流程
+        if (token != null && token.startsWith("Bearer ")) {
+            log.info("Token received and has 'Bearer ' prefix."); // 日志: Token不为空且有正确前缀
+            String jwt = token.substring(7);
+            log.info("Extracted JWT: {}", jwt); // 日志: 打印截取后的jwt
+
+            if (jwtTokenProvider.validateToken(jwt)) {
+                log.info("Token validation successful."); // 日志: Token验证成功
+                String username = jwtTokenProvider.getUsername(jwt);
+                long expirationTime = jwtTokenProvider.getExpirationDateFromToken(jwt).getTime();
+                long currentTime = System.currentTimeMillis();
+                long ttl = expirationTime - currentTime;
+
+                log.info("Token TTL (Time-To-Live) in ms: {}", ttl); // 日志: 打印Token剩余有效期
+
+                if (ttl > 0) {
+                    log.info("TTL is positive. Adding token to blacklist for user: {}", username); // 日志: 准备加入黑名单
+                    try {
+                        redisTemplate.opsForValue().set("blacklist:" + jwt, username, ttl, TimeUnit.MILLISECONDS);
+                        log.info("Token successfully added to Redis blacklist."); // 日志: 成功加入黑名单
+                    } catch (Exception e) {
+                        log.error("Error while adding token to Redis blacklist!", e); // 日志: 加入黑名单时发生异常
+                    }
+                } else {
+                    log.warn("Token TTL is not positive. Token might be expired. Not adding to blacklist."); // 日志: Token已过期，不加入黑名单
+                }
+            } else {
+                log.warn("Token validation failed. Cannot add to blacklist."); // 日志: Token验证失败
+            }
+        } else {
+            log.warn("Token is null or does not have 'Bearer ' prefix. Received token: {}", token); // 日志: Token为空或格式不正确
+        }
     }
 }

@@ -110,5 +110,9 @@
         FROM violations
         WHERE device_id = #{deviceId}
     </select>
-
+    <select id="countViolationsByDate" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM violations
+        WHERE DATE(violation_time) = #{date}
+    </select>
 </mapper>
