@@ -1,12 +1,18 @@
 
 package edu.cupk.trafficviolationidentificationsystem.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AccidentDto {
 
     // 设备相关信息
@@ -19,7 +25,7 @@ public class AccidentDto {
     private BigDecimal longitude;
     private String status; // ENUM: online, offline, warning, maintenance
     private LocalDateTime installedAt;
-
+    private Integer districtId;
     // 关联的违法记录信息
     private Long violationId;
     private String plateNumber;

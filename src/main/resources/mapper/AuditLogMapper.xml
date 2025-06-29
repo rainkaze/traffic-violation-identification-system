@@ -4,6 +4,11 @@
 
 <mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.AuditLogMapper">
 
+    <insert id="insert" parameterType="edu.cupk.trafficviolationidentificationsystem.model.AuditLog">
+        INSERT INTO audit_logs (user_id, action_type, target_entity_type, target_entity_id, details, client_ip_address, created_at)
+        VALUES (#{userId}, #{actionType}, #{targetEntityType}, #{targetEntityId}, #{details}, #{clientIpAddress}, #{createdAt})
+    </insert>
+
     <select id="selectPage1" resultType="edu.cupk.trafficviolationidentificationsystem.dto.AudilVo">
         SELECT
             a.log_id AS logId,
@@ -19,22 +24,3 @@
         ORDER BY a.created_at DESC
     </select>
 </mapper>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

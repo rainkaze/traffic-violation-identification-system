@@ -21,28 +21,28 @@
 <!--            <span>角色权限</span>-->
 <!--          </button>-->
           <button @click="activeTab = 'notifications'" :class="{'bg-primary/10 text-primary': activeTab === 'notifications'}" class="sidebar-item w-full text-left">
-            <i class="fa fa-bell w-5 text-center" :class="activeTab === 'notifications' ? 'text-primary' : 'text-gray-500'"></i>
-            <span>通知设置</span>
+            <i class="fa fa-bell w-5 text-center  text1" :class="activeTab === 'notifications' ? 'text-primary' : 'text-gray-500'"></i>
+            <span class="text1">通知设置</span>
           </button>
           <button @click="activeTab = 'warnings'" :class="{'bg-primary/10 text-primary': activeTab === 'warnings'}" class="sidebar-item w-full text-left">
-            <i class="fa fa-exclamation-triangle w-5 text-center" :class="activeTab === 'warnings' ? 'text-primary' : 'text-gray-500'"></i>
-            <span>预警规则</span>
+            <i class="fa fa-exclamation-triangle w-5 text-center text1" :class="activeTab === 'warnings' ? 'text-primary' : 'text-gray-500'"></i>
+            <span class="text1">预警规则</span>
           </button>
           <button @click="activeTab = 'rules'" :class="{'bg-primary/10 text-primary': activeTab === 'rules'}" class="sidebar-item w-full text-left">
-            <i class="fa fa-balance-scale w-5 text-center" :class="activeTab === 'rules' ? 'text-primary' : 'text-gray-500'"></i>
-            <span>法规库管理</span>
+            <i class="fa fa-balance-scale w-5 text-center text1" :class="activeTab === 'rules' ? 'text-primary' : 'text-gray-500'"></i>
+            <span class="text1">法规库管理</span>
           </button>
           <button @click="activeTab = 'params'" :class="{'bg-primary/10 text-primary': activeTab === 'params'}" class="sidebar-item w-full text-left">
-            <i class="fa fa-sliders w-5 text-center" :class="activeTab === 'params' ? 'text-primary' : 'text-gray-500'"></i>
-            <span>系统参数</span>
+            <i class="fa fa-sliders w-5 text-center text1" :class="activeTab === 'params' ? 'text-primary' : 'text-gray-500'"></i>
+            <span class="text1">系统参数</span>
           </button>
           <button @click="activeTab = 'data'" :class="{'bg-primary/10 text-primary': activeTab === 'data'}" class="sidebar-item w-full text-left">
-            <i class="fa fa-database w-5 text-center" :class="activeTab === 'data' ? 'text-primary' : 'text-gray-500'"></i>
-            <span>数据管理</span>
+            <i class="fa fa-database w-5 text-center text1" :class="activeTab === 'data' ? 'text-primary' : 'text-gray-500'"></i>
+            <span class="text1">数据管理</span>
           </button>
           <button @click="activeTab = 'logs'" :class="{'bg-primary/10 text-primary': activeTab === 'logs'}" class="sidebar-item w-full text-left">
-            <i class="fa fa-history w-5 text-center" :class="activeTab === 'logs' ? 'text-primary' : 'text-gray-500'"></i>
-            <span>操作日志</span>
+            <i class="fa fa-history w-5 text-center text1" :class="activeTab === 'logs' ? 'text-primary' : 'text-gray-500'"></i>
+            <span class="text1">操作日志</span>
           </button>
         </div>
       </div>
@@ -610,7 +610,7 @@
               <input
                 v-model="searchLogKeyword"
                 type="text"
-                placeholder="搜索操作或用户..."
+                placeholder="   搜索操作或用户..."
                 class="input pl-10 w-full"
               />
             </div>
@@ -944,22 +944,7 @@ function handleLogPageChange(newPage) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 // === 法规库模块相关 ===
-
-
 
 
 // 法规模块分页
@@ -1085,8 +1070,6 @@ function handleRulePageChange(newPage) {
   fetchrulesData()
 }
 
-
-
 // 删除操作
 const  deleteRule = async (ruleId) => {
   // if (confirm('确定要删除该条法规吗？')) {
@@ -1095,8 +1078,6 @@ const  deleteRule = async (ruleId) => {
   //     rulePagination.value.page = Math.max(1, rulePagination.value.page - 1)
   //   }
   // }
-
-
 
   // console.log('deleteRule', ruleId)
   if (!confirm('确定要删除该条法规吗？')) return
@@ -1124,12 +1105,6 @@ const  deleteRule = async (ruleId) => {
     console.error('删除法规失败:', error)
     alert('删除失败，请重试')
   }
-
-
-
-
-
-
 }
 
 // 搜索时自动重置页码为第一页
@@ -1137,34 +1112,6 @@ watch(searchRuleKeyword, () => {
   fetchrulesData()
   rulePagination.value.page = 1
 })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // 角色权限管理模块相关
 
@@ -1606,3 +1553,16 @@ watch(() => activeTab.value, (newVal) => {
 
 
 </script>
+<style scoped>
+.text1{
+  font-weight: 700;
+  color: rgb(31 41 55 / var(--tw-text-opacity, 1));
+}
+.text2{
+  font-weight: 700;
+  color: #ffffff;
+}
+.sidebar-item.active{
+  background-color: rgb(30 64 175 / var(--tw-bg-opacity, 1));
+}
+</style>

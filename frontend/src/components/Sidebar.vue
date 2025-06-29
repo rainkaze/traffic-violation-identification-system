@@ -40,21 +40,9 @@
           </router-link>
         </li>
         <li>
-          <router-link to="/enforcement" class="sidebar-item">
-            <i class="fa fa-gavel w-5 text-center"></i>
-            <span>执法管理</span>
-          </router-link>
-        </li>
-        <li>
           <router-link to="/accidents" class="sidebar-item">
             <i class="fa fa-car w-5 text-center"></i>
             <span>事故处置</span>
-          </router-link>
-        </li>
-        <li>
-          <router-link to="/statistics" class="sidebar-item">
-            <i class="fa fa-bar-chart w-5 text-center"></i>
-            <span>统计分析</span>
           </router-link>
         </li>
         <li>
