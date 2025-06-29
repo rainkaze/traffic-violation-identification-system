@@ -56,7 +56,11 @@ public class SecurityConfig {
                                 "/api/signal/**",
                                 "/api/devices/streams",
                                 "/uploads/**",
-                                "/ws/**" // 开放WebSocket连接
+                                "/ws/**", // 开放WebSocket连接
+                                // =========================================================
+                                // ========== 在这里添加新的规则，允许报表API的匿名访问 ==========
+                                "/api/reports/**"
+                                // =========================================================
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/devices/bind").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/devices/*/status").permitAll()
