@@ -3,6 +3,7 @@ package edu.cupk.trafficviolationidentificationsystem.config;
 import edu.cupk.trafficviolationidentificationsystem.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -48,13 +49,31 @@ public class SecurityConfig {
                 .cors(withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
-                        // 公开端点
-                        .requestMatchers("/api/auth/**").permitAll()
-                        // 为数据接口添加明确的访问角色
+                        // 1. 合并所有需要公开访问的端点
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/api/test/**",
+                                "/api/signal/**",
+                                "/api/devices/streams",
+                                "/uploads/**",
+                                "/ws/**" // 开放WebSocket连接
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/devices/bind").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/devices/*/status").permitAll()
+
+                        // 2. 合并设备管理相关权限
+                        .requestMatchers(HttpMethod.GET, "/api/devices/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/devices").hasRole("管理员")
+                        .requestMatchers(HttpMethod.PUT, "/api/devices/**").hasRole("管理员")
+                        .requestMatchers(HttpMethod.DELETE, "/api/devices/**").hasRole("管理员")
+
+                        // 3. 合并数据和统计接口权限，并使用最全的角色列表
                         .requestMatchers("/api/violations/**", "/api/statistics/**").hasAnyRole("管理员", "警员", "小队长", "中队长", "大队长")
-                        // 只有 '管理员' 可以访问 admin 接口
+
+                        // 4. 保留管理员专属接口权限
                         .requestMatchers("/api/admin/**").hasRole("管理员")
-                        // 其他所有请求都需要认证
+
+                        // 5. 其他所有请求都需要认证
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -67,6 +86,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+        // 允许您的Vue前端访问
         configuration.setAllowedOrigins(List.of("http://localhost:5173"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));

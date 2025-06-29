@@ -86,22 +86,24 @@ CREATE TABLE `traffic_rules` (
 -- 表 5: 设备表 (devices)
 -- 描述: 存储所有硬件设备（如摄像头）的详细信息。
 CREATE TABLE `devices` (
-                           `device_id` INT AUTO_INCREMENT PRIMARY KEY, -- 设备唯一标识符, 主键
-                           `device_code` VARCHAR(100) NOT NULL UNIQUE, -- 设备编号, 如 'KMQ-CAM-001', 必须唯一
-                           `device_name` VARCHAR(100) NOT NULL, -- 设备的友好名称, 便于识别
-                           `device_type` ENUM('高清摄像头', '雷达测速仪', 'AI识别终端', 'GPU推理服务器') NOT NULL, -- 设备的类型
-                           `district_id` INT, -- 设备所属的辖区ID, 外键
-                           `address` VARCHAR(255) NOT NULL, -- 设备的详细安装地址
-                           `latitude` DECIMAL(10, 8), -- 地理纬度坐标
-                           `longitude` DECIMAL(11, 8), -- 地理经度坐标
-                           `model_name` VARCHAR(100), -- 设备型号
-                           `ip_address` VARCHAR(45), -- 设备的IP地址
-                           `status` ENUM('online', 'offline', 'warning', 'maintenance') NOT NULL DEFAULT 'offline', -- 设备的当前运行状态
-                           `installed_at` DATE, -- 设备的安装日期
-                           `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 记录创建时间
-                           `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- 记录最后更新时间
-                           FOREIGN KEY (`district_id`) REFERENCES `districts`(`district_id`) ON DELETE CASCADE -- 如果辖区被删除, 该设备归属信息会一并删除
+                           `device_id` INT AUTO_INCREMENT PRIMARY KEY,
+                           `device_code` VARCHAR(100) NOT NULL UNIQUE,
+                           `device_name` VARCHAR(100) NOT NULL,
+                           `device_type` ENUM('高清摄像头', '雷达测速仪', 'AI识别终端', 'GPU推理服务器') NOT NULL,
+                           `district_id` INT,
+                           `address` VARCHAR(255) NOT NULL,
+                           `latitude` DECIMAL(10, 8),
+                           `longitude` DECIMAL(11, 8),
+                           `model_name` VARCHAR(100),
+                           `ip_address` VARCHAR(45),
+                           `rtsp_url` VARCHAR(512),
+                           `status` ENUM('ONLINE', 'OFFLINE', 'WARNING', 'MAINTENANCE') NOT NULL DEFAULT 'OFFLINE',
+                           `installed_at` DATE,
+                           `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                           `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                           FOREIGN KEY (`district_id`) REFERENCES `districts`(`district_id`) ON DELETE CASCADE
 );
+
 
 -- 表 6: 违法记录表 (violations)
 -- 描述: 核心业务表, 存储所有由设备捕获的原始违法事件记录。

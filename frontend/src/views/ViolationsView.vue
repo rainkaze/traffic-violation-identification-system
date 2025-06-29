@@ -34,8 +34,14 @@
           </select>
         </div>
         <div class="flex gap-2">
-          <button class="btn btn-secondary"><i class="fa fa-upload mr-1"></i> 批量导入</button>
-          <button class="btn btn-primary"><i class="fa fa-download mr-1"></i> 导出数据</button>
+          <div class="relative">
+            <button @click="showExportOptions = !showExportOptions" class="btn btn-primary"><i class="fa fa-download mr-1"></i> 导出数据</button>
+            <div v-if="showExportOptions" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20">
+              <a href="#" @click.prevent="handleExport('pdf')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">导出为 PDF</a>
+              <a href="#" @click.prevent="handleExport('xlsx')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">导出为 Excel (XLSX)</a>
+              <a href="#" @click.prevent="handleExport('csv')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">导出为 CSV</a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -70,8 +76,8 @@
               <span :class="{'bg-yellow-100 text-yellow-800': item.status === '待处理', 'bg-green-100 text-green-800': item.status === '已处理', 'bg-blue-100 text-blue-800': item.status === '处理中', 'bg-gray-100 text-gray-800': item.status === '已归档'}" class="badge">{{ item.status }}</span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button class="text-primary hover:text-primary/80 mr-3">详情</button>
-              <button class="text-success hover:text-success/80">处理</button>
+              <button @click="handleProcessClick(item.id)" class="text-primary hover:text-primary/80 mr-3">详情</button>
+              <button @click="handleProcessClick(item.id)" class="text-success hover:text-success/80">处理</button>
             </td>
           </tr>
           </tbody>
@@ -99,12 +105,15 @@ import { ref, onMounted, reactive, computed } from 'vue';
 import apiClient from '@/services/api';
 import authStore from '@/store/auth'; // 引入权限状态
 import { debounce } from 'lodash';
+import { useRouter } from 'vue-router'; // 引入 useRouter
 
+const router = useRouter(); // 获取 router 实例
 const violations = ref([]);
 const error = ref(null);
 const loading = ref(true);
 const violationTypes = ref([]);
 const allDistricts = ref([]); // 存储所有辖区列表
+const showExportOptions = ref(false);
 
 // 从 authStore 中获取用户信息和角色
 const isAdmin = computed(() => authStore.isAdmin());
@@ -116,7 +125,19 @@ const pageDescription = computed(() => {
     ? '查询、筛选和管理克拉玛依市所有交通违法记录'
     : '查询、筛选您所管辖区的交通违法记录';
 });
+const handleProcessClick = async (violationId) => {
+  try {
+    // 先调用后端接口，判断是否匹配工作流
+    const response = await apiClient.post(`/processing/initiate/${violationId}`);
+    const { isWorkflowCase } = response.data;
 
+    // 根据后端返回结果，导航到处理页面
+    router.push({ name: 'process-violation', params: { id: violationId } });
+
+  } catch (error) {
+    alert('启动处理流程失败: ' + (error.response?.data?.message || '未知错误'));
+  }
+};
 // 根据用户角色，计算出下拉框中可用的辖区
 const availableDistricts = computed(() => {
   if (isAdmin.value) {
@@ -206,7 +227,27 @@ const formatTime = (isoString) => {
   if (!isoString) return 'N/A';
   return new Date(isoString).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-');
 };
+const handleExport = async (format) => {
+  showExportOptions.value = false; // Hide dropdown
+  try {
+    const params = { ...filters, format };
+    const response = await apiClient.get('/violations/export', {
+      params,
+      responseType: 'blob', // Important
+    });
 
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `violations.${format}`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (err) {
+    console.error("导出失败:", err);
+    alert('导出失败，请查看控制台获取更多信息。');
+  }
+};
 onMounted(async () => {
   // 先获取辖区数据，以便筛选框能正常显示
   await fetchAllDistricts();

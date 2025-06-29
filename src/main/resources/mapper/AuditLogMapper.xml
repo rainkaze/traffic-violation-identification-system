@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.AuditLogMapper">
+
+    <select id="selectPage1" resultType="edu.cupk.trafficviolationidentificationsystem.dto.AudilVo">
+        SELECT
+            a.log_id AS logId,
+            u.username,
+            a.action_type AS actionType,
+            a.target_entity_type AS targetEntityType,
+            a.target_entity_id AS targetEntityId,
+            a.details,
+            a.client_ip_address AS clientIpAddress,
+            a.created_at AS createdAt
+        FROM audit_logs a
+                 INNER JOIN users u ON a.user_id = u.user_id
+        ORDER BY a.created_at DESC
+    </select>
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

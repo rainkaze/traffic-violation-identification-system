@@ -63,4 +63,52 @@
         <include refid="dynamicWhere"/>
     </select>
 
+    <insert id="insertTestViolation" useGeneratedKeys="true" keyProperty="violationId"
+            parameterType="edu.cupk.trafficviolationidentificationsystem.model.Violation">
+        INSERT INTO violations
+        (plate_number, violation_time, device_id, rule_id, status, evidence_image_urls)
+        VALUES
+            (#{plateNumber}, #{violationTime}, #{deviceId}, #{ruleId}, '待处理', #{evidenceImageUrls, typeHandler=edu.cupk.trafficviolationidentificationsystem.handler.JsonTypeHandler})
+    </insert>
+
+    <select id="getLatestTestViolations" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
+        <include refid="selectJoins"/>
+        ORDER BY v.created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findById" resultType="edu.cupk.trafficviolationidentificationsystem.model.Violation">
+        SELECT * FROM violations WHERE violation_id = #{violationId}
+    </select>
+
+    <update id="updateStatus">
+        UPDATE violations SET status = #{status} WHERE violation_id = #{violationId}
+    </update>
+
+    <select id="findViolationDetailById" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
+        <include refid="selectJoins"/>
+        <where>
+            v.violation_id = #{id}
+        </where>
+    </select>
+
+    <select id="findAllViolationsByCriteria" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
+        <include refid="selectJoins"/>
+        <include refid="dynamicWhere"/>
+        ORDER BY v.violation_time DESC
+    </select>
+
+    <select id="findRecentViolationsByDeviceId" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
+        <include refid="selectJoins"/>
+        WHERE v.device_id = #{deviceId}
+        ORDER BY v.violation_time DESC
+        LIMIT 5
+    </select>
+
+    <select id="countByDeviceId" resultType="long">
+        SELECT COUNT(violation_id)
+        FROM violations
+        WHERE device_id = #{deviceId}
+    </select>
+
 </mapper>
