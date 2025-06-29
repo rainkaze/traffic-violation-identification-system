@@ -2,6 +2,7 @@ package edu.cupk.trafficviolationidentificationsystem.repository;
 
 import edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.ViolationQueryDto;
+import edu.cupk.trafficviolationidentificationsystem.dto.ViolationReportDto;
 import edu.cupk.trafficviolationidentificationsystem.model.Violation;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
@@ -92,4 +93,18 @@ public interface ViolationMapper {
      * @return 总记录数
      */
     long countByDeviceId(@Param("deviceId") Integer deviceId);
+
+
+
+    /**
+     * 查询昨天的违法记录（用于每日安全报告）
+     */
+    List<ViolationReportDto> findViolationsOfYesterday();
+
+    /**
+     * 查询上周的违法记录（用于每周安全报告）
+     */
+    List<ViolationReportDto> findViolationsOfLastWeek();
+
+
 }

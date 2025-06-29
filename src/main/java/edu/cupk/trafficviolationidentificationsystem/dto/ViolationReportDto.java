@@ -7,17 +7,16 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ViolationDetailDto {
-    private Long id;
-    private LocalDateTime time;
-    private String plate;
-    private String type;
-    private String location;
-    private String device;
+public class ViolationReportDto {
+    private Long violationId;
+    private String plateNumber;
+    private String violationType;
+    private LocalDateTime violationTime;
+    private String location;      // 显示地点（设备地址）
     private String status;
-    private String district;
 }

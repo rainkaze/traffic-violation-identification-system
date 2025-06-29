@@ -42,27 +42,56 @@
   ORDER BY value DESC
  </select>
 
- <select id="getRealtimeWarnings" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DashboardDataDto$RealtimeWarning">
-  SELECT
-   v.plate_number AS plateNumber,
-   tr.violation_type AS violationType,
-   d.address AS location,
-   v.violation_time AS time, -- 将在Service层计算timeAgo
-            tr.base_demerit_points AS demeritPoints, -- 获取扣分
+<!-- <select id="getRealtimeWarnings" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DashboardDataDto$RealtimeWarning">-->
+<!--  SELECT-->
+<!--   v.plate_number AS plateNumber,-->
+<!--   tr.violation_type AS violationType,-->
+<!--   d.address AS location,-->
+<!--   v.violation_time AS time, &#45;&#45; 将在Service层计算timeAgo-->
+<!--            tr.base_demerit_points AS demeritPoints, &#45;&#45; 获取扣分-->
+<!--            CASE-->
+<!--                WHEN tr.base_demerit_points >= 6 THEN 1-->
+<!--                ELSE 2-->
+<!--  END AS warningLevel-->
+<!--        FROM-->
+<!--            violations v-->
+<!--            JOIN traffic_rules tr ON v.rule_id = tr.rule_id-->
+<!--            LEFT JOIN devices d ON v.device_id = d.device_id-->
+<!--        ORDER BY-->
+<!--            v.violation_time DESC-->
+<!--        LIMIT 5-->
+<!-- </select>-->
+
+    <select id="getRealtimeWarnings" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DashboardDataDto$RealtimeWarning">
+        SELECT
+            v.plate_number AS plateNumber,
+            tr.violation_type AS violationType,
+            d.address AS location,
+            v.violation_time AS time,
+            tr.base_demerit_points AS demeritPoints,
+            wr.level AS warningLevelName, -- 中文描述，映射到一个新字段
             CASE
-                WHEN tr.base_demerit_points >= 6 THEN 1
-                ELSE 2
-  END AS warningLevel
+                WHEN wr.level = '一级预警' THEN 1
+                WHEN wr.level = '二级预警' THEN 2
+                ELSE 0
+                END AS warningLevel,         -- 这是你原来DTO里的 Integer 字段
+            v.confidence_score AS confidence
         FROM
             violations v
-            JOIN traffic_rules tr ON v.rule_id = tr.rule_id
-            LEFT JOIN devices d ON v.device_id = d.device_id
+                JOIN traffic_rules tr ON v.rule_id = tr.rule_id
+                LEFT JOIN devices d ON v.device_id = d.device_id
+                LEFT JOIN warning_rules wr ON wr.violation_type = tr.violation_type
+#                 AND v.confidence_score >= wr.min_confidence
         ORDER BY
             v.violation_time DESC
-        LIMIT 5
- </select>
+#         LIMIT 5
+    </select>
 
- <select id="getRecentViolations" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DashboardDataDto$RecentViolation">
+
+
+
+
+    <select id="getRecentViolations" resultType="edu.cupk.trafficviolationidentificationsystem.dto.DashboardDataDto$RecentViolation">
   SELECT
    v.violation_time AS time,
             v.plate_number AS plateNumber,

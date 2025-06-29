@@ -1436,8 +1436,8 @@ const fetchUserIdFromBackend = async () => {
 
 const systemNotifications = ref([
   { typeKey: 'alert_level_one', label: '出现一级预警时', enabled: true },
-  { typeKey: 'new_task_assigned', label: '收到新任务指派时', enabled: true },
-  { typeKey: 'important_announcement', label: '系统发布重要公告时', enabled: false },
+  // { typeKey: 'new_task_assigned', label: '收到新任务指派时', enabled: true },
+  // { typeKey: 'important_announcement', label: '系统发布重要公告时', enabled: false },
 ])
 
 const emailNotifications = ref([
