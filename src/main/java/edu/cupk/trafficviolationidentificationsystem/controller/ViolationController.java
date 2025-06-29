@@ -3,23 +3,12 @@ package edu.cupk.trafficviolationidentificationsystem.controller;
 import edu.cupk.trafficviolationidentificationsystem.dto.PageResultDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.ViolationQueryDto;
+import edu.cupk.trafficviolationidentificationsystem.entity.ViolationWarning;
 import edu.cupk.trafficviolationidentificationsystem.entity.WarningRule;
-import edu.cupk.trafficviolationidentificationsystem.repository.NotificationSettingMapper;
-import edu.cupk.trafficviolationidentificationsystem.repository.ViolationMapper;
 import edu.cupk.trafficviolationidentificationsystem.repository.ViolationWarningMapper;
 import edu.cupk.trafficviolationidentificationsystem.repository.WarningRuleMapper;
 import edu.cupk.trafficviolationidentificationsystem.service.ViolationService;
-import edu.cupk.trafficviolationidentificationsystem.websocket.WebSocketServer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Comparator;
-import java.util.List;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -42,11 +31,6 @@ public class ViolationController {
     @Autowired
     private WarningRuleMapper ruleMapper;
     @Autowired
-    private  WarningRuleMapper ruleMapper;
-    @Autowired
-    private WebSocketServer webSocketServer;
-    @Autowired
-    private NotificationSettingMapper notificationSettingMapper;
     private ViolationWarningMapper warningMapper;
 
     /**
@@ -67,26 +51,6 @@ public class ViolationController {
     @GetMapping
     public ResponseEntity<PageResultDto<ViolationDetailDto>> getViolations(ViolationQueryDto queryDto) {
         PageResultDto<ViolationDetailDto> result = violationService.listViolations(queryDto);
-
-
-//        //后续插入违法数据的时候 直接使用下文内容 就可以将一级预警内容通知给所需的人
-//        Violation violation = Violation.builder()
-//                .plateNumber("测A-99999")
-//                .violationTime(LocalDateTime.now())
-//                .deviceId(107)
-//                .ruleId(2)
-////                .evidenceImageUrls(List.of("img1.jpg", "img2.jpg"))  // 如果有多图
-//                .build();
-//        violationMapper.insertTestViolation(violation); // 插入并自动回填 violationId
-//        ViolationDetailDto detail = violationMapper.findViolationDetailById(violation.getViolationId());
-//        System.out.println("插入成功，详细信息如下：");
-//        System.out.println(detail);
-//// 3. 模拟置信度（或从模型/识别模块中获取）
-//        double confidence = 0.91; // 示例置信度，实际应由算法输出
-//// 4. 调用判断预警逻辑
-//        evaluateAndInsertWarning(detail.getId(), detail.getType(), confidence);
-
-
         return ResponseEntity.ok(result);
     }
 
@@ -145,8 +109,6 @@ public class ViolationController {
         }
     }
 
-
-    // 用于排序预警等级：一级 < 二级 < 三级
     /**
      * [内部逻辑] 为预警等级提供排序权重。
      *

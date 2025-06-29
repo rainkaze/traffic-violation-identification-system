@@ -1,6 +1,5 @@
 package edu.cupk.trafficviolationidentificationsystem.controller;
 
-import edu.cupk.trafficviolationidentificationsystem.config.DbConfig;
 import edu.cupk.trafficviolationidentificationsystem.util.AliOssUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -11,8 +10,10 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
+//@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/db")
 public class DatabaseController {
@@ -20,14 +21,10 @@ public class DatabaseController {
     @Autowired
     private AliOssUtil aliOssUtil;
 
-    @Autowired
-    private DbConfig dbConfig;
-
-    // 备份数据库并上传 OSS
+    // 备份数据库 并上传到 OSS
     @PostMapping("/backup")
     public ResponseEntity<String> backupDatabase() {
         System.out.println("开始备份数据库");
-
         try {
             String localPath = "D:/backup/backup.sql";
             File backupFile = new File(localPath);
@@ -35,15 +32,13 @@ public class DatabaseController {
                 backupFile.getParentFile().mkdirs();
             }
 
-            Map<String, String> dbInfo = parseDbUrl(dbConfig.getUrl());
-
             ProcessBuilder pb = new ProcessBuilder(
                     "mysqldump",
-                    "-h", dbInfo.get("host"),
-                    "-P", dbInfo.get("port"),
-                    "-u", dbConfig.getUsername(),
-                    "-p" + dbConfig.getPassword(),
-                    dbInfo.get("dbName")
+                    "-h", "47.94.105.113",           // 指定远程地址
+                    "-P", "3306",
+                    "-u", "traffic_user_02",
+                    "-pL2tTWWWbjR4zh6F4",
+                    "traffic_violation_system_02"
             );
             pb.redirectOutput(backupFile);
             Process process = pb.start();
@@ -54,19 +49,57 @@ public class DatabaseController {
             }
 
             byte[] bytes = Files.readAllBytes(backupFile.toPath());
-
+//            String ossObjectName = "backups/backup_" + System.currentTimeMillis() + ".sql";
+            // 时间格式化文件名
             LocalDateTime now = LocalDateTime.now();
-            String fileName = "backups/backup_" + now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")) + ".sql";
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
+            String formattedTime = now.format(formatter);
+            String ossObjectName = "backups/backup_" + formattedTime + ".sql";
 
-            String ossUrl = aliOssUtil.upload(bytes, fileName);
+            String ossUrl = aliOssUtil.upload(bytes, ossObjectName);
 
-            return ResponseEntity.ok("备份成功，OSS地址：" + ossUrl);
+            return ResponseEntity.ok("备份并上传成功，OSS地址：" + ossUrl);
         } catch (Exception e) {
             return ResponseEntity.status(500).body("异常：" + e.getMessage());
         }
     }
 
-    // 恢复数据库
+    @GetMapping("/listBackups")
+    public ResponseEntity<List<String>> listBackups() {
+        System.out.println("开始列出备份文件");
+        List<String> backups = aliOssUtil.listBackupFiles("backups/");
+        return ResponseEntity.ok(backups);
+    }
+
+
+    @PostMapping("/deleteBackup")
+    public ResponseEntity<String> deleteBackup(@RequestBody Map<String, String> params) {
+
+        System.out.println("开始删除备份文件");
+
+        String fileUrl = params.get("fileUrl");
+        if (fileUrl == null || fileUrl.isEmpty()) {
+            return ResponseEntity.badRequest().body("文件路径不能为空");
+        }
+
+        // 从完整 URL 中提取 OSS 内的 objectName，比如去掉 https://bucket.endpoint/ 部分
+        String prefix = "https://" + aliOssUtil.getBucketName() + "." + aliOssUtil.getEndpoint() + "/";
+        if (!fileUrl.startsWith(prefix)) {
+            return ResponseEntity.badRequest().body("文件路径不合法");
+        }
+        String objectName = fileUrl.substring(prefix.length());
+
+        try {
+            aliOssUtil.deleteObject(objectName);
+            return ResponseEntity.ok("删除成功");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("删除失败：" + e.getMessage());
+        }
+    }
+
+
+
+    // 恢复数据库，前端传来 OSS 上的备份文件 URL
     @PostMapping("/restore")
     public ResponseEntity<String> restoreDatabase(@RequestBody Map<String, String> body) {
         String ossFileUrl = body.get("fileUrl");
@@ -75,6 +108,7 @@ public class DatabaseController {
         }
 
         try {
+            // 先下载备份文件到本地
             String localPath = "D:/backup/restore_temp.sql";
             File restoreFile = new File(localPath);
             if (!restoreFile.getParentFile().exists()) {
@@ -90,19 +124,19 @@ public class DatabaseController {
                 }
             }
 
-            Map<String, String> dbInfo = parseDbUrl(dbConfig.getUrl());
-
+            // 执行恢复命令
             ProcessBuilder pb = new ProcessBuilder(
                     "mysql",
-                    "-h", dbInfo.get("host"),
-                    "-P", dbInfo.get("port"),
-                    "-u", dbConfig.getUsername(),
-                    "-p" + dbConfig.getPassword(),
-                    dbInfo.get("dbName")
+                    "-h", "47.94.105.113",           // 指定远程地址
+                    "-P", "3306",
+                    "-u", "traffic_user_02",
+                    "-pL2tTWWWbjR4zh6F4",
+                    "traffic_violation_system_02"
             );
             pb.redirectInput(restoreFile);
             Process process = pb.start();
 
+            // 读取错误流方便调试
             try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
                 String line;
                 while ((line = errorReader.readLine()) != null) {
@@ -111,61 +145,15 @@ public class DatabaseController {
             }
 
             int exitCode = process.waitFor();
-            return exitCode == 0 ?
-                    ResponseEntity.ok("数据库恢复成功") :
-                    ResponseEntity.status(500).body("恢复失败");
+            if (exitCode == 0) {
+                return ResponseEntity.ok("数据库恢复成功");
+            } else {
+                return ResponseEntity.status(500).body("恢复失败");
+            }
 
         } catch (Exception e) {
             return ResponseEntity.status(500).body("异常：" + e.getMessage());
         }
     }
 
-    // 列出 OSS 上所有备份文件
-    @GetMapping("/listBackups")
-    public ResponseEntity<List<String>> listBackups() {
-        List<String> backups = aliOssUtil.listBackupFiles("backups/");
-        return ResponseEntity.ok(backups);
-    }
-
-    // 删除 OSS 中指定备份
-    @PostMapping("/deleteBackup")
-    public ResponseEntity<String> deleteBackup(@RequestBody Map<String, String> params) {
-        String fileUrl = params.get("fileUrl");
-        if (fileUrl == null || fileUrl.isEmpty()) {
-            return ResponseEntity.badRequest().body("文件路径不能为空");
-        }
-
-        String prefix = "https://" + aliOssUtil.getBucketName() + "." + aliOssUtil.getEndpoint() + "/";
-        if (!fileUrl.startsWith(prefix)) {
-            return ResponseEntity.badRequest().body("文件路径不合法");
-        }
-
-        String objectName = fileUrl.substring(prefix.length());
-
-        try {
-            aliOssUtil.deleteObject(objectName);
-            return ResponseEntity.ok("删除成功");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("删除失败：" + e.getMessage());
-        }
-    }
-
-    // 解析 spring.datasource.url 中的信息
-    private Map<String, String> parseDbUrl(String url) {
-        Map<String, String> map = new HashMap<>();
-        try {
-            String main = url.replace("jdbc:mysql://", "").split("\\?")[0];
-            String[] parts = main.split("/");
-            String hostPort = parts[0];
-            String dbName = parts[1];
-
-            String[] hostPortParts = hostPort.split(":");
-            map.put("host", hostPortParts[0]);
-            map.put("port", hostPortParts.length > 1 ? hostPortParts[1] : "3306");
-            map.put("dbName", dbName);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return map;
-    }
 }

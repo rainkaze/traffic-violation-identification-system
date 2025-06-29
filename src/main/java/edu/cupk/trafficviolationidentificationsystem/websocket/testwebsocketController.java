@@ -21,7 +21,6 @@ public class testwebsocketController {
 //        List<Integer> a=new ArrayList<>();
 //        a.add(8);                 这里是需要发送给的用户ids
 //        webSocketServer.sendToClientsByInt(a,"新增条款");
-//        我已经在前端调用插入通知表了 后端可以不用写了
         webSocketServer.sendToAllClient("这是后端发给所有前端的消息");
         return "test";
     }
