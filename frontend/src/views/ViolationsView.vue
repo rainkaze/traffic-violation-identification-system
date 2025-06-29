@@ -9,7 +9,7 @@
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <div class="flex flex-col sm:flex-row gap-3 flex-wrap">
           <div class="relative">
-            <input type="text" v-model="filters.plateNumber" @input="onFilterChange" placeholder="搜索车牌号" class="input pl-10 w-full sm:w-48">
+            <input type="text" v-model="filters.plateNumber" @input="onFilterChange" placeholder="    搜索车牌号" class="input pl-10 w-full sm:w-48">
             <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
           </div>
           <select v-model="filters.violationType" @change="onFilterChange" class="input w-full sm:w-48">

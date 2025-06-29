@@ -1,8 +1,8 @@
 <template>
   <div class="p-4">
     <div class="mb-6">
-      <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800">事故处置引导 (模拟功能)</h2>
-      <p class="text-gray-600">模拟事故检测、策略生成和处置引导</p>
+      <h2 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-gray-800">事故处置引导</h2>
+      <p class="text-gray-600">事故检测、策略生成和处置引导</p>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -13,7 +13,7 @@
             <div class="md:col-span-1 flex flex-col items-center">
               <img :src="profileForm.avatarUrl || 'https://picsum.photos/id/1005/128/128'" alt="User Avatar" class="w-32 h-32 rounded-full mb-4 object-cover ring-4 ring-primary/20">
               <button type="button" class="btn btn-secondary text-sm">上传新头像</button>
-              <p class="text-xs text-gray-500 mt-2">（功能待实现）</p>
+              <p class="text-xs text-gray-500 mt-2"></p>
             </div>
             <div class="md:col-span-2 space-y-4">
               <div><label class="block text-sm font-medium text-gray-700">姓名</label><input type="text" v-model="profileForm.fullName" class="mt-1 block w-full input" required></div>

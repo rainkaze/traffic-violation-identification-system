@@ -6,7 +6,7 @@
           <i class="fa fa-bars text-xl"></i>
         </button>
         <div class="relative">
-          <input type="text" placeholder="搜索..." class="input pl-10 pr-4 w-64" />
+          <input type="text" placeholder="    搜索..." class="input pl-10 pr-4 w-64" />
           <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
         </div>
       </div>

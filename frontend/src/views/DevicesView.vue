@@ -9,7 +9,7 @@
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div class="flex flex-col sm:flex-row gap-3">
           <div class="relative">
-            <input type="text" v-model="searchTerm" placeholder="搜索设备ID或名称" class="input pl-10 w-full sm:w-64">
+            <input type="text" v-model="searchTerm" placeholder="   搜索设备ID或名称" class="input pl-10 w-full sm:w-64">
             <i class="fa fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
           </div>
           <select v-model="selectedType" class="input w-full sm:w-40">
