@@ -16,6 +16,9 @@ public class RabbitMQConfig {
     public static final String QUEUE_NOTIFICATION = "q.notification";
     public static final String ROUTING_KEY_NOTIFICATION = "routing.notification.#";
 
+    public static final String QUEUE_VIOLATION_TEST = "q.violation.test";
+    public static final String ROUTING_KEY_VIOLATION_TEST = "routing.violation.test.submit";
+
     @Bean
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
@@ -33,5 +36,14 @@ public class RabbitMQConfig {
     @Bean
     public Binding notificationBinding(Queue notificationQueue, TopicExchange exchange) {
         return BindingBuilder.bind(notificationQueue).to(exchange).with(ROUTING_KEY_NOTIFICATION);
+    }
+
+    @Bean
+    public Queue violationTestQueue() {
+        return new Queue(QUEUE_VIOLATION_TEST);
+    }
+    @Bean
+    public Binding violationTestBinding(Queue violationTestQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(violationTestQueue).to(exchange).with(ROUTING_KEY_VIOLATION_TEST);
     }
 }

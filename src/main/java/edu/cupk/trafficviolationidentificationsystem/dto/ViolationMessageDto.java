@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 
 /**
  * 用于RabbitMQ消息传递的DTO，封装了违章数据和证据图片内容。
@@ -12,9 +11,11 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ViolationTestDto implements Serializable {
-    private String plateNumber;
-    private LocalDateTime violationTime;
-    private Integer deviceId;
-    private Integer ruleId;
+public class ViolationMessageDto implements Serializable {
+    // 确保 ViolationTestDto 也实现了 Serializable 接口
+    private ViolationTestDto violationData;
+
+    private byte[] imageBytes;
+    private String originalImageName;
+    private String imageContentType;
 }
