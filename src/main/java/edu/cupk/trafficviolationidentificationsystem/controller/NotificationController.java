@@ -7,6 +7,7 @@ import edu.cupk.trafficviolationidentificationsystem.entity.Notification;
 import edu.cupk.trafficviolationidentificationsystem.entity.NotificationSetting;
 import edu.cupk.trafficviolationidentificationsystem.repository.NotificationMapper;
 import edu.cupk.trafficviolationidentificationsystem.repository.NotificationSettingMapper;
+import edu.cupk.trafficviolationidentificationsystem.service.MessageProducerService;
 import edu.cupk.trafficviolationidentificationsystem.websocket.WebSocketServer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +18,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +40,8 @@ public class NotificationController {
     // 1. 注入RedisTemplate
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
+    @Autowired
+    private MessageProducerService messageProducerService; // 注入生产者服务
     // 2. 实例化ObjectMapper用于序列化
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -105,7 +109,7 @@ public class NotificationController {
     }
 
     /**
-     * [合并后] 发送通知给一个或多个指定用户。
+     * 发送通知给一个或多个指定用户。
      * 此操作会通过WebSocket实时推送，将通知存入数据库，并通过Redis发布消息。
      *
      * @param request 包含主题、内容和接收者ID列表的请求对象。
@@ -114,39 +118,11 @@ public class NotificationController {
     @PostMapping("/send")
     @AuditLog(actionType = "SEND_NOTIFICATION", targetEntityType = "NOTIFICATION_RECIPIENTS", targetEntityIdExpression = "#request.recipientIds.toString()")
     public ResponseEntity<String> sendNotification(@RequestBody NotificationRequest request) {
-        // 3. 使用规范化的消息格式
-        String messageContent = "主题:" + request.getSubject() + "  内容:" + request.getMessage();
+        // 调用生产者发送消息，然后立即返回
+        messageProducerService.sendNotification(request);
 
-        // 4. 通过WebSocket实时发送
-        webSocketServer.sendToClientsByInt(request.getRecipientIds(), messageContent);
-
-        // 5. 持久化到数据库
-        for (Integer recipientId : request.getRecipientIds()) {
-            Notification notification = Notification.builder()
-                    .userId(Long.valueOf(recipientId))
-                    .message(messageContent)
-                    .timestamp(LocalDateTime.now())
-                    .isRead(false)
-                    .build();
-            notificationMapper.insertNotification(notification);
-        }
-
-        // 6. 将消息发布到 Redis Topic
-        try {
-            Map<String, Object> messageMap = Map.of(
-                    "recipientIds", request.getRecipientIds(),
-                    "message", messageContent
-            );
-            // 使用 convertAndSend 发送到指定的主题
-            redisTemplate.convertAndSend(RedisPubSubConfig.NOTIFICATION_TOPIC, objectMapper.writeValueAsString(messageMap));
-        } catch (Exception e) {
-            // 在实际项目中，这里应该记录错误日志
-            e.printStackTrace();
-        }
-
-        return ResponseEntity.ok("通知已成功发送、存储和发布");
+        return ResponseEntity.ok("通知任务已成功提交，正在后台处理。");
     }
-
     /**
      * 用于/markAllAsRead接口的请求体封装类。
      */
@@ -162,7 +138,8 @@ public class NotificationController {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
-    public static class NotificationRequest {
+// 2. 在这里添加 implements Serializable
+    public static class NotificationRequest implements Serializable {
         private String subject;
         private String message;
         private List<Integer> recipientIds;
