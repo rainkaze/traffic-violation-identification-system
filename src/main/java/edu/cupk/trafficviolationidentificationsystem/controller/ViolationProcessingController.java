@@ -5,6 +5,7 @@ import edu.cupk.trafficviolationidentificationsystem.dto.ProcessRequestDto;
 import edu.cupk.trafficviolationidentificationsystem.dto.ViolationProcessingDetailDto;
 import edu.cupk.trafficviolationidentificationsystem.model.User;
 import edu.cupk.trafficviolationidentificationsystem.model.Workflow;
+import edu.cupk.trafficviolationidentificationsystem.service.LeaderboardService; // 1. 引入新服务
 import edu.cupk.trafficviolationidentificationsystem.service.ViolationProcessingService;
 import edu.cupk.trafficviolationidentificationsystem.service.WorkflowEngineService;
 import org.springframework.http.ResponseEntity;
@@ -14,8 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 /**
- * 违法记录处理流程控制器。
- * 负责启动处理流程、获取处理详情以及提交处理决策。
+ * [合并后] 违法记录处理流程控制器。
+ * 负责启动处理流程、获取处理详情、提交处理决策以及更新排行榜。
  */
 @RestController
 @RequestMapping("/api/processing")
@@ -23,16 +24,19 @@ public class ViolationProcessingController {
 
     private final WorkflowEngineService workflowEngineService;
     private final ViolationProcessingService violationProcessingService;
+    private final LeaderboardService leaderboardService; // 2. 注入新服务
 
     /**
-     * 构造函数，注入所需服务。
+     * [合并后] 构造函数，注入所需服务。
      *
      * @param workflowEngineService      工作流引擎服务。
      * @param violationProcessingService 违法处理服务。
+     * @param leaderboardService         排行榜服务。
      */
-    public ViolationProcessingController(WorkflowEngineService workflowEngineService, ViolationProcessingService violationProcessingService) {
+    public ViolationProcessingController(WorkflowEngineService workflowEngineService, ViolationProcessingService violationProcessingService, LeaderboardService leaderboardService) {
         this.workflowEngineService = workflowEngineService;
         this.violationProcessingService = violationProcessingService;
+        this.leaderboardService = leaderboardService;
     }
 
     /**
@@ -64,7 +68,8 @@ public class ViolationProcessingController {
     }
 
     /**
-     * 提交处理决策。
+     * [合并后] 提交处理决策。
+     * 成功处理后，会为处理该任务的用户增加排行榜分数。
      *
      * @param violationId    正在处理的违法记录ID。
      * @param processRequest 包含决策信息（如"pass", "reject"）和备注的请求体。
@@ -74,6 +79,7 @@ public class ViolationProcessingController {
     @PostMapping("/submit/{id}")
     @AuditLog(actionType = "SUBMIT_VIOLATION_DECISION", targetEntityType = "VIOLATION", targetEntityIdExpression = "#violationId")
     public ResponseEntity<?> submitDecision(@PathVariable("id") Long violationId, @RequestBody ProcessRequestDto processRequest, Authentication authentication) {
+        // 3. 采用版本1的方式获取用户，更安全简洁
         User currentUser = (User) authentication.getPrincipal();
 
         try {
@@ -82,6 +88,10 @@ public class ViolationProcessingController {
             } else {
                 workflowEngineService.processDirectly(violationId, currentUser.getUserId(), processRequest.getRemarks());
             }
+
+            // 4. 新增功能：处理成功后，增加排行榜分数
+            leaderboardService.incrementScore(currentUser.getFullName(), 1);
+
             return ResponseEntity.ok(Map.of("message", "处理成功！"));
         } catch (IllegalStateException e) {
             return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));

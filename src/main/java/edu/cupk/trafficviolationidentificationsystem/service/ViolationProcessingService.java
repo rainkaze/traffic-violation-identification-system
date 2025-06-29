@@ -23,14 +23,20 @@ public class ViolationProcessingService {
     private final ViolationProcessingLogMapper logMapper;
     private final WorkflowNodeMapper nodeMapper;
     private final UserMapper userMapper;
-
-    public ViolationProcessingService(ViolationMapper violationMapper, ViolationProcessingLogMapper logMapper, WorkflowNodeMapper nodeMapper, UserMapper userMapper) {
+    private final LeaderboardService leaderboardService;
+    public ViolationProcessingService(ViolationMapper violationMapper, ViolationProcessingLogMapper logMapper, WorkflowNodeMapper nodeMapper, UserMapper userMapper, LeaderboardService leaderboardService) {
         this.violationMapper = violationMapper;
         this.logMapper = logMapper;
         this.nodeMapper = nodeMapper;
         this.userMapper = userMapper;
+        this.leaderboardService = leaderboardService; // 注入
     }
-
+    public void recordProcessingSuccess(Integer userId) {
+        User user = userMapper.findById(userId).orElse(null);
+        if (user != null) {
+            leaderboardService.incrementScore(user.getFullName(), 1);
+        }
+    }
     public ViolationProcessingDetailDto getProcessingDetails(Long violationId) {
         // 使用新方法直接获取 DTO
         ViolationDetailDto violationDetail = Optional.ofNullable(violationMapper.findViolationDetailById(violationId))
