@@ -1,5 +1,6 @@
 package edu.cupk.trafficviolationidentificationsystem.controller;
 
+import edu.cupk.trafficviolationidentificationsystem.annotation.AuditLog;
 import edu.cupk.trafficviolationidentificationsystem.entity.Notification;
 import edu.cupk.trafficviolationidentificationsystem.entity.NotificationSetting;
 import edu.cupk.trafficviolationidentificationsystem.repository.NotificationMapper;
@@ -14,109 +15,127 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 通知管理控制器。
+ * 负责处理用户的通知获取、标记已读、设置以及发送通知等操作。
+ */
 @RestController
 @RequestMapping("/api/notifications")
 public class NotificationController {
-    // GET /api/notifications?userId=xxx
+
     @Autowired
     private NotificationMapper notificationMapper;
     @Autowired
     private NotificationSettingMapper notificationSettingMapper;
-
     @Autowired
     private WebSocketServer webSocketServer;
 
+    /**
+     * 根据用户ID获取其所有通知列表。
+     *
+     * @param userId 目标用户的ID。
+     * @return 该用户的通知列表。
+     */
     @GetMapping
     public List<Notification> getNotificationsByUserId(@RequestParam Long userId) {
-
-        System.out.println("获取用户 " + userId + " 的通知列表");
-        // 这里先写死静态数据，后续改为数据库查询
-        List<Notification> notifications = new ArrayList<>();
-        //未读消息红点由前端动态计算得到 这里只用获取所有通知即可
-        notifications=notificationMapper.getAllNotificationsByUserId(userId);
-        return notifications;
+        return notificationMapper.getAllNotificationsByUserId(userId);
     }
 
-    // PUT /api/notifications/markAllAsRead
+    /**
+     * 将指定用户的所有未读通知标记为已读。
+     *
+     * @param request 包含 "userId" 的请求体。
+     * @return 操作成功的字符串 "success"。
+     */
     @PutMapping("/markAllAsRead")
+    @AuditLog(actionType = "MARK_ALL_NOTIFICATIONS_READ", targetEntityType = "USER_NOTIFICATIONS", targetEntityIdExpression = "#request.userId")
     public String markAllAsRead(@RequestBody MarkReadRequest request) {
         Long userId = request.getUserId();
-        System.out.println("标记用户 " + userId + " 的所有通知为已读");
         notificationMapper.markAllAsRead(userId);
         return "success";
     }
 
-    public static class MarkReadRequest {
-        private Long userId;
-        public Long getUserId() {
-            return userId;
-        }
-        public void setUserId(Long userId) {
-            this.userId = userId;
-        }
-    }
-
-    //插入数据库
+    /**
+     * 内部接口，用于直接向数据库插入一条通知。
+     * 通常由系统内部服务调用，而非前端直接调用。
+     *
+     * @param notification 要插入的通知实体。
+     * @return 操作成功的字符串 "success"。
+     */
     @PostMapping("/insert")
+    @AuditLog(actionType = "INSERT_NOTIFICATION_INTERNAL", targetEntityType = "NOTIFICATION", targetEntityIdExpression = "#notification.userId")
     public String insertNotification(@RequestBody Notification notification) {
         notificationMapper.insertNotification(notification);
-        System.out.println("插入通知：" + notification);
         return "success";
     }
-    //设置通知
-//就是通知设置那块的选项
+
+    /**
+     * 为用户初次设置通知偏好。
+     *
+     * @param settings 通知设置列表。
+     * @return 操作成功的字符串 "success"。
+     */
     @PostMapping("/set")
+    @AuditLog(actionType = "SET_NOTIFICATION_SETTINGS", targetEntityType = "NOTIFICATION_SETTINGS", targetEntityIdExpression = "#authentication.principal.userId")
     public String setNotification(@RequestBody List<NotificationSetting> settings) {
-//        这个是初始用户时 拿来设置通知的
-        System.out.println("设置通知：" + settings);
         notificationSettingMapper.insertNotificationSetting(settings);
         return "success";
     }
 
-
+    /**
+     * 更新用户已存在的通知偏好设置。
+     *
+     * @param settings 更新后的通知设置列表。
+     * @return 操作成功的字符串 "success"。
+     */
     @PostMapping("/put")
+    @AuditLog(actionType = "UPDATE_NOTIFICATION_SETTINGS", targetEntityType = "NOTIFICATION_SETTINGS", targetEntityIdExpression = "#authentication.principal.userId")
     public String putNotification(@RequestBody List<NotificationSetting> settings) {
-//        修改通知设置的时候调用
-        System.out.println("更新：" + settings);
         notificationSettingMapper.putNotificationSetting(settings);
         return "success";
     }
 
-
-//    发送通知  发布任务的那个功能调用的
+    /**
+     * 发送通知给一个或多个指定用户。
+     * 此操作会通过WebSocket实时推送，并同时将通知存入数据库。
+     *
+     * @param request 包含主题、内容和接收者ID列表的请求对象。
+     * @return 操作成功的响应实体。
+     */
     @PostMapping("/send")
+    @AuditLog(actionType = "SEND_NOTIFICATION", targetEntityType = "NOTIFICATION_RECIPIENTS", targetEntityIdExpression = "#request.recipientIds.toString()")
     public ResponseEntity<String> sendNotification(@RequestBody NotificationRequest request) {
-//        // 打印接收到的数据（前期调试用）
-//        System.out.println("接收到通知请求：");
-//        System.out.println("主题: " + request.getSubject());
-//        System.out.println("内容: " + request.getMessage());
-//        System.out.println("收件人ID列表: " + request.getRecipientIds());
+        String messageContent = "主题:" + request.getSubject() + "  内容:" + request.getMessage();
 
+        // 通过WebSocket实时发送
+        webSocketServer.sendToClientsByInt(request.getRecipientIds(), messageContent);
 
-        List<Integer> a=new ArrayList<>();
-        a=request.getRecipientIds();
-        webSocketServer.sendToClientsByInt(a,"主题"+request.getSubject()+"  内容  "+request.getMessage());
-//        webSocketServer.sendToAllClient("你好啊");
-//        websocket发通知是在连接的情况下可以即时发 不管在线离线 你都要存通知数据库里
-
+        // 持久化到数据库
         for (Integer recipientId : request.getRecipientIds()) {
             Notification notification = Notification.builder()
                     .userId(Long.valueOf(recipientId))
-                    .message("主题" + request.getSubject() + "  内容  " + request.getMessage())
+                    .message(messageContent)
                     .timestamp(LocalDateTime.now())
                     .isRead(false)
                     .build();
             notificationMapper.insertNotification(notification);
-            System.out.println("插入通知：" + notification);
-
         }
-        // 这里只返回一个简单的响应
-        return ResponseEntity.ok("通知接收成功");
+        return ResponseEntity.ok("通知已成功发送和存储");
     }
 
+    /**
+     * 用于/markAllAsRead接口的请求体封装类。
+     */
+    @Data
+    public static class MarkReadRequest {
+        private Long userId;
+    }
+
+    /**
+     * 用于/send接口的请求体封装类。
+     */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -125,8 +144,5 @@ public class NotificationController {
         private String subject;
         private String message;
         private List<Integer> recipientIds;
-
     }
-
-
-    }
+}
