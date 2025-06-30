@@ -12,4 +12,8 @@ public interface NotificationSettingMapper {
     void putNotificationSetting(List<NotificationSetting> settings);
 
     List<Integer> getUserIdsByTypeKey(String typeKey);
+
+    List<NotificationSetting> selectByUserId(Long userId);
+
+    void deleteByUserId(Long userId);
 }
