@@ -4,60 +4,79 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="edu.cupk.trafficviolationidentificationsystem.repository.ViolationMapper">
 
+    <resultMap id="ViolationDetailDtoResultMap" type="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
+        <id property="id" column="id"/>
+        <result property="plate" column="plate"/>
+        <result property="time" column="time"/>
+        <result property="type" column="type"/>
+        <result property="location" column="location"/>
+        <result property="district" column="district"/>
+        <result property="device" column="device"/>
+        <result property="status" column="status"/>
+        <result property="evidenceImageUrls" column="evidence_image_urls"
+                typeHandler="edu.cupk.trafficviolationidentificationsystem.handler.JsonTypeHandler"/>
+    </resultMap>
+
     <sql id="selectJoins">
         SELECT
-            v.violation_id AS id,
-            v.plate_number AS plate,
-            v.violation_time AS time,
-            tr.violation_type AS type,
-            d.address AS location,
-            dist.district_name AS district,
-            d.device_name AS device,
-            v.status AS status
-        FROM
-            violations v
+            v.violation_id AS id, v.plate_number AS plate, v.violation_time AS time,
+            tr.violation_type AS type, d.address AS location, dist.district_name AS district,
+            d.device_name AS device, v.status AS status, v.evidence_image_urls
+        FROM violations v
             LEFT JOIN devices d ON v.device_id = d.device_id
             LEFT JOIN districts dist ON d.district_id = dist.district_id
             LEFT JOIN traffic_rules tr ON v.rule_id = tr.rule_id
     </sql>
-
     <sql id="dynamicWhere">
         <where>
-            <if test="query.plateNumber != null and query.plateNumber != ''">
-                AND v.plate_number LIKE CONCAT('%', #{query.plateNumber}, '%')
-            </if>
-            <if test="query.violationType != null and query.violationType != ''">
-                AND tr.violation_type = #{query.violationType}
-            </if>
-            <if test="query.status != null and query.status != ''">
-                AND v.status = #{query.status}
-            </if>
-            <if test="query.yearMonth != null and query.yearMonth != ''">
-                AND DATE_FORMAT(v.violation_time, '%Y-%m') = #{query.yearMonth}
-            </if>
-            <if test="query.districtId != null">
-                AND d.district_id = #{query.districtId}
-            </if>
+            <if test="query.plateNumber != null and query.plateNumber != ''">AND v.plate_number LIKE CONCAT('%', #{query.plateNumber}, '%')</if>
+            <if test="query.violationType != null and query.violationType != ''">AND tr.violation_type = #{query.violationType}</if>
+            <if test="query.status != null and query.status != ''">AND v.status = #{query.status}</if>
+            <if test="query.yearMonth != null and query.yearMonth != ''">AND DATE_FORMAT(v.violation_time, '%Y-%m') = #{query.yearMonth}</if>
+            <if test="query.districtId != null">AND d.district_id = #{query.districtId}</if>
             <if test="query.accessibleDistrictIds != null and query.accessibleDistrictIds.size() > 0">
                 AND d.district_id IN
-                <foreach item="id" collection="query.accessibleDistrictIds" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
+                <foreach item="id" collection="query.accessibleDistrictIds" open="(" separator="," close=")">#{id}</foreach>
             </if>
         </where>
     </sql>
 
-    <select id="findViolationsByCriteria" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
+    <select id="findViolationsByCriteria" resultMap="ViolationDetailDtoResultMap">
         <include refid="selectJoins"/>
         <include refid="dynamicWhere"/>
         ORDER BY v.violation_time DESC
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 
+    <select id="getLatestTestViolations" resultMap="ViolationDetailDtoResultMap">
+        <include refid="selectJoins"/>
+        ORDER BY v.created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <select id="findViolationDetailById" resultMap="ViolationDetailDtoResultMap">
+        <include refid="selectJoins"/>
+        <where>
+            v.violation_id = #{id}
+        </where>
+    </select>
+
+    <select id="findAllViolationsByCriteria" resultMap="ViolationDetailDtoResultMap">
+        <include refid="selectJoins"/>
+        <include refid="dynamicWhere"/>
+        ORDER BY v.violation_time DESC
+    </select>
+
+    <select id="findRecentViolationsByDeviceId" resultMap="ViolationDetailDtoResultMap">
+        <include refid="selectJoins"/>
+        WHERE v.device_id = #{deviceId}
+        ORDER BY v.violation_time DESC
+        LIMIT 5
+    </select>
+
     <select id="countViolationsByCriteria" resultType="long">
         SELECT COUNT(v.violation_id)
-        FROM
-        violations v
+        FROM violations v
         LEFT JOIN devices d ON v.device_id = d.device_id
         LEFT JOIN traffic_rules tr ON v.rule_id = tr.rule_id
         <include refid="dynamicWhere"/>
@@ -66,16 +85,12 @@
     <insert id="insertTestViolation" useGeneratedKeys="true" keyProperty="violationId"
             parameterType="edu.cupk.trafficviolationidentificationsystem.model.Violation">
         INSERT INTO violations
-        (plate_number, violation_time, device_id, rule_id, status, evidence_image_urls)
-        VALUES
-            (#{plateNumber}, #{violationTime}, #{deviceId}, #{ruleId}, '待处理', #{evidenceImageUrls, typeHandler=edu.cupk.trafficviolationidentificationsystem.handler.JsonTypeHandler})
+        (plate_number, violation_time, device_id, rule_id, status,
+         evidence_image_urls, confidence_score)  VALUES
+            (#{plateNumber}, #{violationTime}, #{deviceId}, #{ruleId}, '待处理',
+             #{evidenceImageUrls, typeHandler=edu.cupk.trafficviolationidentificationsystem.handler.JsonTypeHandler},
+             #{confidenceScore})
     </insert>
-
-    <select id="getLatestTestViolations" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
-        <include refid="selectJoins"/>
-        ORDER BY v.created_at DESC
-        LIMIT #{limit}
-    </select>
 
     <select id="findById" resultType="edu.cupk.trafficviolationidentificationsystem.model.Violation">
         SELECT * FROM violations WHERE violation_id = #{violationId}
@@ -85,41 +100,14 @@
         UPDATE violations SET status = #{status} WHERE violation_id = #{violationId}
     </update>
 
-    <select id="findViolationDetailById" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
-        <include refid="selectJoins"/>
-        <where>
-            v.violation_id = #{id}
-        </where>
-    </select>
-
-    <select id="findAllViolationsByCriteria" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
-        <include refid="selectJoins"/>
-        <include refid="dynamicWhere"/>
-        ORDER BY v.violation_time DESC
-    </select>
-
-    <select id="findRecentViolationsByDeviceId" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationDetailDto">
-        <include refid="selectJoins"/>
-        WHERE v.device_id = #{deviceId}
-        ORDER BY v.violation_time DESC
-        LIMIT 5
-    </select>
-
     <select id="countByDeviceId" resultType="long">
-        SELECT COUNT(violation_id)
-        FROM violations
-        WHERE device_id = #{deviceId}
+        SELECT COUNT(violation_id) FROM violations WHERE device_id = #{deviceId}
     </select>
-
 
     <select id="findViolationsOfYesterday" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationReportDto">
         SELECT
-            v.violation_id AS violationId,
-            v.plate_number AS plateNumber,
-            tr.violation_type AS violationType,
-            v.violation_time AS violationTime,
-            d.address AS location,
-            v.status
+            v.violation_id AS violationId, v.plate_number AS plateNumber, tr.violation_type AS violationType,
+            v.violation_time AS violationTime, d.address AS location, v.status
         FROM violations v
                  LEFT JOIN traffic_rules tr ON v.rule_id = tr.rule_id
                  LEFT JOIN devices d ON v.device_id = d.device_id
@@ -128,12 +116,8 @@
 
     <select id="findViolationsOfLastWeek" resultType="edu.cupk.trafficviolationidentificationsystem.dto.ViolationReportDto">
         SELECT
-            v.violation_id AS violationId,
-            v.plate_number AS plateNumber,
-            tr.violation_type AS violationType,
-            v.violation_time AS violationTime,
-            d.address AS location,
-            v.status
+            v.violation_id AS violationId, v.plate_number AS plateNumber, tr.violation_type AS violationType,
+            v.violation_time AS violationTime, d.address AS location, v.status
         FROM violations v
                  LEFT JOIN traffic_rules tr ON v.rule_id = tr.rule_id
                  LEFT JOIN devices d ON v.device_id = d.device_id
@@ -141,11 +125,8 @@
           AND v.violation_time &lt;  DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
     </select>
 
-
-
     <select id="countViolationsByDate" resultType="java.lang.Integer">
-        SELECT COUNT(*)
-        FROM violations
-        WHERE DATE(violation_time) = #{date}
+        SELECT COUNT(*) FROM violations WHERE DATE(violation_time) = #{date}
     </select>
+
 </mapper>

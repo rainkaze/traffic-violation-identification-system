@@ -121,11 +121,11 @@ public class ViolationProcessingService {
         // 在真实场景中，这里会扫描临时目录（如 /tmp/violation_videos）并删除符合条件的文件
         long releasedSpace = new Random().nextInt(300) + 50; // 模拟释放的空间大小
 
-        System.out.println();
-        System.out.println("---------------------------------------------------------");
-        System.out.println("-------> Quartz Job: [系统维护] 正在执行临时文件清理任务... <-------");
-        System.out.println("-------> Quartz Job: [系统维护] 清理完成，释放了 " + releasedSpace + "MB 磁盘空间。 <-------");
-        System.out.println("---------------------------------------------------------");
-        System.out.println();
+//        System.out.println();
+//        System.out.println("---------------------------------------------------------");
+//        System.out.println("-------> Quartz Job: [系统维护] 正在执行临时文件清理任务... <-------");
+//        System.out.println("-------> Quartz Job: [系统维护] 清理完成，释放了 " + releasedSpace + "MB 磁盘空间。 <-------");
+//        System.out.println("---------------------------------------------------------");
+//        System.out.println();
     }
 }

@@ -17,4 +17,6 @@ public class ViolationTestDto implements Serializable {
     private LocalDateTime violationTime;
     private Integer deviceId;
     private Integer ruleId;
+    private Double confidenceScore;
+
 }

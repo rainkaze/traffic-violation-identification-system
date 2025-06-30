@@ -32,8 +32,16 @@
             <p><strong>抓拍设备:</strong> {{ details.violation.device }}</p>
           </div>
           <h4 class="font-semibold mt-6 mb-2">证据照片</h4>
-          <div class="bg-gray-200 rounded-lg aspect-video flex items-center justify-center">
-            <p class="text-gray-500">(暂无图片)</p>
+          <div class="bg-gray-200 rounded-lg aspect-video">
+            <img
+              v-if="details.violation.evidenceImageUrls && details.violation.evidenceImageUrls.length > 0"
+              :src="details.violation.evidenceImageUrls[0]"
+              alt="违法证据"
+              class="w-full h-full object-contain rounded-lg"
+            >
+            <div v-else class="flex items-center justify-center h-full">
+              <p class="text-gray-500">(暂无图片)</p>
+            </div>
           </div>
         </div>
 
@@ -63,8 +71,8 @@
 </template>
 
 <script setup>
-// (JS部分与上一版相同，无需修改)
-import { ref, reactive, onMounted } from 'vue';
+// 1. 从 'vue' 中引入 watch
+import { ref, reactive, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import apiClient from '@/services/api';
 
@@ -84,20 +92,36 @@ const form = reactive({
 });
 
 const fetchDetails = async () => {
+  // 增加一个保护，如果id不存在则不执行
+  if (!props.id) return;
   isLoading.value = true;
   error.value = null;
   try {
     const response = await apiClient.get(`/processing/details/${props.id}`);
     details.value = response.data;
     form.isWorkflowCase = details.value.workflowCase;
+    console.log("成功获取到的详情数据:", details.value);
   } catch (err) {
-    error.value = '加载处理详情失败: ' + (err.response?.data?.message || '未知错误');
+    const errorMessage = '加载处理详情失败: ' + (err.response?.data?.message || '未知错误');
+    error.value = errorMessage;
+    console.error(errorMessage, err);
   } finally {
     isLoading.value = false;
   }
 };
 
+const initiateProcessing = async () => {
+  if (!props.id) return;
+  try {
+    await apiClient.post(`/processing/initiate/${props.id}`);
+    console.log("处理流程启动请求已成功发送。");
+  } catch (err) {
+    console.warn("启动处理流程的请求失败（这可能不影响您查看详情）:", err.response?.data?.message || err.message);
+  }
+};
+
 const submitDecision = async (decisionType = 'APPROVE') => {
+  // ... 此函数保持不变 ...
   form.decision = decisionType;
   isSubmitting.value = true;
   try {
@@ -109,17 +133,27 @@ const submitDecision = async (decisionType = 'APPROVE') => {
   } finally {
     isSubmitting.value = false;
   }
-}
+};
 
-onMounted(async () => {
-  // 页面加载时，先调用 initiate 接口
-  try {
-    await apiClient.post(`/processing/initiate/${props.id}`);
-    // 不管结果如何，都去获取详情
-    await fetchDetails();
-  } catch (err) {
-    error.value = "启动处理流程失败：" + (err.response?.data?.message || err.message);
-    isLoading.value = false;
-  }
+// 2. 【核心修正】使用 watch 来侦听 props.id 的变化
+watch(
+  () => props.id, // 我们要侦听的目标
+  (newId, oldId) => {
+    // 当 newId 存在且与 oldId 不同时，重新加载数据
+    if (newId) {
+      console.log(`路由ID从 ${oldId} 变为 ${newId}，重新加载数据...`);
+      fetchDetails();
+      initiateProcessing();
+    }
+  },
+  { immediate: true } // immediate: true 确保组件第一次加载时也会执行一次，这样就可以替代 onMounted
+);
+
+/*
+// 3. 【替代】原来的 onMounted 现在可以被 watch 的 immediate:true 选项替代，所以可以注释或删除
+onMounted(() => {
+  // fetchDetails();
+  // initiateProcessing();
 });
+*/
 </script>

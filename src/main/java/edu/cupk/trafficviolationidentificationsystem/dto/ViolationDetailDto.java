@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -20,4 +21,6 @@ public class ViolationDetailDto {
     private String device;
     private String status;
     private String district;
+    private List<String> evidenceImageUrls;
+
 }
