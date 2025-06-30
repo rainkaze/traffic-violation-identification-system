@@ -143,7 +143,7 @@
       </div>
     </div>
     <div class="card lg:col-span-1">
-      <h3 class="font-bold text-gray-800">警员处理排行榜</h3>
+      <h3 class="font-bold text-gray-800">处理排行榜</h3>
       <div class="h-80 overflow-y-auto space-y-3 mt-4">
         <div v-for="(user, index) in leaderboard" :key="index" class="flex items-center gap-3 p-2 rounded-lg bg-gray-50 border-l-4 border-primary">
           <span class="font-bold text-primary w-5 text-center">{{ index + 1 }}</span>

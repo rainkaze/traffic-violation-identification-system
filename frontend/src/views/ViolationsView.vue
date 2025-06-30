@@ -77,7 +77,7 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
               <button @click="handleProcessClick(item.id)" class="text-primary hover:text-primary/80 mr-3">详情</button>
-              <button @click="handleProcessClick(item.id)" class="text-success hover:text-success/80">处理</button>
+              <button v-if="!isAdmin" @click="handleProcessClick(item.id)" class="text-success hover:text-success/80">处理</button>
             </td>
           </tr>
           </tbody>

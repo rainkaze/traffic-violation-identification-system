@@ -48,8 +48,8 @@
 </template>
 
 <script setup>
-// <script>部分的代码完全不用修改
-import {ref, onMounted} from 'vue';
+// 1. 从 'vue' 中引入 onActivated
+import { ref, onMounted, onActivated } from 'vue';
 import apiClient from '@/services/api';
 
 const loading = ref(true);
@@ -73,7 +73,7 @@ const deleteWorkflow = async (id) => {
   try {
     await apiClient.delete(`/admin/workflows/${id}`);
     alert('工作流已删除。');
-    await fetchWorkflows();
+    await fetchWorkflows(); // 删除后立即刷新
   } catch (e) {
     console.error("删除工作流失败:", e);
     alert('删除失败');
@@ -82,7 +82,6 @@ const deleteWorkflow = async (id) => {
 
 const toggleActivation = async (workflow) => {
   try {
-    // 后端返回的是布尔值，直接赋值
     const response = await apiClient.post(`/admin/workflows/${workflow.workflowId}/toggle-activation`);
     workflow.isActive = response.data;
     alert('状态更新成功！');
@@ -92,5 +91,12 @@ const toggleActivation = async (workflow) => {
   }
 };
 
+// 2. 【保留】onMounted: 组件第一次被创建时加载数据
 onMounted(fetchWorkflows);
+
+// 3. 【新增】onActivated: 组件被“激活”时（例如从其他页面返回时）再次加载数据
+onActivated(() => {
+  console.log("工作流列表页面被激活，重新加载数据...");
+  fetchWorkflows();
+});
 </script>
