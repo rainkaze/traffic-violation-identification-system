@@ -45,13 +45,13 @@ public class AuditLogController {
             @RequestParam(required = false) String date) {
 
 
-        System.out.println("获取日志");
+//        System.out.println("获取日志");
 
 
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String username="";
         if (principal instanceof UserDetails userDetails) {
-            System.out.println( userDetails.getUsername());
+//            System.out.println( userDetails.getUsername());
             username= userDetails.getUsername();
         } else {
             System.out.println(principal.toString());
