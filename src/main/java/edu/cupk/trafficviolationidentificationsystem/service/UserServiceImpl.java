@@ -8,7 +8,11 @@ import edu.cupk.trafficviolationidentificationsystem.repository.UserMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import edu.cupk.trafficviolationidentificationsystem.dto.PageResultDto; // 确认导入
 
+import java.util.List;
+import java.util.stream.Collectors; // 确认导入
+import java.util.Collections; // 确认导入
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -37,7 +41,10 @@ public class UserServiceImpl implements UserService {
         user.setEmail(profileUpdateDto.getEmail());
 
         userMapper.updateUser(user);
-        return new UserDto(user);
+        UserDto updatedDto = new UserDto(user);
+        updatedDto.setDistricts(userMapper.findDistrictsByUserId(user.getUserId())); // 顺便把辖区信息也带上
+        return updatedDto;
+       // return new UserDto(user);
     }
 
     @Override
@@ -54,5 +61,22 @@ public class UserServiceImpl implements UserService {
         // 加密并设置新密码
         user.setPasswordHash(passwordEncoder.encode(passwordChangeDto.getNewPassword()));
         userMapper.updateUserPassword(user.getUserId(), user.getPasswordHash());
+    }
+    @Override
+    public PageResultDto<UserDto> getUsers(int page, int size, String keyword) {
+        long totalItems = userMapper.countAll(keyword);
+        if (totalItems == 0) {
+            return new PageResultDto<>(Collections.emptyList(), 0, 0, page);
+        }
+
+        int offset = page * size;
+        List<User> users = userMapper.findAllByPage(keyword, size, offset);
+        List<UserDto> userDtos = users.stream()
+                .map(UserDto::new)
+                .collect(Collectors.toList());
+
+        long totalPages = (long) Math.ceil((double) totalItems / size);
+
+        return new PageResultDto<>(userDtos, totalItems, (int) totalPages, page);
     }
 }

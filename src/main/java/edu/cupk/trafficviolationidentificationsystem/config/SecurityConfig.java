@@ -49,35 +49,24 @@ public class SecurityConfig {
                 .cors(withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authorize -> authorize
-                        // 1. 合并所有需要公开访问的端点
+                        // 1. 公开访问的端点
                         .requestMatchers(
                                 "/api/auth/**",
-                                "/api/test/**",
-                                "/api/signal/**",
-                                "/api/devices/streams",
                                 "/uploads/**",
-                                "/ws/**", // 开放WebSocket连接
-                                // =========================================================
-                                // ========== 在这里添加新的规则，允许报表API的匿名访问 ==========
-                                "/api/reports/**"
-                                // =========================================================
+                                "/ws/**"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/devices/bind").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/devices/*/status").permitAll()
 
-                        // 2. 合并设备管理相关权限
-                        .requestMatchers(HttpMethod.GET, "/api/devices/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/devices").hasRole("管理员")
-                        .requestMatchers(HttpMethod.PUT, "/api/devices/**").hasRole("管理员")
-                        .requestMatchers(HttpMethod.DELETE, "/api/devices/**").hasRole("管理员")
+                        // 2.【最终调试版】确保所有业务API只要登录就能访问
+                        .requestMatchers(
+                                "/api/devices/**",
+                                "/api/violations/**",
+                                "/api/statistics/**",
+                                "/api/dashboard/**",
+                                "/api/users/**", // 确保 users 接口包含在内
+                                "/api/admin/**"
+                        ).authenticated()
 
-                        // 3. 合并数据和统计接口权限，并使用最全的角色列表
-                        .requestMatchers("/api/violations/**", "/api/statistics/**").hasAnyRole("管理员", "警员", "小队长", "中队长", "大队长")
-
-                        // 4. 保留管理员专属接口权限
-                        .requestMatchers("/api/admin/**").hasRole("管理员")
-
-                        // 5. 其他所有请求都需要认证
+                        // 3. 其他所有未知请求，也只需要认证即可
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
@@ -90,11 +79,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 允许您的Vue前端访问
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+        // 当 allowedOrigins 为 "*" 时, allowCredentials 必须为 false
+        configuration.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

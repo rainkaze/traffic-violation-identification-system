@@ -40,6 +40,7 @@ public interface ViolationService {
     byte[] exportViolations(ViolationQueryDto queryDto, String format) throws Exception;
 
     List<ViolationDetailDto> getRecentViolationsByDeviceId(Integer deviceId);
+
 }
 
 @Service
@@ -82,7 +83,18 @@ class ViolationServiceImpl implements ViolationService {
             return new PageResultDto<>(Collections.emptyList(), 0, 0, queryDto.getPage());
         }
 
-        int offset = (queryDto.getPage() - 1) * queryDto.getPageSize();
+        // ===================================================================
+        // ======================= 最终核心修改点 ==========================
+        //  分页查询的页码通常从0或1开始。为保证健壮性，我们先对页码做预处理。
+        //  如果页码小于1（比如前端传来了0），我们将其视为第1页来处理。
+        // ===================================================================
+        int page = queryDto.getPage();
+        if (page < 1) {
+            page = 1; // 将小于1的页码强制修正为1
+        }
+        int offset = (page - 1) * queryDto.getPageSize();
+
+
         List<ViolationDetailDto> items = violationMapper.findViolationsByCriteria(queryDto, queryDto.getPageSize(), offset);
         long totalPages = (long) Math.ceil((double) totalItems / queryDto.getPageSize());
 
