@@ -40,7 +40,7 @@ public class CustomUserDetailsService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        log.info("正在为用户 '{}' 加载用户详情...", username);
+//        log.info("正在为用户 '{}' 加载用户详情...", username);
         return userMapper.findByUsername(username)
                 .orElseThrow(() -> {
                     log.warn("加载用户详情失败：在数据库中未找到用户 '{}'。", username);
