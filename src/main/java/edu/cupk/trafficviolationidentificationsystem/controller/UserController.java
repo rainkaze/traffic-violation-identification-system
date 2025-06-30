@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder; // 确保导入
 import org.springframework.web.bind.annotation.*;
-
+import edu.cupk.trafficviolationidentificationsystem.dto.PageResultDto;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -118,5 +118,21 @@ public class UserController {
             users = userMapper.searchUsersByKeyword(keyword);
         }
         return ResponseEntity.ok(users);
+    }
+    /**
+     * 获取所有用户的分页列表。
+     *
+     * @param page 当前页码
+     * @param size 每页数量
+     * @param keyword 搜索关键字 (可选)
+     * @return 用户分页结果
+     */
+    @GetMapping
+    public ResponseEntity<PageResultDto<UserDto>> getUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String keyword) {
+        PageResultDto<UserDto> userPage = userService.getUsers(page, size, keyword);
+        return ResponseEntity.ok(userPage);
     }
 }

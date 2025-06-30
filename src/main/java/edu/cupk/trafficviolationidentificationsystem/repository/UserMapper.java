@@ -35,4 +35,7 @@ public interface UserMapper {
     List<User> searchUsersByKeyword(String keyword);
 
     List<User> getAllUsers();
+    List<User> findAllByPage(@Param("keyword") String keyword, @Param("limit") int limit, @Param("offset") int offset);
+
+    long countAll(@Param("keyword") String keyword);
 }

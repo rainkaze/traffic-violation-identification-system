@@ -31,53 +31,32 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 违法记录相关业务逻辑的服务接口。
+ * [合并后] 违法记录相关业务逻辑的服务接口。
  */
 public interface ViolationService {
-    /**
-     * 根据查询条件分页列出违法记录。
-     */
     PageResultDto<ViolationDetailDto> listViolations(ViolationQueryDto queryDto);
-
-    /**
-     * 创建一条测试用的违法记录，包含上传证据图片。
-     */
     Violation createTestViolation(ViolationTestDto violationDto, MultipartFile evidenceImage);
-
-    /**
-     * 获取最新的N条测试违法记录。
-     */
     List<ViolationDetailDto> getLatestTestViolations(int limit);
-
-    /**
-     * 根据查询条件导出违法记录为指定格式文件。
-     */
     byte[] exportViolations(ViolationQueryDto queryDto, String format) throws Exception;
-
-    /**
-     * 根据设备ID获取最近的违法记录。
-     */
     List<ViolationDetailDto> getRecentViolationsByDeviceId(Integer deviceId);
 }
 
 /**
- * ViolationService 的实现类。
- * 【已重构】: 使用 OssFileStorageService 将文件上传至云端。
+ * [合并后] ViolationService 的实现类。
+ * 结合了OSS云存储和分页健壮性修复。
  */
 @Service
 class ViolationServiceImpl implements ViolationService {
 
-    private final OssFileStorageService ossFileStorageService; // <-- 【核心修改】依赖新的OSS服务
+    // 1. 依赖于新的OSS服务
+    private final OssFileStorageService ossFileStorageService;
     private final ViolationMapper violationMapper;
     private final UserMapper userMapper;
 
-    /**
-     * 构造函数，注入所有需要的服务和Mapper。
-     */
     public ViolationServiceImpl(ViolationMapper violationMapper, UserMapper userMapper, OssFileStorageService ossFileStorageService) {
         this.violationMapper = violationMapper;
         this.userMapper = userMapper;
-        this.ossFileStorageService = ossFileStorageService; // <-- 【核心修改】注入新的OSS服务
+        this.ossFileStorageService = ossFileStorageService;
     }
 
     @Override
@@ -97,50 +76,51 @@ class ViolationServiceImpl implements ViolationService {
             queryDto.setAccessibleDistrictIds(districtIds);
         }
 
-        // --- 分页查询逻辑 (保持不变) ---
         long totalItems = violationMapper.countViolationsByCriteria(queryDto);
         if (totalItems == 0) {
             return new PageResultDto<>(Collections.emptyList(), 0, 0, queryDto.getPage());
         }
-        int offset = (queryDto.getPage() - 1) * queryDto.getPageSize();
+
+        // 2. 整合版本二的健壮性修复：修正无效的页码
+        int page = queryDto.getPage();
+        if (page < 1) {
+            page = 1; // 将小于1的页码强制修正为1
+        }
+        int offset = (page - 1) * queryDto.getPageSize();
+
         List<ViolationDetailDto> items = violationMapper.findViolationsByCriteria(queryDto, queryDto.getPageSize(), offset);
         long totalPages = (long) Math.ceil((double) totalItems / queryDto.getPageSize());
 
+        // 注意：返回给前端的仍然是原始请求的页码
         return new PageResultDto<>(items, totalItems, (int) totalPages, queryDto.getPage());
     }
 
     /**
-     * 【已重构】创建一条测试违法记录。
-     * 此方法现在会将证据图片上传到阿里云OSS，并将返回的公开URL存入数据库。
+     * 3. 保留版本一重构后的方法：
+     * 将证据图片上传到阿里云OSS，并处理置信度等信息。
      */
     @Override
     @Transactional
     public Violation createTestViolation(ViolationTestDto violationDto, MultipartFile evidenceImage) {
-        // 步骤1：调用OSS服务上传文件，获取可公开访问的URL
         String imageUrl = ossFileStorageService.storeFile(evidenceImage);
 
-        // 步骤2：创建并填充Violation实体
         Violation violation = new Violation();
         violation.setPlateNumber(violationDto.getPlateNumber());
         violation.setViolationTime(violationDto.getViolationTime());
         violation.setDeviceId(violationDto.getDeviceId());
         violation.setRuleId(violationDto.getRuleId());
         violation.setStatus("PENDING");
-
-        // 将返回的OSS URL存入数据库
         violation.setEvidenceImageUrls(List.of(imageUrl));
 
-        // 处理并设置置信度
         if (violationDto.getConfidenceScore() != null) {
             violation.setConfidenceScore(new BigDecimal(violationDto.getConfidenceScore()));
         }
 
-        // 步骤3：将实体插入数据库
         violationMapper.insertTestViolation(violation);
-
         return violation;
     }
 
+    // (以下方法保持不变)
     @Override
     public List<ViolationDetailDto> getLatestTestViolations(int limit) {
         return violationMapper.getLatestTestViolations(limit);
@@ -148,7 +128,6 @@ class ViolationServiceImpl implements ViolationService {
 
     @Override
     public byte[] exportViolations(ViolationQueryDto queryDto, String format) throws Exception {
-        // (此方法逻辑保持不变)
         List<ViolationDetailDto> allViolations = violationMapper.findAllViolationsByCriteria(queryDto);
         File file = ResourceUtils.getFile("classpath:reports/report.jrxml");
         JasperReport jasperReport = JasperCompileManager.compileReport(file.getAbsolutePath());
