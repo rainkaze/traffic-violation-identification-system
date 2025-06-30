@@ -1,6 +1,10 @@
 package edu.cupk.trafficviolationidentificationsystem.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -9,6 +13,9 @@ import java.util.List;
  * 对应于数据库中 'violations' 表的实体类
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Violation {
 
     /**

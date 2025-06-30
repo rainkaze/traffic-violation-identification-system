@@ -24,8 +24,17 @@
         END
         WHERE user_id = #{settings[0].userId}
     </update>
+
+    <delete id="deleteByUserId">
+        DELETE FROM notification_setting WHERE user_id = #{userId}
+    </delete>
     <select id="getUserIdsByTypeKey" resultType="java.lang.Integer">
         SELECT DISTINCT user_id FROM notification_setting WHERE type_key = #{typeKey} and enabled = true
+    </select>
+
+    <select id="selectByUserId"
+            resultType="edu.cupk.trafficviolationidentificationsystem.entity.NotificationSetting">
+            SELECT * FROM notification_setting WHERE user_id = #{userId}
     </select>
 
 </mapper>
